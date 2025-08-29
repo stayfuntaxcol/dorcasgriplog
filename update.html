@@ -89,16 +89,12 @@
     <span id="userInfo" class="user-info"></span>
   </div>
 
-  <!-- Tabs and sections remain unchanged from the previous version -->
-  <!-- ... Goals / Risks / Issues / Plans tables ... -->
-
   <footer>© <span id="yr"></span> Dorcas / GRIPlog – bilingual viewer/editor with role-based permissions.</footer>
 
   <script type="module">
-    // Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -117,11 +113,9 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    // Language & UI state (re-used from previous version)
     let uiLang = 'en';
     $('#langSelect').addEventListener('change', ()=>{ uiLang = $('#langSelect').value; renderAll(); });
 
-    // ==== Anonymous auth ====
     const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
     onAuthStateChanged(auth, (user)=>{
       if(user){
@@ -129,19 +123,14 @@
         authTxt.textContent = 'Viewer (Anonymous)';
         const display = ($('#viewerName').value||'Guest');
         userInfo.textContent = `Logged in as: ${display} (Role: Viewer)`;
-        isAdmin = false; // anonymous = viewer only
-        toggleAdminButtons();
         renderAll();
       } else {
         authDot.classList.remove('ok');
         authTxt.textContent = 'Not connected';
       }
     });
-    // start anonymous session
     signInAnonymously(auth).catch(e=>{ alert('Anonymous login failed: '+e.message); });
 
-    // ===== Data & Rendering (same as earlier index) =====
-    let isAdmin = false; // no email login -> no admin rights
     let cache = {goals:[], risks:[], issues:[], plans:[]};
 
     async function loadAll(){
@@ -155,33 +144,15 @@
       cache.risks = r.docs.map(d=>({id:d.id, ...d.data()}));
       cache.issues= i.docs.map(d=>({id:d.id, ...d.data()}));
       cache.plans = p.docs.map(d=>({id:d.id, ...d.data()}));
-      ['goals','risks','issues','plans'].forEach(k=> cache[k].sort((a,b)=> idNum(a.id)-idNum(b.id)) );
-      buildFilterOptions();
       renderAll();
     }
 
     function idNum(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
     function getML(v){ return (v && typeof v==='object')? v : {en:(v||''), nl:''}; }
 
-    function toggleAdminButtons(){
-      // hide new buttons for viewers (kept for future admin mode)
-      ['gNew','rNew','iNew','pNew'].forEach(id=>{ const el=$('#'+id); if(el) el.style.display = isAdmin? '' : 'none'; });
-    }
-
-    // ===== Filters, renderers, and event handlers from previous version =====
-    // (For brevity, assume the same render* functions are present here.)
-
     function renderAll(){
-      // viewer can see all tabs
-      renderTab($('#goals').classList.contains('active')? 'goals':
-                $('#risks').classList.contains('active')? 'risks':
-                $('#issues').classList.contains('active')? 'issues': 'plans');
+      console.log('Render all tables (placeholder).');
     }
-
-    function renderTab(kind){ if(kind==='goals') renderGoals(); if(kind==='risks') renderRisks(); if(kind==='issues') renderIssues(); if(kind==='plans') renderPlans(); }
-
-    // TODO: include the renderGoals/renderRisks/renderIssues/renderPlans and helpers from your last version
-    // Make sure Action buttons check isAdmin before showing Edit/Del
 
     loadAll().catch(err=> alert('Failed to load: '+err.message));
   </script>
