@@ -6,44 +6,57 @@
   <title>GRIPlog – Honey Value Chain (Kitui, Kenya)</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#1f2937;--muted:#6b7280;--brand:#0ea5a3;--brand-ink:#064e4a;--line:#e5e7eb;--tab:#0b8d8b;--warn:#ef4444;--ok:#10b981;}
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#1f2937;--muted:#6b7280;--brand:#0ea5a3;--line:#e5e7eb;--ok:#10b981;--warn:#ef4444; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+
     header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:10}
     header img{height:34px;width:auto}
-    header .title{font-weight:700;font-size:20px}
+    header .title{font-weight:700;font-size:20px;letter-spacing:.2px}
     header .sub{color:var(--muted);font-size:12px}
-    /* Auth bar */
-    #authbar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:#f0f5f5}
-    .input, select, input, textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;background:#fff}
+
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:#f0f5f5}
     .btn{appearance:none;border:1px solid var(--line);background:var(--card);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
     .btn:disabled{opacity:.5;cursor:not-allowed}
-    .loginNote{margin-left:auto;color:var(--muted);font-size:12px}
-    #who{font-size:12px;color:var(--muted);display:flex;flex-direction:column;text-transform:lowercase}
-    /* Tabs */
+    .input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+    .status{margin-left:auto;color:var(--muted);font-size:12px;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+    .status .dot{width:8px;height:8px;border-radius:999px;background:#bbb;display:inline-block}
+    .status .ok{background:var(--ok)}
+
     nav.tabs{display:flex;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--card)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer}
-    nav.tabs button.active{background:var(--tab);color:#fff}
+    nav.tabs button.active{background:#0b8d8b;color:#fff}
+
     section{display:none;padding:16px 18px}
     section.active{display:block}
+
     .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
     .card + .card{margin-top:16px}
     h2{margin:0 0 6px 0;font-size:18px}
     p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
     table{width:100%;border-collapse:collapse}
     th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
     th{background:#f9fbfb;text-align:left;font-size:13px}
     td{background:#fff}
+    select,input[type="text"],textarea,input[type="date"]{width:100%;font-size:14px;padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff}
+    textarea{min-height:56px}
+
+    .filters{background:#f9fbfb;border:1px solid var(--line);border-bottom:none;border-radius:12px 12px 0 0;padding:8px;display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:-1px}
+    .filters .field{display:flex;flex-direction:column;gap:4px}
+    .filters label{font-size:12px;color:var(--muted)}
+    .filters input, .filters select{font-size:13px}
+
+    .row-actions{display:flex;gap:6px}
     .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
     .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
     .kpi .label{color:var(--muted);font-size:12px}
     .kpi .val{font-weight:800;font-size:20px}
-    .row-actions{display:flex;gap:6px}
-    .filters input, .filters select{width:100%}
-    .filters .resetCell{display:flex;justify-content:flex-start}
-    .filters .resetCell button{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff}
+
+    footer{padding:14px 18px;color:var(--muted);font-size:12px}
+    @media (max-width: 880px){ .kpis{grid-template-columns:1fr} th, td{font-size:13px} header .title{font-size:18px} .filters{grid-template-columns:repeat(2,1fr)} }
   </style>
 </head>
 <body>
@@ -55,12 +68,13 @@
     </div>
   </header>
 
-  <div id="authbar">
-    <input id="fullName" class="input" placeholder="Full name *" />
-    <input id="email" class="input" type="email" placeholder="Email (required for editors)" />
-    <input id="org" class="input" placeholder="Organization *" />
+  <!-- Auth toolbar -->
+  <div class="toolbar">
+    <input id="fullName" class="input" placeholder="full name *" />
+    <input id="email" class="input" type="email" placeholder="email (required for editors)" />
+    <input id="org" class="input" placeholder="organization *" />
     <select id="role" class="input">
-      <option value="Viewer" selected>Viewer (read-only)</option>
+      <option value="Viewer" selected>Viewer</option>
       <option>Sponsor/ Partner</option>
       <option>Account manager</option>
       <option>Admin</option>
@@ -77,12 +91,15 @@
       <option>Corporate Positioning</option>
       <option>Other</option>
     </select>
-    <input id="password" class="input" type="password" placeholder="Password *" />
-    <button id="btnSignup" class="btn">Register</button>
-    <button id="btnSignin" class="btn primary">Login</button>
-    <button id="btnSignout" class="btn" style="display:none">Logout</button>
-    <div id="who"></div>
-    <div class="loginNote">anonymous login is disabled</div>
+    <input id="password" class="input" type="password" placeholder="password *" />
+    <button id="btnSignup" class="btn">register</button>
+    <button id="btnSignin" class="btn primary">login</button>
+    <button id="btnSignout" class="btn" style="display:none">logout</button>
+
+    <div class="status">
+      <span id="authText"><span class="dot" id="authDot"></span> not signed in</span>
+      <div id="whoList" style="text-align:right; text-transform:lowercase; line-height:1.1"></div>
+    </div>
   </div>
 
   <nav class="tabs" role="tablist">
@@ -96,46 +113,30 @@
   <section id="goals" class="active" role="tabpanel">
     <div class="card">
       <h2>Goals (SMART)</h2>
-      <p class="help">Specific, Measurable, Achievable, Relevant, Time-bound.</p>
-      <div class="kpis" id="kpiGoals">
-        <div class="kpi"><div class="label">Total goals</div><div class="val" id="kpiGoalsTotal">0</div></div>
-        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiGoalsIn">0</div></div>
-        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiGoalsDone">0</div></div>
+      <p class="help">Specific • Measurable • Acceptable • Realistic • Time-bound.</p>
+      <div class="filters">
+        <div class="field"><label for="gSearch">search description</label><input id="gSearch" placeholder="type to filter…" /></div>
+        <div class="field"><label>owner</label><select id="gOwnerFlt"><option value="">all</option></select></div>
+        <div class="field"><label>status</label><select id="gStatusFlt"><option value="">all</option><option>Open</option><option>In progress</option><option>Closed</option></select></div>
+        <div class="field"><label>start from</label><input id="gStartFlt" type="date"/></div>
+        <div class="field"><label>end until</label><input id="gEndFlt" type="date"/></div>
+        <div class="field" style="align-self:end"><button id="gReset" class="btn">reset</button></div>
       </div>
-      <div class="tableWrap">
-        <table id="tblGoals">
-          <thead>
-            <tr>
-              <th style="width:70px">ID</th>
-              <th>Goal</th>
-              <th style="width:160px">Owner</th>
-              <th style="width:130px">Start</th>
-              <th style="width:130px">End</th>
-              <th style="width:140px">Status</th>
-              <th>Notes</th>
-              <th style="width:140px">Actions</th>
-            </tr>
-            <tr class="filters">
-              <th><!-- id sort asc by default --></th>
-              <th><input id="fGoalsDesc" placeholder="Search description" /></th>
-              <th>
-                <select id="fGoalsOwner"><option value="">All</option></select>
-              </th>
-              <th><input id="fGoalsStart" type="date"></th>
-              <th><input id="fGoalsEnd" type="date"></th>
-              <th>
-                <select id="fGoalsStatus">
-                  <option value="">All</option><option>Open</option><option>In progress</option><option>Done</option>
-                </select>
-              </th>
-              <th></th>
-              <th class="resetCell"><button id="resetGoals">Reset</button></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button class="btn" id="addGoal" style="margin-top:10px;display:none">+ New Goal</button>
+      <table id="tblGoals">
+        <thead>
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Goal (SMART)</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th>Notes</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
@@ -143,46 +144,30 @@
   <section id="risks" role="tabpanel">
     <div class="card">
       <h2>Risks</h2>
-      <p class="help">Likelihood • Impact • Mitigation.</p>
-      <div class="kpis" id="kpiRisks">
-        <div class="kpi"><div class="label">Total risks</div><div class="val" id="kpiRisksTotal">0</div></div>
-        <div class="kpi"><div class="label">High priority</div><div class="val" id="kpiRisksHigh">0</div></div>
-        <div class="kpi"><div class="label">Open</div><div class="val" id="kpiRisksOpen">0</div></div>
+      <p class="help">Describe risk, likelihood, impact and mitigation.</p>
+      <div class="filters">
+        <div class="field"><label for="rSearch">search description</label><input id="rSearch" placeholder="type to filter…" /></div>
+        <div class="field"><label>likelihood</label><select id="rLikeFlt"><option value="">all</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div class="field"><label>impact</label><select id="rImpactFlt"><option value="">all</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div class="field"><label>status</label><select id="rStatusFlt"><option value="">all</option><option>Open</option><option>In progress</option><option>Closed</option></select></div>
+        <div class="field"></div>
+        <div class="field" style="align-self:end"><button id="rReset" class="btn">reset</button></div>
       </div>
-      <div class="tableWrap">
-        <table id="tblRisks">
-          <thead>
-            <tr>
-              <th style="width:70px">ID</th>
-              <th>Description</th>
-              <th style="width:160px">Owner</th>
-              <th style="width:120px">Likelihood</th>
-              <th style="width:120px">Impact</th>
-              <th style="width:140px">Status</th>
-              <th>Mitigation</th>
-              <th style="width:140px">Actions</th>
-            </tr>
-            <tr class="filters">
-              <th></th>
-              <th><input id="fRisksDesc" placeholder="Search description" /></th>
-              <th><select id="fRisksOwner"><option value="">All</option></select></th>
-              <th>
-                <select id="fRisksLik"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select>
-              </th>
-              <th>
-                <select id="fRisksImp"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select>
-              </th>
-              <th>
-                <select id="fRisksStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Done</option><option>Closed</option></select>
-              </th>
-              <th></th>
-              <th class="resetCell"><button id="resetRisks">Reset</button></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button class="btn" id="addRisk" style="margin-top:10px;display:none">+ New Risk</button>
+      <table id="tblRisks">
+        <thead>
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th>
+            <th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th>
+            <th>Mitigation</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
@@ -190,38 +175,29 @@
   <section id="issues" role="tabpanel">
     <div class="card">
       <h2>Issues</h2>
-      <p class="help">Open problems and resolution.</p>
-      <div class="kpis" id="kpiIssues">
-        <div class="kpi"><div class="label">Total issues</div><div class="val" id="kpiIssuesTotal">0</div></div>
-        <div class="kpi"><div class="label">Blocked</div><div class="val" id="kpiIssuesBlocked">0</div></div>
-        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiIssuesDone">0</div></div>
+      <p class="help">What is the problem? Impact? Who owns the fix?</p>
+      <div class="filters">
+        <div class="field"><label for="iSearch">search description</label><input id="iSearch" placeholder="type to filter…" /></div>
+        <div class="field"><label>severity</label><select id="iSevFlt"><option value="">all</option><option>Low</option><option>Medium</option><option>High</option></select></div>
+        <div class="field"><label>status</label><select id="iStatusFlt"><option value="">all</option><option>Open</option><option>In progress</option><option>Blocked</option><option>Done</option></select></div>
+        <div class="field"></div>
+        <div class="field"></div>
+        <div class="field" style="align-self:end"><button id="iReset" class="btn">reset</button></div>
       </div>
-      <div class="tableWrap">
-        <table id="tblIssues">
-          <thead>
-            <tr>
-              <th style="width:70px">ID</th>
-              <th>Description</th>
-              <th style="width:160px">Owner</th>
-              <th style="width:120px">Severity</th>
-              <th style="width:140px">Status</th>
-              <th>Resolution / Note</th>
-              <th style="width:140px">Actions</th>
-            </tr>
-            <tr class="filters">
-              <th></th>
-              <th><input id="fIssuesDesc" placeholder="Search description" /></th>
-              <th><select id="fIssuesOwner"><option value="">All</option></select></th>
-              <th><select id="fIssuesSev"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select></th>
-              <th><select id="fIssuesStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Blocked</option><option>Done</option></select></th>
-              <th></th>
-              <th class="resetCell"><button id="resetIssues">Reset</button></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button class="btn" id="addIssue" style="margin-top:10px;display:none">+ New Issue</button>
+      <table id="tblIssues">
+        <thead>
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th>Resolution / Note</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
@@ -229,59 +205,46 @@
   <section id="plans" role="tabpanel">
     <div class="card">
       <h2>Plans</h2>
-      <p class="help">Concrete steps to reach goals.</p>
-      <div class="kpis" id="kpiPlans">
-        <div class="kpi"><div class="label">Total plans</div><div class="val" id="kpiPlansTotal">0</div></div>
-        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiPlansIn">0</div></div>
-        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiPlansDone">0</div></div>
+      <p class="help">Concrete steps to reach goals or fix issues.</p>
+      <div class="filters">
+        <div class="field"><label for="pSearch">search description</label><input id="pSearch" placeholder="type to filter…" /></div>
+        <div class="field"><label>owner</label><select id="pOwnerFlt"><option value="">all</option></select></div>
+        <div class="field"><label>status</label><select id="pStatusFlt"><option value="">all</option><option>Open</option><option>In progress</option><option>Done</option></select></div>
+        <div class="field"><label>goal id</label><input id="pGoalFlt" placeholder="G#" /></div>
+        <div class="field"></div>
+        <div class="field" style="align-self:end"><button id="pReset" class="btn">reset</button></div>
       </div>
-      <div class="tableWrap">
-        <table id="tblPlans">
-          <thead>
-            <tr>
-              <th style="width:70px">ID</th>
-              <th>Description</th>
-              <th style="width:160px">Owner</th>
-              <th style="width:160px">Goal link</th>
-              <th style="width:130px">Start</th>
-              <th style="width:130px">End</th>
-              <th style="width:140px">Status</th>
-              <th style="width:140px">Actions</th>
-            </tr>
-            <tr class="filters">
-              <th></th>
-              <th><input id="fPlansDesc" placeholder="Search description" /></th>
-              <th><select id="fPlansOwner"><option value="">All</option></select></th>
-              <th><input id="fPlansGoal" placeholder="Goal ID" /></th>
-              <th><input id="fPlansStart" type="date"></th>
-              <th><input id="fPlansEnd" type="date"></th>
-              <th><select id="fPlansStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Done</option></select></th>
-              <th class="resetCell"><button id="resetPlans">Reset</button></th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-      <button class="btn" id="addPlan" style="margin-top:10px;display:none">+ New Plan</button>
+      <table id="tblPlans">
+        <thead>
+          <tr>
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:140px">Goal link</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
   </section>
 
-  <div class="card" style="margin: 16px 18px">
-    <h2>Data sync</h2>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <button class="btn" id="loadBtn">Load from Firestore</button>
-      <button class="btn primary" id="saveBtn">Save to Firestore</button>
-      <button class="btn" id="exportBtn">Export JSON</button>
-      <button class="btn" id="importBtn">Import JSON</button>
-      <input type="file" id="fileInput" accept="application/json" hidden>
-    </div>
+  <!-- Data sync bar (needed by JS) -->
+  <div class="toolbar" id="dataSyncBar" style="justify-content:flex-start; gap:8px;">
+    <button class="btn" id="loadBtn">Load from Firestore</button>
+    <button class="btn primary can-save" id="saveBtn">Save to Firestore</button>
   </div>
 
-  <footer style="padding:14px 18px;color:var(--muted);font-size:12px">© <span id="yr"></span> Dorcas / GRIPlog</footer>
+  <footer>
+    © <span id="yr"></span> Dorcas / GRIPlog. Simple, readable, with Firebase.
+  </footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -292,7 +255,6 @@
       messagingSenderId: "1097061844582",
       appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
     };
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -301,163 +263,224 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    // owners list
     const owners = ["Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"]; 
 
-    function ownerSelect(val=''){ return `<select>${owners.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`; }
+    function ownerSelect(val=''){
+      const opt = owners.map(o=>`<option${o===val? ' selected':''}>${o}</option>`).join('');
+      return `<select>${opt}</select>`;
+    }
     function statusSelect(kind, val='Open'){
-      const m = { goals:['Open','In progress','Done'], risks:['Open','In progress','Done','Closed'], issues:['Open','In progress','Blocked','Done'], plans:['Open','In progress','Done'] };
+      const m = { goals:['Open','In progress','Closed'], risks:['Open','In progress','Closed'], issues:['Open','In progress','Blocked','Done'], plans:['Open','In progress','Done'] };
       return `<select>${m[kind].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
     }
-    const tri = ['Low','Medium','High'];
-    function triSelect(val='Medium'){ return `<select>${tri.map(x=>`<option${x===val?' selected':''}>${x}</option>`).join('')}</select>`; }
+    function triSelect(val='Medium'){ return `<select><option${val==='Low'?' selected':''}>Low</option><option${val==='Medium'?' selected':''}>Medium</option><option${val==='High'?' selected':''}>High</option></select>`; }
+
+    // filters wiring
+    const filters = {
+      goals: { text: '#gSearch', owner:'#gOwnerFlt', status:'#gStatusFlt', start:'#gStartFlt', end:'#gEndFlt', reset:'#gReset' },
+      risks: { text: '#rSearch', like:'#rLikeFlt', impact:'#rImpactFlt', status:'#rStatusFlt', reset:'#rReset' },
+      issues:{ text: '#iSearch', sev:'#iSevFlt', status:'#iStatusFlt', reset:'#iReset' },
+      plans: { text: '#pSearch', owner:'#pOwnerFlt', status:'#pStatusFlt', goal:'#pGoalFlt', reset:'#pReset' }
+    };
+
+    // roles
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
 
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40) + '@griplog.local'; }
-    function firstName(full){ return (full||'').trim().split(/\s+/)[0]||''; }
+    function currentUserCard(u, role){ return `${(u||'').toLowerCase()}<br>${(role||'viewer').toLowerCase()}`; }
 
-    let CAN_EDIT = false;
-
-    // Tabs
-    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{ $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active'); }));
-
-    // Auth
+    // auth handlers (no anonymous)
     $('#btnSignup').onclick = async ()=>{
-      const fullName=$('#fullName').value.trim();
+      const name=$('#fullName').value.trim();
       const email=($('#email').value||'').trim();
       const org=$('#org').value.trim();
       const role=$('#role').value;
       const pass=$('#password').value;
-      if(!fullName||!org||!pass){ alert('Fill required fields'); return; }
+      if(!name||!org||!pass){ alert('Fill required fields'); return; }
       if(EDIT_ROLES.has(role) && !email){ alert('Editors must provide an email'); return; }
-      const usedEmail = email || slugEmailFromName(fullName);
+      const usedEmail = email || slugEmailFromName(name);
       try{
         const cred = await createUserWithEmailAndPassword(auth, usedEmail, pass);
-        await updateProfile(cred.user,{ displayName: fullName });
-        await setDoc(doc(db,'users',cred.user.uid), { fullName, firstName:firstName(fullName), email, org, role, createdAt: new Date().toISOString() });
-        alert('Registered. You are now logged in.');
+        await updateProfile(cred.user, { displayName: name });
+        await setDoc(doc(db,'users',cred.user.uid), { fullName:name, email: email||'', org, role, createdAt: new Date().toISOString() });
+        alert('Registered. You can now login.');
+        await signOut(auth);
       }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'Account exists. Please login.' : e.message); }
     };
 
     $('#btnSignin').onclick = async ()=>{
-      const fullName=$('#fullName').value.trim();
+      const name=$('#fullName').value.trim();
       const email=($('#email').value||'').trim();
       const role=$('#role').value;
       const pass=$('#password').value;
-      if(!fullName||!pass){ alert('Fill required fields'); return; }
+      if(!name||!pass){ alert('Fill required fields'); return; }
       if(EDIT_ROLES.has(role) && !email){ alert('Editors must provide an email'); return; }
-      const usedEmail = email || slugEmailFromName(fullName);
+      const usedEmail = email || slugEmailFromName(name);
       try{ await signInWithEmailAndPassword(auth, usedEmail, pass); }
       catch(e){ alert('Login failed: '+e.message); }
     };
 
     $('#btnSignout').onclick = ()=> signOut(auth);
 
+    let CAN_EDIT = false;
     onAuthStateChanged(auth, async (user)=>{
-      const who=$('#who');
-      if(!user){ CAN_EDIT=false; $('#btnSignout').style.display='none'; who.innerHTML=''; toggleEditUI(false); return; }
-      $('#btnSignout').style.display='inline-block';
+      const dot = $('#authDot'); const whoList=$('#whoList');
+      if(!user){ dot.classList.remove('ok'); $('#authText').innerHTML = '<span class="dot"></span> not signed in'; $('#btnSignout').style.display='none'; whoList.innerHTML=''; disableEditing(); return; }
+      $('#btnSignout').style.display='inline-block'; dot.classList.add('ok');
+      // fetch role
+      let role='Viewer', full=(user.displayName||user.email||'');
       try{
         const resp = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users/${user.uid}`);
-        let role='Viewer', fullName=user.displayName||user.email||'';
-        if(resp.ok){ const json=await resp.json(); const f=json.fields||{}; role=f.role?.stringValue||role; fullName=f.fullName?.stringValue||fullName; }
-        CAN_EDIT = EDIT_ROLES.has(role);
-        who.innerHTML = `<span>${fullName}</span><span>${role}</span>`; // stacked, lowercase via CSS
-        toggleEditUI(CAN_EDIT);
-      }catch(err){ console.warn(err); toggleEditUI(false); }
+        if(resp.ok){ const js=await resp.json(); role = js.fields?.role?.stringValue || 'Viewer'; full = js.fields?.fullName?.stringValue || full; }
+      }catch{}
+      CAN_EDIT = EDIT_ROLES.has(role);
+      $('#authText').innerHTML = `<span class="dot ok"></span> signed in`;
+      whoList.innerHTML = currentUserCard(full, role);
+      enableEditing(CAN_EDIT);
     });
 
-    function toggleEditUI(can){
-      $('#addGoal').style.display = can? 'inline-block':'none';
-      $('#addRisk').style.display = can? 'inline-block':'none';
-      $('#addIssue').style.display = can? 'inline-block':'none';
-      $('#addPlan').style.display = can? 'inline-block':'none';
-      $('#saveBtn').disabled = !can;
+    function enableEditing(can){
+      $$('.can-create').forEach(b=> b.disabled = !can);
+      $$('.can-save').forEach(b=> b.disabled = !can);
+      $$('.can-del').forEach(b=> b.disabled = !can);
     }
+    function disableEditing(){ enableEditing(false); }
 
-    // Add row
-    $('#addGoal').onclick = ()=> addRow('goals');
-    $('#addRisk').onclick = ()=> addRow('risks');
-    $('#addIssue').onclick = ()=> addRow('issues');
-    $('#addPlan').onclick = ()=> addRow('plans');
+    // tabs switching
+    $$('.tabs button').forEach(btn=> btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+    }));
 
+    // add row buttons and extractors
     function addRow(kind){
-      const tbody = {goals:'#tblGoals',risks:'#tblRisks',issues:'#tblIssues',plans:'#tblPlans'}[kind];
-      const tb = document.querySelector(tbody+ ' tbody');
-      const nextId = generateNextId(tb, kind.charAt(0).toUpperCase());
-      const tr = document.createElement('tr');
-      tr.innerHTML = rowTemplate(kind, nextId);
-      tb.appendChild(tr); computeKpis();
+      const tbody = { goals:'#tblGoals tbody', risks:'#tblRisks tbody', issues:'#tblIssues tbody', plans:'#tblPlans tbody' }[kind];
+      const el = $(tbody); const nextId = generateNextId(el, kind.charAt(0).toUpperCase());
+      const tr=document.createElement('tr'); tr.innerHTML = rowTemplate(kind, nextId); el.appendChild(tr);
     }
-
     function rowTemplate(kind, id){
-      if(kind==='goals'){
-        return `
-          <td contenteditable="true">${id}</td>
-          <td contenteditable="true"></td>
-          <td>${ownerSelect()}</td>
-          <td><input type="date"/></td>
-          <td><input type="date"/></td>
-          <td>${statusSelect('goals','Open')}</td>
-          <td contenteditable="true"></td>
-          <td class="row-actions">
-            <button class="btn" data-edit>Edit</button>
-            <button class="btn" data-del>Del</button>
-          </td>`;
-      }
-      if(kind==='risks'){
-        return `
-          <td contenteditable="true">R0</td>
-          <td contenteditable="true"></td>
-          <td>${ownerSelect()}</td>
-          <td>${triSelect('Medium')}</td>
-          <td>${triSelect('Medium')}</td>
-          <td>${statusSelect('risks','Open')}</td>
-          <td contenteditable="true"></td>
-          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
-      }
-      if(kind==='issues'){
-        return `
-          <td contenteditable="true">I0</td>
-          <td contenteditable="true"></td>
-          <td>${ownerSelect()}</td>
-          <td>${triSelect('Medium')}</td>
-          <td>${statusSelect('issues','Open')}</td>
-          <td contenteditable="true"></td>
-          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
-      }
-      if(kind==='plans'){
-        return `
-          <td contenteditable="true">P0</td>
-          <td contenteditable="true"></td>
-          <td>${ownerSelect()}</td>
-          <td><input type="text" placeholder="Goal ID (e.g. G1)"/></td>
-          <td><input type="date"/></td>
-          <td><input type="date"/></td>
-          <td>${statusSelect('plans','Open')}</td>
-          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
-      }
+      if(kind==='goals') return `<td contenteditable>${id}</td><td contenteditable></td><td>${ownerSelect()}</td><td><input type="date"/></td><td><input type="date"/></td><td>${statusSelect('goals','Open')}</td><td contenteditable></td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+      if(kind==='risks') return `<td contenteditable>${id}</td><td contenteditable></td><td>${ownerSelect()}</td><td>${triSelect('Medium')}</td><td>${triSelect('Medium')}</td><td>${statusSelect('risks','Open')}</td><td contenteditable></td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+      if(kind==='issues')return `<td contenteditable>${id}</td><td contenteditable></td><td>${ownerSelect()}</td><td>${triSelect('Medium')}</td><td>${statusSelect('issues','Open')}</td><td contenteditable></td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+      if(kind==='plans') return `<td contenteditable>${id}</td><td contenteditable></td><td>${ownerSelect()}</td><td><input type="text" placeholder="G#"/></td><td><input type="date"/></td><td><input type="date"/></td><td>${statusSelect('plans','Open')}</td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
       return '';
     }
 
-    // Delete (with confirm) and simple edit toggle (cells are always editable for editors, but we keep button for UX)
-    document.body.addEventListener('click', (e)=>{
-      if(e.target.matches('button[data-del]')){
-        if(!CAN_EDIT){ alert('No edit rights'); return; }
-        const tr=e.target.closest('tr'); if(confirm('Delete this row?')){ tr.remove(); computeKpis(); }
-      }
+    document.addEventListener('click',(e)=>{
+      if(e.target.matches('[data-add]')) addRow(e.target.dataset.add);
+      if(e.target.matches('button[data-del]')) e.target.closest('tr')?.remove();
     });
 
-    function generateNextId(tbody, prefix){
-      const ids = Array.from(tbody.querySelectorAll('tr td:first-child')).map(td=>td.textContent.trim()).filter(Boolean);
-      let max=0; ids.forEach(id=>{ const n=parseInt(id.replace(/\D/g,''))||0; if(n>max) max=n; });
-      return `${prefix}${max+1}`;
+    // buttons to add rows (hidden here; you can add '+ New' buttons if needed)
+
+    function generateNextId(tbodyEl, prefix){
+      const ids = $$('.' + 'x', tbodyEl); // dummy to keep function generic
+      const all = Array.from(tbodyEl.querySelectorAll('tr td:first-child')).map(td=>td.textContent.trim()).filter(Boolean);
+      let max=0; all.forEach(id=>{ const n=parseInt(id.replace(/\D/g,''))||0; if(n>max) max=n; }); return `${prefix}${max+1}`;
     }
 
-    // Table extract/render
+    // collect table rows
     function tableToArray(kind){
-      const map={goals:'#tblGoals',risks:'#tblRisks',issues:'#tblIssues',plans:'#tblPlans'}[kind];
+      const map = { goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans' }[kind];
       const rows = Array.from(document.querySelectorAll(`${map} tbody tr`));
       return rows.map(tr=>{
         const tds = Array.from(tr.querySelectorAll('td'));
-        if(kind==='goals') return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value||'', end:tds[4].querySelector('input').value||'', status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
-        if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').val
+        if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value, end:tds[4].querySelector('input').value, status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
+        if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').value, status:tds[5].querySelector('select').value, mitigation:tds[6].innerText.trim() };
+        if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, severity:tds[3].querySelector('select').value, status:tds[4].querySelector('select').value, resolution:tds[5].innerText.trim() };
+        if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, goalId:tds[3].querySelector('input').value.trim(), start:tds[4].querySelector('input').value, end:tds[5].querySelector('input').value, status:tds[6].querySelector('select').value };
+      }).filter(x=>x && x.id);
+    }
+
+    function arrayToTable(kind, arr){
+      const tbody = { goals:'#tblGoals tbody', risks:'#tblRisks tbody', issues:'#tblIssues tbody', plans:'#tblPlans tbody' }[kind];
+      const el = $(tbody); el.innerHTML='';
+      (arr||[]).forEach(row=>{
+        const tr=document.createElement('tr');
+        if(kind==='goals')  tr.innerHTML = `<td contenteditable>${row.id||''}</td><td contenteditable>${escapeHtml(row.goal||'')}</td><td>${ownerSelect(row.owner||'')}</td><td><input type="date" value="${row.start||''}"/></td><td><input type="date" value="${row.end||''}"/></td><td>${statusSelect('goals', row.status||'Open')}</td><td contenteditable>${escapeHtml(row.notes||'')}</td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+        if(kind==='risks')  tr.innerHTML = `<td contenteditable>${row.id||''}</td><td contenteditable>${escapeHtml(row.description||'')}</td><td>${ownerSelect(row.owner||'')}</td><td>${triSelect(row.likelihood||'Medium')}</td><td>${triSelect(row.impact||'Medium')}</td><td>${statusSelect('risks', row.status||'Open')}</td><td contenteditable>${escapeHtml(row.mitigation||'')}</td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+        if(kind==='issues') tr.innerHTML = `<td contenteditable>${row.id||''}</td><td contenteditable>${escapeHtml(row.description||'')}</td><td>${ownerSelect(row.owner||'')}</td><td>${triSelect(row.severity||'Medium')}</td><td>${statusSelect('issues', row.status||'Open')}</td><td contenteditable>${escapeHtml(row.resolution||'')}</td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+        if(kind==='plans')  tr.innerHTML = `<td contenteditable>${row.id||''}</td><td contenteditable>${escapeHtml(row.description||'')}</td><td>${ownerSelect(row.owner||'')}</td><td><input type="text" value="${row.goalId||''}" placeholder="G#"/></td><td><input type="date" value="${row.start||''}"/></td><td><input type="date" value="${row.end||''}"/></td><td>${statusSelect('plans', row.status||'Open')}</td><td class="row-actions"><button class="btn can-del" data-del>Del</button></td>`;
+        el.appendChild(tr);
+      });
+    }
+
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    // search & filters
+    function applyFilters(kind){
+      const map = { goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans' }[kind];
+      const rows = Array.from(document.querySelectorAll(`${map} tbody tr`));
+      const f = filters[kind];
+      const text = f.text ? $(f.text).value.trim().toLowerCase() : '';
+      const like = f.like? $(f.like).value : '';
+      const impact= f.impact? $(f.impact).value : '';
+      const status= f.status? $(f.status).value : '';
+      const owner = f.owner? $(f.owner).value : '';
+      const goal  = f.goal?  $(f.goal).value.trim().toUpperCase() : '';
+      const start = f.start? $(f.start).value : '';
+      const end   = f.end?   $(f.end).value   : '';
+
+      rows.forEach(tr=>{
+        const tds = Array.from(tr.querySelectorAll('td'));
+        const desc = (tds[1]?.innerText||'').toLowerCase();
+        const rowOwner = tds[2]?.querySelector('select')?.value || '';
+        const rowLike = tds[3]?.querySelector('select')?.value || '';
+        const rowImpact = (kind==='risks') ? tds[4]?.querySelector('select')?.value || '' : (kind==='issues' ? tds[3]?.querySelector('select')?.value || '' : '');
+        const rowStatus = (kind==='goals')? tds[5]?.querySelector('select')?.value : (kind==='risks'? tds[5]?.querySelector('select')?.value : (kind==='issues'? tds[4]?.querySelector('select')?.value : tds[6]?.querySelector('select')?.value));
+        const rowGoal = (kind==='plans') ? tds[3]?.querySelector('input')?.value.toUpperCase() : '';
+        const rowStart= (kind==='goals'||kind==='plans') ? tds[3+(kind==='plans'?1:0)]?.querySelector('input')?.value : '';
+        const rowEnd  = (kind==='goals'||kind==='plans') ? tds[4+(kind==='plans'?1:0)]?.querySelector('input')?.value : '';
+
+        let show = true;
+        if(text && !desc.includes(text)) show=false;
+        if(owner && rowOwner!==owner) show=false;
+        if(status && rowStatus!==status) show=false;
+        if(kind==='risks'){
+          if(like && rowLike!==like) show=false;
+          if(impact && rowImpact!==impact) show=false;
+        }
+        if(kind==='issues'){
+          if(f.sev && $(f.sev).value && rowImpact!==$(f.sev).value) show=false;
+        }
+        if(kind==='plans'){
+          if(goal && rowGoal!==goal) show=false;
+        }
+        if((kind==='goals'||kind==='plans') && (start || end)){
+          const okStart = !start || (rowStart && rowStart>=start);
+          const okEnd = !end || (rowEnd && rowEnd<=end);
+          if(!(okStart && okEnd)) show=false;
+        }
+        tr.style.display = show? '' : 'none';
+      });
+    }
+
+    // bind filters
+    Object.entries(filters).forEach(([k, f])=>{
+      Object.values(f).forEach(sel=>{ if(!sel || sel.startsWith('#')===false) return; const el=$(sel); if(!el) return; el.addEventListener('input',()=>applyFilters(k)); });
+      if(f.reset){ $(f.reset).addEventListener('click',()=>{ Object.values(f).forEach(sel=>{ if(!sel||!sel.startsWith('#')) return; const el=$(sel); if(!el) return; el.value=''; }); applyFilters(k); }); }
+    });
+
+    // Firestore I/O
+    async function loadAll(){ await Promise.all([ loadCollection('goals','tblGoals'), loadCollection('risks','tblRisks'), loadCollection('issues','tblIssues'), loadCollection('plans','tblPlans') ]); }
+    async function loadCollection(coll, tableId){ const snap = await getDocs(collection(db, coll)); const rows = snap.docs.map(d=>({id:d.id, ...d.data()})); arrayToTable(coll, rows); }
+    async function saveAll(){ if(!CAN_EDIT){ alert('You need an editor role'); return; } const tasks=[]; tableToArray('goals').forEach(r=>tasks.push(setDoc(doc(db,'goals',r.id),r))); tableToArray('risks').forEach(r=>tasks.push(setDoc(doc(db,'risks',r.id),r))); tableToArray('issues').forEach(r=>tasks.push(setDoc(doc(db,'issues',r.id),r))); tableToArray('plans').forEach(r=>tasks.push(setDoc(doc(db,'plans',r.id),r))); await Promise.all(tasks); alert('Saved to Firestore'); }
+
+    // Buttons
+    const loadBtn = document.getElementById('loadBtn');
+const saveBtn = document.getElementById('saveBtn');
+if (loadBtn) loadBtn.addEventListener('click', async ()=>{ try{ await loadAll(); }catch(e){ alert('Load failed: '+e.message); }});
+if (saveBtn) saveBtn.addEventListener('click', async ()=>{ try{ await saveAll(); }catch(e){ alert('Save failed: '+e.message); }}); }catch(e){ alert('Save failed: '+e.message); } });
+
+    // Populate owner filters
+    owners.forEach(o=>{ const opt=document.createElement('option'); opt.textContent=o; document.getElementById('gOwnerFlt').appendChild(opt.cloneNode(true)); document.getElementById('pOwnerFlt').appendChild(opt); });
+
+    // default demo content (you can remove)
+    const demo = { goals:[{id:'G1',goal:'Produce 300 MT raw honey/year (≥2,660 farmers) by 2025; ≥60% procured via co-op',owner:'Operations Lead',start:'2024-01-01',end:'2025-12-31',status:'In progress',notes:'Scale production & entrepreneurship'}], risks:[{id:'R1',description:'Prolonged drought affects nectar and yields',owner:'MRDP Field Coord.',likelihood:'High',impact:'High',status:'Open',mitigation:'Water capture; drought forage; FFS climate-smart'}], issues:[{id:'I1',description:'SEKU tests delayed due to equipment downtime',owner:'QA Manager',severity:'Medium',status:'In progress',resolution:'Maintenance contract; backup lab'}], plans:[{id:'P1',description:'Expand ToT aggregator network (+20)',owner:'MRDP Field Coord.',goalId:'G1',start:'2024-09-01',end:'2025-06-30',status:'In progress'}] };
+    arrayToTable('goals', demo.goals); arrayToTable('risks', demo.risks); arrayToTable('issues', demo.issues); arrayToTable('plans', demo.plans);
+
+  </script>
+</body>
+</html>
