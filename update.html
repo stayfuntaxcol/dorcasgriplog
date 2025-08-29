@@ -82,22 +82,22 @@
 
     <div style="width:1px;height:24px;background:var(--line);"></div>
 
-    <label for="viewerName">Name:</label>
+    <label for="viewerName">Name (optional):</label>
     <input id="viewerName" class="input" placeholder="Your name" />
-    <input id="password" class="input" type="password" placeholder="Password" />
-    <button id="signupBtn" class="btn primary">Sign up</button>
-    <button id="signinBtn" class="btn">Sign in</button>
-    <button id="signoutBtn" class="btn" style="display:none">Sign out</button>
 
-    <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Not signed in</span></span>
+    <span class="chip" style="margin-left:auto"><span id="authDot" class="dot"></span><span id="authTxt">Connecting…</span></span>
     <span id="userInfo" class="user-info"></span>
   </div>
 
-  <!-- rest of the HTML stays the same -->
+  <!-- Tabs and sections remain unchanged from the previous version -->
+  <!-- ... Goals / Risks / Issues / Plans tables ... -->
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – bilingual viewer/editor with role-based permissions.</footer>
 
   <script type="module">
+    // Firebase SDK
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -117,53 +117,73 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
+    // Language & UI state (re-used from previous version)
+    let uiLang = 'en';
+    $('#langSelect').addEventListener('change', ()=>{ uiLang = $('#langSelect').value; renderAll(); });
+
+    // ==== Anonymous auth ====
     const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
-
-    $('#signupBtn').addEventListener('click', async ()=>{
-      const name = $('#viewerName').value.trim();
-      const pass = $('#password').value.trim();
-      if(!name || !pass){ alert('Enter name and password'); return; }
-      const email = `${name.replace(/\s+/g,'').toLowerCase()}@griplog.local`; // pseudo email from name
-      try {
-        await createUserWithEmailAndPassword(auth, email, pass);
-      } catch(e){ alert('Sign-up failed: '+e.message); }
-    });
-
-    $('#signinBtn').addEventListener('click', async ()=>{
-      const name = $('#viewerName').value.trim();
-      const pass = $('#password').value.trim();
-      if(!name || !pass){ alert('Enter name and password'); return; }
-      const email = `${name.replace(/\s+/g,'').toLowerCase()}@griplog.local`;
-      try {
-        await signInWithEmailAndPassword(auth, email, pass);
-      } catch(e){ alert('Sign-in failed: '+e.message); }
-    });
-
-    $('#signoutBtn').addEventListener('click', async ()=>{ await signOut(auth); });
-
-    let isAdmin = false;
     onAuthStateChanged(auth, (user)=>{
-      isAdmin = !!user;
-      if(isAdmin){
+      if(user){
         authDot.classList.add('ok');
-        authTxt.textContent = 'Signed in';
-        $('#signinBtn').style.display='none';
-        $('#signupBtn').style.display='none';
-        $('#signoutBtn').style.display='inline-block';
-        userInfo.textContent = `Logged in as: ${user.email.split('@')[0]} (Role: User)`;
+        authTxt.textContent = 'Viewer (Anonymous)';
+        const display = ($('#viewerName').value||'Guest');
+        userInfo.textContent = `Logged in as: ${display} (Role: Viewer)`;
+        isAdmin = false; // anonymous = viewer only
+        toggleAdminButtons();
+        renderAll();
       } else {
         authDot.classList.remove('ok');
-        authTxt.textContent = 'Not signed in';
-        $('#signinBtn').style.display='inline-block';
-        $('#signupBtn').style.display='inline-block';
-        $('#signoutBtn').style.display='none';
-        userInfo.textContent = '';
+        authTxt.textContent = 'Not connected';
       }
-      toggleAdminButtons();
-      renderAll();
     });
+    // start anonymous session
+    signInAnonymously(auth).catch(e=>{ alert('Anonymous login failed: '+e.message); });
 
-    // ... (rest of the script unchanged) ...
+    // ===== Data & Rendering (same as earlier index) =====
+    let isAdmin = false; // no email login -> no admin rights
+    let cache = {goals:[], risks:[], issues:[], plans:[]};
+
+    async function loadAll(){
+      const [g,r,i,p] = await Promise.all([
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+      ]);
+      cache.goals = g.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.risks = r.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.issues= i.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.plans = p.docs.map(d=>({id:d.id, ...d.data()}));
+      ['goals','risks','issues','plans'].forEach(k=> cache[k].sort((a,b)=> idNum(a.id)-idNum(b.id)) );
+      buildFilterOptions();
+      renderAll();
+    }
+
+    function idNum(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function getML(v){ return (v && typeof v==='object')? v : {en:(v||''), nl:''}; }
+
+    function toggleAdminButtons(){
+      // hide new buttons for viewers (kept for future admin mode)
+      ['gNew','rNew','iNew','pNew'].forEach(id=>{ const el=$('#'+id); if(el) el.style.display = isAdmin? '' : 'none'; });
+    }
+
+    // ===== Filters, renderers, and event handlers from previous version =====
+    // (For brevity, assume the same render* functions are present here.)
+
+    function renderAll(){
+      // viewer can see all tabs
+      renderTab($('#goals').classList.contains('active')? 'goals':
+                $('#risks').classList.contains('active')? 'risks':
+                $('#issues').classList.contains('active')? 'issues': 'plans');
+    }
+
+    function renderTab(kind){ if(kind==='goals') renderGoals(); if(kind==='risks') renderRisks(); if(kind==='issues') renderIssues(); if(kind==='plans') renderPlans(); }
+
+    // TODO: include the renderGoals/renderRisks/renderIssues/renderPlans and helpers from your last version
+    // Make sure Action buttons check isAdmin before showing Edit/Del
+
+    loadAll().catch(err=> alert('Failed to load: '+err.message));
   </script>
 </body>
 </html>
