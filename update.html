@@ -82,25 +82,22 @@
 
     <div style="width:1px;height:24px;background:var(--line);"></div>
 
-    <label for="viewerName">Name (required to view):</label>
+    <label for="viewerName">Name:</label>
     <input id="viewerName" class="input" placeholder="Your name" />
-    <button id="enterBtn" class="btn">Enter</button>
+    <input id="password" class="input" type="password" placeholder="Password" />
+    <button id="signupBtn" class="btn primary">Sign up</button>
+    <button id="signinBtn" class="btn">Sign in</button>
+    <button id="signoutBtn" class="btn" style="display:none">Sign out</button>
 
-    <div id="authBlock" style="display:flex;align-items:center;gap:8px;margin-left:auto">
-      <input id="email" class="input" type="email" placeholder="Admin email" />
-      <input id="password" class="input" type="password" placeholder="Password" />
-      <button id="signinBtn" class="btn primary">Sign in</button>
-      <button id="signoutBtn" class="btn" style="display:none">Sign out</button>
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Viewer mode</span></span>
-      <span id="userInfo" class="user-info"></span>
-    </div>
+    <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Not signed in</span></span>
+    <span id="userInfo" class="user-info"></span>
   </div>
 
   <!-- rest of the HTML stays the same -->
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -120,16 +117,28 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    // ... (tabs, language, viewer gating unchanged) ...
-
     const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
-    $('#signinBtn').addEventListener('click', async ()=>{
-      const email = $('#email').value.trim();
-      const pass  = $('#password').value.trim();
-      if(!email || !pass){ alert('Enter email and password.'); return; }
-      try{ await signInWithEmailAndPassword(auth, email, pass); }
-      catch(e){ alert('Sign-in failed: '+e.message); }
+
+    $('#signupBtn').addEventListener('click', async ()=>{
+      const name = $('#viewerName').value.trim();
+      const pass = $('#password').value.trim();
+      if(!name || !pass){ alert('Enter name and password'); return; }
+      const email = `${name.replace(/\s+/g,'').toLowerCase()}@griplog.local`; // pseudo email from name
+      try {
+        await createUserWithEmailAndPassword(auth, email, pass);
+      } catch(e){ alert('Sign-up failed: '+e.message); }
     });
+
+    $('#signinBtn').addEventListener('click', async ()=>{
+      const name = $('#viewerName').value.trim();
+      const pass = $('#password').value.trim();
+      if(!name || !pass){ alert('Enter name and password'); return; }
+      const email = `${name.replace(/\s+/g,'').toLowerCase()}@griplog.local`;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch(e){ alert('Sign-in failed: '+e.message); }
+    });
+
     $('#signoutBtn').addEventListener('click', async ()=>{ await signOut(auth); });
 
     let isAdmin = false;
@@ -137,16 +146,18 @@
       isAdmin = !!user;
       if(isAdmin){
         authDot.classList.add('ok');
-        authTxt.textContent = 'Admin (EN edit)';
+        authTxt.textContent = 'Signed in';
         $('#signinBtn').style.display='none';
+        $('#signupBtn').style.display='none';
         $('#signoutBtn').style.display='inline-block';
-        userInfo.textContent = `Logged in as: ${user.email} (Role: Admin)`;
+        userInfo.textContent = `Logged in as: ${user.email.split('@')[0]} (Role: User)`;
       } else {
         authDot.classList.remove('ok');
-        authTxt.textContent = 'Viewer mode';
+        authTxt.textContent = 'Not signed in';
         $('#signinBtn').style.display='inline-block';
+        $('#signupBtn').style.display='inline-block';
         $('#signoutBtn').style.display='none';
-        userInfo.textContent = `Logged in as: ${$('#viewerName').value || 'Anonymous'} (Role: Viewer)`;
+        userInfo.textContent = '';
       }
       toggleAdminButtons();
       renderAll();
