@@ -243,16 +243,16 @@
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    // IMPORTANT: Vul je appId hieronder in vanuit je Firebase Console (Web app settings)
-    const firebaseConfig = {
-      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",        // Web API Key (gegeven)
-      authDomain: "griplog.firebaseapp.com",                   // afgeleid van projectId
-      projectId: "griplog",                                   // Project ID (gegeven)
-      storageBucket: "griplog.appspot.com",
-      messagingSenderId: "1097061844582",                     // vaak gelijk aan project number
-      appId: "REPLACE_WITH_YOUR_APP_ID"                       // <-- VEREIST: bijv. "1:1097061844582:web:abcd1234efgh5678"
-    };
-
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+  authDomain: "griplog.firebaseapp.com",
+  projectId: "griplog",
+  storageBucket: "griplog.firebasestorage.app",
+  messagingSenderId: "1097061844582",
+  appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7",
+  measurementId: "G-NPE08326BM"
+};
     // Init app + services
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
