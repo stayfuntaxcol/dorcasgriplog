@@ -1,177 +1,305 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="nl">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TRAIDlog – Honey Value Chain</title>
-  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <title>TRAID → GRIP Importer (Kitui Honey Value Chain)</title>
   <style>
-    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line)}
-    header img{height:34px;width:auto}
-    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
-    .btn{border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    :root{
+      --bg:#f7faf9;--card:#fff;--ink:#1f2937;--muted:#6b7280;
+      --brand:#0ea5a3;--accent:#0b8d8b;--line:#e5e7eb;--warn:#ef4444;--ok:#10b981;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+    header{padding:16px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+    h1{margin:0 0 4px 0;font-size:20px}
+    p{margin:6px 0}
+    .wrap{max-width:980px;margin:16px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+    .btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
-    .input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
-    table{width:100%;border-collapse:collapse;margin:16px 0}
-    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
-    th{background:#f9fbfb;text-align:left}
-    .row-actions button{margin-right:4px}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)} .warn{background:var(--warn)}
+    table{width:100%;border-collapse:collapse;margin-top:8px}
+    th,td{border:1px solid var(--line);padding:6px 8px;font-size:13px;vertical-align:top}
+    th{background:#f4faf9;text-align:left}
+    code.small{font-size:12px;background:#f3f4f6;padding:2px 4px;border-radius:6px}
+    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .kpi{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
+    .kpi .lab{font-size:12px;color:var(--muted)}
+    .kpi .val{font-weight:800;font-size:20px}
+    @media (max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
+    footer{padding:16px;color:var(--muted);font-size:12px;text-align:center}
   </style>
 </head>
 <body>
-  <header>
-    <img src="assets/dorcas-logo.svg" alt="Dorcas">
-    <div>
-      <div class="title">TRAIDlog – Honey Value Chain (Kitui)</div>
-      <div class="sub">Targets • Risks • Actions • Issues • Decisions</div>
-    </div>
-  </header>
+<header class="wrap">
+  <h1>TRAID → GRIP Importer</h1>
+  <p>Mapt je (T)RAID-log naar GRIP en uploadt naar Firestore (project <strong>griplog</strong>).</p>
+</header>
 
-  <div class="toolbar">
-    <input id="fullName" class="input" placeholder="Full name *" />
-    <input id="email" class="input" type="email" placeholder="Email (required for editors)" />
-    <input id="org" class="input" placeholder="Organization *" />
-    <select id="role" class="input">
-      <option value="Viewer" selected>Viewer (read-only)</option>
-      <option>Account manager</option>
-      <option>Projectmanager</option>
-      <option>Strategic Program Advisor</option>
-      <option>Thematic Expert</option>
-      <option>Strategic Partnership & Resource Advisor</option>
-      <option>Program Knowledge Support</option>
-      <option>Engagement & Fundraising</option>
-      <option>Public Engagement</option>
-      <option>Finance Officer</option>
-      <option>IT specialist</option>
-      <option>HR Officer</option>
-      <option>Corporate Positioning</option>
-      <option>Other</option>
-    </select>
-    <input id="password" class="input" type="password" placeholder="Password *" />
-    <button id="signupBtn" class="btn">Register</button>
-    <button id="signinBtn" class="btn primary">Login</button>
-    <button id="signoutBtn" class="btn" style="display:none">Logout</button>
-    <span id="authTxt">Not signed in</span>
-    <span id="userInfo"></span>
+<main class="wrap">
+  <div class="card">
+    <div class="row">
+      <button id="btnLogin" class="btn">Login (anonymous)</button>
+      <input id="filePick" type="file" accept=".html,.json" hidden />
+      <button id="btnPick" class="btn">Kies TRAID bestand</button>
+      <button id="btnUpload" class="btn primary" disabled>Upload naar Firestore</button>
+      <span class="pill"><span id="authDot" class="dot"></span><span id="authTxt">Niet aangemeld</span></span>
+    </div>
+    <p style="margin-top:8px;color:var(--muted)">
+      Ondersteunt: je oude <em>TRAID-HTML</em> of een <em>traid.json</em> export. Beslissingen (D) worden overgeslagen (niet nodig in GRIP).
+    </p>
   </div>
 
-  <main style="padding:16px">
-    <h2>Targets</h2>
-    <table id="tblTargets"><thead><tr><th>ID</th><th>Description</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+  <div class="card">
+    <h3 style="margin:0 0 8px 0">Voorvertoning & telling</h3>
+    <div class="kpis">
+      <div class="kpi"><div class="lab">Goals (Targets)</div><div id="nGoals" class="val">0</div></div>
+      <div class="kpi"><div class="lab">Risks</div><div id="nRisks" class="val">0</div></div>
+      <div class="kpi"><div class="lab">Issues</div><div id="nIssues" class="val">0</div></div>
+      <div class="kpi"><div class="lab">Plans (Actions)</div><div id="nPlans" class="val">0</div></div>
+    </div>
 
-    <h2>Risks</h2>
-    <table id="tblRisks"><thead><tr><th>ID</th><th>Description</th><th>Likelihood</th><th>Impact</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+    <table id="prevTbl" style="display:none">
+      <thead><tr>
+        <th>Type</th><th>ID</th><th>Omschrijving</th><th>Owner</th><th>Extra</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
 
-    <h2>Actions</h2>
-    <table id="tblActions"><thead><tr><th>ID</th><th>Description</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+  <div class="card">
+    <h3 style="margin:0 0 8px 0">Firebase configuratie</h3>
+    <p>Deze importer gebruikt je bestaande project:</p>
+    <ul style="margin:6px 0 0 18px">
+      <li>Project name: <code class="small">GRIPlog</code></li>
+      <li>Project ID: <code class="small">griplog</code></li>
+      <li>Project number / senderId: <code class="small">1097061844582</code></li>
+      <li>Web API Key: <code class="small">AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps</code></li>
+      <li>App ID: <code class="small">1:1097061844582:web:5fc1c25e320af9c9384fa7</code></li>
+    </ul>
+  </div>
+</main>
 
-    <h2>Issues</h2>
-    <table id="tblIssues"><thead><tr><th>ID</th><th>Description</th><th>Severity</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
+<footer>© <span id="yr"></span> Dorcas / GRIPlog Importer</footer>
 
-    <h2>Decisions</h2>
-    <table id="tblDecisions"><thead><tr><th>ID</th><th>Decision</th><th>Owner</th><th>Status</th><th>Actions</th></tr></thead><tbody></tbody></table>
-  </main>
+<script type="module">
+  // ---- Firebase (modular SDK) ----
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+  import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+  import { getFirestore, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, setDoc, doc, serverTimestamp, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+  // Config gefixt: correcte storageBucket domein
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+    authDomain: "griplog.firebaseapp.com",
+    projectId: "griplog",
+    storageBucket: "griplog.appspot.com",
+    messagingSenderId: "1097061844582",
+    appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+  };
 
-    const firebaseConfig = { apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps", authDomain: "griplog.firebaseapp.com", projectId: "griplog" };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
-    const editableRoles = new Set(['Account manager','Projectmanager','Strategic Program Advisor','Thematic Expert','Strategic Partnership & Resource Advisor','Program Knowledge Support','Engagement & Fundraising','Public Engagement','Finance Officer','IT specialist','HR Officer','Corporate Positioning']);
+  const $ = (q,root=document)=>root.querySelector(q);
+  const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+  $('#yr').textContent = new Date().getFullYear();
 
-    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40) + '@traidlog.local'; }
+  // UI
+  const authDot = $('#authDot'), authTxt = $('#authTxt');
+  const btnLogin = $('#btnLogin'), btnPick = $('#btnPick'), filePick = $('#filePick'), btnUpload = $('#btnUpload');
 
-    document.getElementById('signupBtn').onclick = async ()=>{
-      const fullName=document.getElementById('fullName').value.trim();
-      const email=(document.getElementById('email').value||'').trim();
-      const org=document.getElementById('org').value.trim();
-      const role=document.getElementById('role').value;
-      const pass=document.getElementById('password').value;
-      if(!fullName||!org||!pass){ alert('Fill required fields'); return; }
-      if(editableRoles.has(role)&&!email){ alert('Editors must supply email'); return; }
-      const usedEmail=email||slugEmailFromName(fullName);
-      try{
-        const cred=await createUserWithEmailAndPassword(auth,usedEmail,pass);
-        await setDoc(doc(db,'users',cred.user.uid),{fullName,org,role,email,createdAt:serverTimestamp()});
-        alert('Registered');
-      }catch(e){
-        if(e.code==='auth/email-already-in-use') alert('This account already exists. Please login.'); else alert(e.message);
+  onAuthStateChanged(auth, (user)=>{
+    if(user){ authDot.classList.add('ok'); authTxt.textContent = 'Anoniem aangemeld'; }
+    else { authDot.classList.remove('ok'); authTxt.textContent = 'Niet aangemeld'; }
+  });
+
+  btnLogin.onclick = async ()=>{
+    try{ await signInAnonymously(auth); }catch(e){ alert('Auth fout: '+e.message); }
+  };
+
+  btnPick.onclick = ()=> filePick.click();
+
+  // ---------- Parser voor TRAID-HTML of JSON ----------
+  let parsed = { targets:[], risks:[], actions:[], issues:[], decisions:[] };
+
+  filePick.onchange = async (e)=>{
+    const f = e.target.files[0]; if(!f) return;
+    const text = await f.text();
+    try{
+      if(f.name.toLowerCase().endsWith('.json')){
+        parsed = JSON.parse(text);
+      }else{
+        parsed = parseTraidHtml(text);
       }
-    };
-
-    document.getElementById('signinBtn').onclick = async ()=>{
-      const fullName=document.getElementById('fullName').value.trim();
-      const email=(document.getElementById('email').value||'').trim();
-      const role=document.getElementById('role').value;
-      const pass=document.getElementById('password').value;
-      if(!fullName||!pass){ alert('Fill required fields'); return; }
-      if(editableRoles.has(role)&&!email){ alert('Editors must supply email'); return; }
-      const usedEmail=email||slugEmailFromName(fullName);
-      try{ await signInWithEmailAndPassword(auth,usedEmail,pass); }catch(e){ alert('Login failed: '+e.message); }
-    };
-
-    document.getElementById('signoutBtn').onclick = ()=>signOut(auth);
-
-    let CAN_EDIT=false;
-
-    onAuthStateChanged(auth,async(user)=>{
-      if(user){
-        document.getElementById('authTxt').textContent='Signed in';
-        const snap=await getDoc(doc(db,'users',user.uid));
-        if(snap.exists()){
-          const p=snap.data();
-          document.getElementById('userInfo').textContent=`${p.fullName} – ${p.role}`;
-          CAN_EDIT=editableRoles.has(p.role);
-        } else {
-          document.getElementById('userInfo').textContent=user.email;
-          CAN_EDIT=false;
-        }
-        document.getElementById('signoutBtn').style.display='inline-block';
-        loadTables();
-      } else {
-        document.getElementById('authTxt').textContent='Not signed in';
-        document.getElementById('userInfo').textContent='';
-        document.getElementById('signoutBtn').style.display='none';
-      }
-    });
-
-    async function loadTables(){
-      await loadTable('targets','tblTargets',['id','description','owner','status']);
-      await loadTable('risks','tblRisks',['id','description','likelihood','impact','status']);
-      await loadTable('actions','tblActions',['id','description','owner','status']);
-      await loadTable('issues','tblIssues',['id','description','severity','status']);
-      await loadTable('decisions','tblDecisions',['id','decision','owner','status']);
+      resequenceIds(parsed);              // normaliseer ID's
+      const grip = mapToGrip(parsed);     // map naar GRIP
+      preview(grip);                      // toon in tabel
+      btnUpload.disabled = false;
+    }catch(err){
+      console.error(err);
+      alert('Kon bestand niet parseren: '+ err.message);
     }
+  };
 
-    async function loadTable(coll, tableId, fields){
-      const snap=await getDocs(collection(db,coll));
-      const tbody=document.querySelector(`#${tableId} tbody`);
-      tbody.innerHTML='';
-      snap.forEach(docSnap=>{
-        const data=docSnap.data();
-        const tr=document.createElement('tr');
-        fields.forEach(f=>{
-          const td=document.createElement('td');
-          td.textContent=data[f]||'';
-          tr.appendChild(td);
+  function parseTraidHtml(html){
+    // We verwachten tabellen met id's: targetsTable, risksTable, actionsTable, issuesTable, decisionsTable
+    const docEl = new DOMParser().parseFromString(html, 'text/html');
+    const readTable = (id, cols)=>{
+      const rows = [];
+      const tbody = docEl.querySelector('#'+id+' tbody');
+      if(!tbody) return rows;
+      tbody.querySelectorAll('tr').forEach(tr=>{
+        const obj = {};
+        cols.forEach((c,idx)=>{
+          const td = tr.children[idx];
+          if(!td){ obj[c]=''; return; }
+          const sel = td.querySelector('select');
+          let v = sel? (sel.value||sel.selectedOptions?.[0]?.value||'') : (td.textContent||'');
+          obj[c] = v.trim();
         });
-        const tdAct=document.createElement('td');
-        if(CAN_EDIT){
-          const btnE=document.createElement('button');btnE.textContent='Edit';
-          const btnD=document.createElement('button');btnD.textContent='Del';
-          tdAct.appendChild(btnE);tdAct.appendChild(btnD);
-        } else tdAct.textContent='—';
-        tr.appendChild(tdAct);
-        tbody.appendChild(tr);
+        rows.push(obj);
       });
+      return rows;
+    };
+    return {
+      targets:   readTable('targetsTable',  ["id","desc","owner","start","end","status","detail","added"]),
+      risks:     readTable('risksTable',    ["id","desc","owner","chance","impact","status","mitigation","added"]),
+      actions:   readTable('actionsTable',  ["id","desc","owner","target","start","end","status","added"]),
+      issues:    readTable('issuesTable',   ["id","desc","owner","location","deadline","impact","status","added"]),
+      decisions: readTable('decisionsTable',["id","desc","owner","why","date","impact","status","added"])
+    };
+  }
+
+  function resequenceIds(data){
+    const maps = {targets:'T', risks:'R', actions:'A', issues:'I', decisions:'D'};
+    Object.keys(maps).forEach(k=>{
+      let c = 1;
+      (data[k]||[]).forEach(it=>{ it.id = maps[k]+(c++); });
+    });
+  }
+
+  // ---------- Mapping TRAID → GRIP ----------
+  function mapToGrip(src){
+    const goals = (src.targets||[]).map(t=>({
+      id: t.id.replace(/^T/,'G'),
+      goal: t.desc || '',
+      owner: t.owner || '',
+      start: t.start || '',
+      end: t.end || '',
+      status: mapStatus(t.status),
+      notes: t.detail || ''
+    }));
+    const risks = (src.risks||[]).map(r=>({
+      id: r.id,
+      description: r.desc || '',
+      owner: r.owner || '',
+      likelihood: normalizeTri(r.chance),
+      impact: normalizeTri(r.impact),
+      status: mapStatus(r.status),
+      mitigation: r.mitigation || ''
+    }));
+    const issues = (src.issues||[]).map(i=>({
+      id: i.id,
+      description: i.desc || '',
+      owner: i.owner || '',
+      severity: normalizeTri(i.impact),
+      status: mapStatusIssue(i.status),
+      resolution: (i.location ? ('Locatie: '+i.location+'. ') : '') + (i.deadline? ('Deadline: '+i.deadline+'. ') : '')
+    }));
+    const plans = (src.actions||[]).map(a=>({
+      id: a.id.replace(/^A/,'P'),
+      description: a.desc || '',
+      owner: a.owner || '',
+      goalId: (a.target||'').replace(/^T/,'G'),
+      start: a.start || '',
+      end: a.end || '',
+      status: mapStatusPlan(a.status)
+    }));
+    return {goals,risks,issues,plans};
+  }
+
+  function normalizeTri(v){
+    if(!v) return 'Middel';
+    const s = v.toLowerCase();
+    if(s.startsWith('laag')) return 'Laag';
+    if(s.startsWith('hoog')) return 'Hoog';
+    return 'Middel';
+  }
+  function mapStatus(v){
+    const s=(v||'').toLowerCase();
+    if(s.includes('progress')) return 'In progress';
+    if(s.includes('closed')||s.includes('done')) return 'Closed';
+    return 'Open';
+  }
+  function mapStatusPlan(v){
+    const s=(v||'').toLowerCase();
+    if(s.includes('progress')) return 'In progress';
+    if(s.includes('closed')||s.includes('done')) return 'Done';
+    return 'Open';
+  }
+  function mapStatusIssue(v){
+    const s=(v||'').toLowerCase();
+    if(s.includes('blocked')) return 'Blocked';
+    if(s.includes('progress')) return 'In progress';
+    if(s.includes('closed')||s.includes('done')) return 'Done';
+    return 'Open';
+  }
+
+  // ---------- Preview ----------
+  function preview(grip){
+    const n = (id,val)=> $(id).textContent = String(val);
+    n('#nGoals', grip.goals.length);
+    n('#nRisks', grip.risks.length);
+    n('#nIssues', grip.issues.length);
+    n('#nPlans', grip.plans.length);
+
+    const tbl = $('#prevTbl'); tbl.style.display = '';
+    const tbody = $('#prevTbl tbody'); tbody.innerHTML = '';
+    const add = (type, row, idKey, descKey, ownerKey, extra)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${type}</td>
+        <td>${row[idKey]||''}</td>
+        <td>${escapeHtml(row[descKey]||'')}</td>
+        <td>${escapeHtml(row[ownerKey]||'')}</td>
+        <td>${escapeHtml(extra||'')}</td>`;
+      tbody.appendChild(tr);
+    };
+    grip.goals.forEach(g=>add('Goal', g, 'id','goal','owner', (g.start?g.start+' → ':'')+(g.end||'')));
+    grip.risks.forEach(r=>add('Risk', r, 'id','description','owner', `Kans:${r.likelihood}, Impact:${r.impact}`));
+    grip.issues.forEach(i=>add('Issue', i, 'id','description','owner', `Ernst:${i.severity}, Status:${i.status}`));
+    grip.plans.forEach(p=>add('Plan', p, 'id','description','owner', `Goal:${p.goalId}, ${p.start}→${p.end}`));
+
+    // cache voor upload
+    window.__GRIP = grip;
+  }
+  function escapeHtml(s){return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
+
+  // ---------- Upload naar Firestore ----------
+  btnUpload.onclick = async ()=>{
+    const g = window.__GRIP;
+    if(!g){ alert('Geen data geladen.'); return; }
+    if(!auth.currentUser){ alert('Niet aangemeld. Klik “Login (anonymous)”.'); return; }
+    try{
+      const tasks=[];
+      g.goals.forEach(row => tasks.push(setDoc(doc(db,'goals', row.id), row)));
+      g.risks.forEach(row => tasks.push(setDoc(doc(db,'risks', row.id), row)));
+      g.issues.forEach(row=> tasks.push(setDoc(doc(db,'issues',row.id), row)));
+      g.plans.forEach(row => tasks.push(setDoc(doc(db,'plans', row.id), row)));
+      await Promise.all(tasks);
+      alert('Upload voltooid: '+(g.goals.length+g.risks.length+g.issues.length+g.plans.length)+' records.');
+    }catch(err){
+      alert('Upload fout: '+err.message+'\nCheck je Firestore regels.');
     }
-  </script>
+  };
+
+</script>
 </body>
 </html>
