@@ -1,0 +1,635 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain (Kitui, Kenya)</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{
+      --bg:#f6f7fb;--card:#ffffff;--ink:#1f2937;--muted:#6b7280;--brand:#0ea5a3;--brand-ink:#064e4a;
+      --line:#e5e7eb;--tab:#0b8d8b;--warn:#ef4444;--ok:#10b981;--amber:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--bg)}
+
+    /* Header */
+    header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:700;font-size:20px;letter-spacing:.2px}
+    header .sub{color:var(--muted);font-size:12px}
+
+    /* Toolbar */
+    #toolbar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:#f0f5f5}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--card);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    #status{margin-left:auto;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:8px}
+    #status .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    #status .ok{background:var(--ok)}
+    #status .warn{background:var(--warn)}
+
+    /* Tabs */
+    nav.tabs{display:flex;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+    nav.tabs button.active{background:var(--tab);color:#fff}
+
+    /* Sections */
+    section{display:none;padding:16px 18px}
+    section.active{display:block}
+
+    /* Cards / Tables */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03);}
+    .card + .card{margin-top:16px}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+    th{background:#f9fbfb;text-align:left;font-size:13px}
+    td{background:#fff}
+    td[contenteditable="true"]{outline:none}
+    select,input[type="text"],textarea,input[type="date"]{width:100%;font-size:14px;padding:6px;border:1px solid var(--line);border-radius:8px;background:#fff}
+    textarea{min-height:56px}
+
+    .row-actions{display:flex;gap:6px}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+    .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+    .kpi .label{color:var(--muted);font-size:12px}
+    .kpi .val{font-weight:800;font-size:20px}
+
+    .addRow{margin:10px 0}
+    .tag{padding:2px 6px;border-radius:6px;font-size:12px;display:inline-block}
+    .status-open{background:#fee2e2}
+    .status-in{background:#fef3c7}
+    .status-done{background:#dcfce7}
+    .severity-low{background:#e5e7eb}
+    .severity-mid{background:#fde68a}
+    .severity-high{background:#fecaca}
+
+    footer{padding:14px 18px;color:var(--muted);font-size:12px}
+
+    @media (max-width: 880px){
+      .kpis{grid-template-columns:1fr}
+      th, td{font-size:13px}
+      header .title{font-size:18px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'"/>
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans</div>
+    </div>
+  </header>
+
+  <div id="toolbar">
+    <button class="btn" id="loadBtn">Laden uit Firestore</button>
+    <button class="btn primary" id="saveBtn">Opslaan naar Firestore</button>
+    <button class="btn" id="exportBtn">Export JSON</button>
+    <button class="btn" id="importBtn">Import JSON</button>
+    <input type="file" id="fileInput" accept="application/json" hidden>
+    <button class="btn ghost" id="seedBtn">Reset demo-data</button>
+
+    <div id="status">
+      <span id="authState" class="dot"></span>
+      <span id="authText">Niet aangemeld</span>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals" role="tab">G – Goals</button>
+    <button data-tab="risks" role="tab">R – Risks</button>
+    <button data-tab="issues" role="tab">I – Issues</button>
+    <button data-tab="plans" role="tab">P – Plans</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <h2>Goals (SMART)</h2>
+      <p class="help">Formuleer Specifiek, Meetbaar, Acceptabel, Realistisch, Tijdgebonden. Normale tekst voor invoer.</p>
+      <div class="kpis" id="kpiGoals">
+        <div class="kpi"><div class="label">Totaal doelen</div><div class="val" id="kpiGoalsTotal">0</div></div>
+        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiGoalsIn">0</div></div>
+        <div class="kpi"><div class="label">Afgerond</div><div class="val" id="kpiGoalsDone">0</div></div>
+      </div>
+      <button class="btn addRow" data-add="goals">+ Nieuw Goal</button>
+      <div class="tableWrap">
+        <table id="tblGoals">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Goal (SMART)</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:130px">Start</th>
+              <th style="width:130px">Einde</th>
+              <th style="width:140px">Status</th>
+              <th>Notities</th>
+              <th style="width:90px">Acties</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <h2>Risks (incl. mitigatie)</h2>
+      <p class="help">Beschrijf risico, kans & impact en hoe je het beperkt.</p>
+      <div class="kpis" id="kpiRisks">
+        <div class="kpi"><div class="label">Totaal risks</div><div class="val" id="kpiRisksTotal">0</div></div>
+        <div class="kpi"><div class="label">Hoog</div><div class="val" id="kpiRisksHigh">0</div></div>
+        <div class="kpi"><div class="label">Open</div><div class="val" id="kpiRisksOpen">0</div></div>
+      </div>
+      <button class="btn addRow" data-add="risks">+ Nieuw Risk</button>
+      <div class="tableWrap">
+        <table id="tblRisks">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Omschrijving</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:120px">Kans</th>
+              <th style="width:120px">Impact</th>
+              <th style="width:140px">Status</th>
+              <th>Mitigatie</th>
+              <th style="width:90px">Acties</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <h2>Issues (huidige blokkades)</h2>
+      <p class="help">Wat is het probleem? Impact? Wie pakt het op?</p>
+      <div class="kpis" id="kpiIssues">
+        <div class="kpi"><div class="label">Totaal issues</div><div class="val" id="kpiIssuesTotal">0</div></div>
+        <div class="kpi"><div class="label">Geblokkeerd</div><div class="val" id="kpiIssuesBlocked">0</div></div>
+        <div class="kpi"><div class="label">Opgelost</div><div class="val" id="kpiIssuesDone">0</div></div>
+      </div>
+      <button class="btn addRow" data-add="issues">+ Nieuw Issue</button>
+      <div class="tableWrap">
+        <table id="tblIssues">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Omschrijving</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:120px">Ernst</th>
+              <th style="width:140px">Status</th>
+              <th>Resolutie / Opmerking</th>
+              <th style="width:90px">Acties</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <h2>Plans (aanpak)</h2>
+      <p class="help">Concrete stappen om doelen te halen of issues op te lossen.</p>
+      <div class="kpis" id="kpiPlans">
+        <div class="kpi"><div class="label">Totaal plans</div><div class="val" id="kpiPlansTotal">0</div></div>
+        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiPlansIn">0</div></div>
+        <div class="kpi"><div class="label">Afgerond</div><div class="val" id="kpiPlansDone">0</div></div>
+      </div>
+      <button class="btn addRow" data-add="plans">+ Nieuw Plan</button>
+      <div class="tableWrap">
+        <table id="tblPlans">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Omschrijving</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:120px">Koppeling Goal</th>
+              <th style="width:130px">Start</th>
+              <th style="width:130px">Einde</th>
+              <th style="width:140px">Status</th>
+              <th style="width:90px">Acties</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    © <span id="yr"></span> Dorcas / GRIPlog. Simpel, leesbaar, met Firebase‑koppeling. 
+  </footer>
+
+  <!-- Firebase + App Logic -->
+  <script type="module">
+    // --- Firebase SDK (modular) ---
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    // IMPORTANT: Vul je appId hieronder in vanuit je Firebase Console (Web app settings)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY",            // Web API Key (gegeven)
+      authDomain: "griplog.firebaseapp.com",                   // afgeleid van projectId
+      projectId: "griplog",                                   // Project ID (gegeven)
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",                     // vaak gelijk aan project number
+      appId: "REPLACE_WITH_YOUR_APP_ID"                       // <-- VEREIST: bijv. "1:1097061844582:web:abcd1234efgh5678"
+    };
+
+    // Init app + services
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    // UI helpers
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    const yearEl = $('#yr'); yearEl.textContent = new Date().getFullYear();
+
+    // Tabs
+    $$('.tabs button').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        $$('.tabs button').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.dataset.tab;
+        $$('section').forEach(s=>s.classList.remove('active'));
+        $('#'+tab).classList.add('active');
+      });
+    });
+
+    // Row factories
+    const owners = ["Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"]; 
+
+    function ownerSelect(val=''){
+      const opt = owners.map(o=>`<option${o===val? ' selected':''}>${o}</option>`).join('');
+      return `<select>${opt}</select>`;
+    }
+    function statusSelect(kind, val='Open'){
+      const m = {
+        goals:['Open','In progress','Closed'],
+        risks:['Open','In progress','Closed'],
+        issues:['Open','In progress','Blocked','Done'],
+        plans:['Open','In progress','Done']
+      };
+      return `<select>${m[kind].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
+    }
+    function chanceSelect(val='Middel'){
+      return `<select><option>Laag</option><option${val==='Middel'?' selected':''}>Middel</option><option${val==='Hoog'?' selected':''}>Hoog</option></select>`;
+    }
+    function impactSelect(val='Middel'){
+      return chanceSelect(val);
+    }
+    function severitySelect(val='Middel'){
+      return chanceSelect(val);
+    }
+
+    // Add row buttons
+    $$('.addRow').forEach(btn=>btn.addEventListener('click',()=>{
+      const kind = btn.dataset.add; // goals/risks/issues/plans
+      const tbody = {
+        goals: $('#tblGoals tbody'),
+        risks: $('#tblRisks tbody'),
+        issues: $('#tblIssues tbody'),
+        plans: $('#tblPlans tbody')
+      }[kind];
+      const nextId = generateNextId(tbody, kind.charAt(0).toUpperCase());
+      const tr = document.createElement('tr');
+      tr.innerHTML = rowTemplate(kind, nextId);
+      tbody.appendChild(tr);
+      computeKpis();
+    }));
+
+    function rowTemplate(kind, id){
+      if(kind==='goals'){
+        return `
+          <td contenteditable="true">${id}</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td><input type="date"/></td>
+          <td><input type="date"/></td>
+          <td>${statusSelect('goals','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions">
+            <button class="btn" data-del>Del</button>
+          </td>`;
+      }
+      if(kind==='risks'){
+        return `
+          <td contenteditable="true">${id}</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td>${chanceSelect()}</td>
+          <td>${impactSelect()}</td>
+          <td>${statusSelect('risks','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+      }
+      if(kind==='issues'){
+        return `
+          <td contenteditable="true">${id}</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td>${severitySelect()}</td>
+          <td>${statusSelect('issues','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+      }
+      if(kind==='plans'){
+        return `
+          <td contenteditable="true">${id}</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td><input type="text" placeholder="Goal ID (bijv. G1)"/></td>
+          <td><input type="date"/></td>
+          <td><input type="date"/></td>
+          <td>${statusSelect('plans','Open')}</td>
+          <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+      }
+      return '';
+    }
+
+    function generateNextId(tbody, prefix){
+      const ids = $$("tr td:first-child", tbody).map(td=>td.textContent.trim()).filter(Boolean);
+      let max = 0;
+      ids.forEach(id=>{ const n = parseInt(id.replace(/\D/g,''))||0; if(n>max) max=n; });
+      return `${prefix}${max+1}`;
+    }
+
+    // Delete buttons (event delegation)
+    document.body.addEventListener('click', (e)=>{
+      if(e.target && e.target.matches('button[data-del]')){
+        const tr = e.target.closest('tr');
+        tr.remove();
+        computeKpis();
+      }
+    });
+
+    // Data extraction
+    function tableToArray(kind){
+      const map = {
+        goals: '#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'
+      }[kind];
+      const rows = $$(`${map} tbody tr`);
+      return rows.map(tr=>{
+        const tds = $$('td,th', tr);
+        if(kind==='goals'){
+          return {
+            id: tds[0].textContent.trim(),
+            goal: tds[1].textContent.trim(),
+            owner: $('select', tds[2]).value,
+            start: $('input', tds[3]).value || '',
+            end: $('input', tds[4]).value || '',
+            status: $('select', tds[5]).value,
+            notes: tds[6].textContent.trim()
+          };
+        }
+        if(kind==='risks'){
+          return {
+            id: tds[0].textContent.trim(),
+            description: tds[1].textContent.trim(),
+            owner: $('select', tds[2]).value,
+            likelihood: $('select', tds[3]).value,
+            impact: $('select', tds[4]).value,
+            status: $('select', tds[5]).value,
+            mitigation: tds[6].textContent.trim()
+          };
+        }
+        if(kind==='issues'){
+          return {
+            id: tds[0].textContent.trim(),
+            description: tds[1].textContent.trim(),
+            owner: $('select', tds[2]).value,
+            severity: $('select', tds[3]).value,
+            status: $('select', tds[4]).value,
+            resolution: tds[5].textContent.trim()
+          };
+        }
+        if(kind==='plans'){
+          return {
+            id: tds[0].textContent.trim(),
+            description: tds[1].textContent.trim(),
+            owner: $('select', tds[2]).value,
+            goalId: $('input', tds[3]).value.trim(),
+            start: $('input', tds[4]).value || '',
+            end: $('input', tds[5]).value || '',
+            status: $('select', tds[6]).value
+          };
+        }
+      }).filter(r=>r && r.id);
+    }
+
+    function arrayToTable(kind, arr){
+      const tbody = {
+        goals: $('#tblGoals tbody'), risks: $('#tblRisks tbody'), issues: $('#tblIssues tbody'), plans: $('#tblPlans tbody')
+      }[kind];
+      tbody.innerHTML = '';
+      (arr||[]).forEach(row=>{
+        const tr = document.createElement('tr');
+        if(kind==='goals'){
+          tr.innerHTML = `
+            <td contenteditable> ${row.id||''} </td>
+            <td contenteditable> ${escapeHtml(row.goal||'')} </td>
+            <td> ${ownerSelect(row.owner||'')} </td>
+            <td><input type="date" value="${row.start||''}"/></td>
+            <td><input type="date" value="${row.end||''}"/></td>
+            <td>${statusSelect('goals', row.status||'Open')}</td>
+            <td contenteditable> ${escapeHtml(row.notes||'')} </td>
+            <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+        }
+        if(kind==='risks'){
+          tr.innerHTML = `
+            <td contenteditable> ${row.id||''} </td>
+            <td contenteditable> ${escapeHtml(row.description||'')} </td>
+            <td>${ownerSelect(row.owner||'')}</td>
+            <td>${chanceSelect(row.likelihood||'Middel')}</td>
+            <td>${impactSelect(row.impact||'Middel')}</td>
+            <td>${statusSelect('risks', row.status||'Open')}</td>
+            <td contenteditable> ${escapeHtml(row.mitigation||'')} </td>
+            <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+        }
+        if(kind==='issues'){
+          tr.innerHTML = `
+            <td contenteditable> ${row.id||''} </td>
+            <td contenteditable> ${escapeHtml(row.description||'')} </td>
+            <td>${ownerSelect(row.owner||'')}</td>
+            <td>${severitySelect(row.severity||'Middel')}</td>
+            <td>${statusSelect('issues', row.status||'Open')}</td>
+            <td contenteditable> ${escapeHtml(row.resolution||'')} </td>
+            <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+        }
+        if(kind==='plans'){
+          tr.innerHTML = `
+            <td contenteditable> ${row.id||''} </td>
+            <td contenteditable> ${escapeHtml(row.description||'')} </td>
+            <td>${ownerSelect(row.owner||'')}</td>
+            <td><input type="text" value="${row.goalId||''}" placeholder="Goal ID (bijv. G1)"/></td>
+            <td><input type="date" value="${row.start||''}"/></td>
+            <td><input type="date" value="${row.end||''}"/></td>
+            <td>${statusSelect('plans', row.status||'Open')}</td>
+            <td class="row-actions"><button class="btn" data-del>Del</button></td>`;
+        }
+        tbody.appendChild(tr);
+      });
+      computeKpis();
+    }
+
+    function escapeHtml(s){
+      return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
+    }
+
+    // KPIs
+    function computeKpis(){
+      const g = tableToArray('goals');
+      $('#kpiGoalsTotal').textContent = g.length;
+      $('#kpiGoalsIn').textContent = g.filter(x=>x.status==='In progress').length;
+      $('#kpiGoalsDone').textContent = g.filter(x=>x.status==='Closed').length;
+
+      const r = tableToArray('risks');
+      $('#kpiRisksTotal').textContent = r.length;
+      $('#kpiRisksHigh').textContent = r.filter(x=>x.impact==='Hoog' || x.likelihood==='Hoog').length;
+      $('#kpiRisksOpen').textContent = r.filter(x=>x.status==='Open').length;
+
+      const i = tableToArray('issues');
+      $('#kpiIssuesTotal').textContent = i.length;
+      $('#kpiIssuesBlocked').textContent = i.filter(x=>x.status==='Blocked').length;
+      $('#kpiIssuesDone').textContent = i.filter(x=>x.status==='Done').length;
+
+      const p = tableToArray('plans');
+      $('#kpiPlansTotal').textContent = p.length;
+      $('#kpiPlansIn').textContent = p.filter(x=>x.status==='In progress').length;
+      $('#kpiPlansDone').textContent = p.filter(x=>x.status==='Done').length;
+    }
+
+    // Export / Import
+    $('#exportBtn').addEventListener('click',()=>{
+      const data = {
+        goals: tableToArray('goals'),
+        risks: tableToArray('risks'),
+        issues: tableToArray('issues'),
+        plans: tableToArray('plans'),
+        exportedAt: new Date().toISOString()
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `griplog_kitui_${Date.now()}.json`;
+      a.click();
+    });
+
+    $('#importBtn').addEventListener('click',()=>$('#fileInput').click());
+    $('#fileInput').addEventListener('change', async (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const text = await file.text();
+      try{
+        const data = JSON.parse(text);
+        arrayToTable('goals', data.goals||[]);
+        arrayToTable('risks', data.risks||[]);
+        arrayToTable('issues', data.issues||[]);
+        arrayToTable('plans', data.plans||[]);
+      }catch(err){ alert('Kon JSON niet lezen: '+err.message); }
+    });
+
+    // Demo seed (subset gebaseerd op bestaande TRAID-inhoud)
+    const demo = {
+      goals:[
+        {id:'G1', goal:'300 MT ruwe honing/jaar produceren (≥2,660 boeren) – eind 2025; ≥60% afname door coöperatie', owner:'Operations Lead', start:'2024-01-01', end:'2025-12-31', status:'In progress', notes:'Opschaling productie & ondernemerschap'},
+        {id:'G2', goal:'≥800 actieve imkers als coöperatielid', owner:'Coop Board', start:'2024-01-01', end:'2026-12-31', status:'In progress', notes:'FFS → actief betalende leden'},
+        {id:'G3', goal:'Kwaliteitscontrole en certificering (KEBS + SEKU) op orde', owner:'QA Manager', start:'2024-01-01', end:'2026-12-31', status:'In progress', notes:'Vocht/Brix en traceerbaarheid'}
+      ],
+      risks:[
+        {id:'R1', description:'Langdurige droogte vermindert nectar en opbrengsten', owner:'MRDP Field Coord.', likelihood:'Hoog', impact:'Hoog', status:'Open', mitigation:'Wateropvang, bijenplanten, klimaatslim FFS'},
+        {id:'R2', description:'Tekort aan werkkapitaal tijdens hoogseizoen', owner:'Finance Lead', likelihood:'Hoog', impact:'Hoog', status:'Open', mitigation:'Kredietlijnen; contracten voor het seizoen'},
+        {id:'R3', description:'Prijsconcurrentie van makelaars op boerenerf', owner:'Coop Board', likelihood:'Middel', impact:'Hoog', status:'Open', mitigation:'Stabiel prijsbeleid; tijdige betalingen'},
+      ],
+      issues:[
+        {id:'I1', description:'Vertraging bij SEKU‑tests door apparatuur downtime', owner:'QA Manager', severity:'Middel', status:'In progress', resolution:'Onderhoudscontract; backup‑lab'},
+        {id:'I2', description:'Inzamelpunt Kilifi mist hygrometer en zegels', owner:'Operations Lead', severity:'Laag', status:'Open', resolution:'Bestelling Q3; training QC'}
+      ],
+      plans:[
+        {id:'P1', description:'ToT‑netwerk uitbreiden voor aggregatie (20 extra)', owner:'MRDP Field Coord.', goalId:'G1', start:'2024-09-01', end:'2025-06-30', status:'In progress'},
+        {id:'P2', description:'Zonne‑energie installeren bij verwerkingslijn', owner:'Operations Lead', goalId:'G3', start:'2024-10-01', end:'2025-03-31', status:'Open'}
+      ]
+    };
+    $('#seedBtn').addEventListener('click',()=>{
+      arrayToTable('goals', demo.goals);
+      arrayToTable('risks', demo.risks);
+      arrayToTable('issues', demo.issues);
+      arrayToTable('plans', demo.plans);
+    });
+
+    // Firestore I/O (flat collections per GRIP)
+    async function loadAll(){
+      await Promise.all([
+        loadCollection('goals', 'tblGoals'),
+        loadCollection('risks', 'tblRisks'),
+        loadCollection('issues', 'tblIssues'),
+        loadCollection('plans', 'tblPlans')
+      ]);
+      computeKpis();
+    }
+
+    async function loadCollection(coll, tableId){
+      const snap = await getDocs(collection(db, coll));
+      const rows = snap.docs.map(d=>({id: d.id, ...d.data()}));
+      arrayToTable(coll, rows);
+    }
+
+    async function saveAll(){
+      const all = {
+        goals: tableToArray('goals'),
+        risks: tableToArray('risks'),
+        issues: tableToArray('issues'),
+        plans: tableToArray('plans')
+      };
+      // simple upsert by ID
+      const tasks = [];
+      for(const row of all.goals){ tasks.push(setDoc(doc(db,'goals', row.id), row)); }
+      for(const row of all.risks){ tasks.push(setDoc(doc(db,'risks', row.id), row)); }
+      for(const row of all.issues){ tasks.push(setDoc(doc(db,'issues', row.id), row)); }
+      for(const row of all.plans){ tasks.push(setDoc(doc(db,'plans', row.id), row)); }
+      await Promise.all(tasks);
+      alert('Opgeslagen naar Firestore.');
+    }
+
+    $('#loadBtn').addEventListener('click', async ()=>{
+      try{ await loadAll(); } catch(err){ alert('Laden mislukt: '+err.message); }
+    });
+    $('#saveBtn').addEventListener('click', async ()=>{
+      try{ await saveAll(); } catch(err){ alert('Opslaan mislukt: '+err.message + '\nControleer of appId is ingevuld en Firestore regels toegang geven.'); }
+    });
+
+    // Auth (anonymous)
+    onAuthStateChanged(auth, (user)=>{
+      const dot = $('#authState');
+      if(user){ dot.classList.add('ok'); $('#authText').textContent = 'Anoniem aangemeld'; }
+      else { dot.classList.add('warn'); $('#authText').textContent = 'Niet aangemeld'; }
+    });
+    try{ await signInAnonymously(auth); }catch(e){ console.warn('Anon auth failed', e); }
+
+    // Auto seed on first load (optional)
+    if($('#tblGoals tbody').children.length===0){
+      arrayToTable('goals', demo.goals);
+      arrayToTable('risks', demo.risks);
+      arrayToTable('issues', demo.issues);
+      arrayToTable('plans', demo.plans);
+    }
+  </script>
+</body>
+</html>
