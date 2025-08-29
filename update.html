@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GRIPlog – Honey Value Chain (Bilingual NL/EN)</title>
+  <title>GRIPlog – Honey Value Chain</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
     :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
@@ -15,10 +15,15 @@
     header .title{font-weight:800;font-size:18px}
     header .sub{color:var(--muted);font-size:12px}
 
-    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
     .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
-    .input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
     .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
     .ok{background:var(--ok)}
@@ -35,22 +40,16 @@
     h2{margin:0 0 6px 0;font-size:18px}
     p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
 
-    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-    select, input[type="text"], input[type="date"]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;background:#fff}
-    .search{min-width:240px}
-
     table{width:100%;border-collapse:collapse}
     th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
     th{background:#f9fbfb;text-align:left}
-    .th-duo{display:flex;flex-direction:column;line-height:1.15}
-    .th-en{font-weight:700}
-    .th-nl{color:var(--muted);font-size:12px}
+    thead tr.filters th{background:#fff}
 
     .stacked{display:flex;flex-direction:column;gap:4px}
     .stacked .en{font-weight:600}
     .stacked .nl{color:var(--muted);font-size:13px}
 
-    .row-actions{display:flex;gap:6px;color:#9ca3af}
+    .row-actions{display:flex;gap:6px}
 
     footer{padding:16px;color:var(--muted);font-size:12px}
     @media (max-width: 880px){ th, td{font-size:13px} }
@@ -61,24 +60,48 @@
     <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
     <div>
       <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans — bilingual EN/NL</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans — bilingual rows (EN/NL)</div>
     </div>
   </header>
 
   <div class="toolbar">
-    <label>View:</label>
-    <select id="langSelect" class="input">
-      <option value="en" selected>English (default)</option>
-      <option value="nl">Nederlands (bilingual view)</option>
-    </select>
+    <div class="leftbar">
+      <label>View:</label>
+      <select id="langSelect" class="input">
+        <option value="en" selected>English</option>
+        <option value="nl">Nederlands (show EN+NL in cells)</option>
+      </select>
+    </div>
 
-    <div style="width:1px;height:24px;background:var(--line);"></div>
-
-    <label for="viewerName">Name (optional):</label>
-    <input id="viewerName" class="input" placeholder="Your name" />
-
-    <span class="chip" style="margin-left:auto"><span id="authDot" class="dot"></span><span id="authTxt">Connecting…</span></span>
-    <span id="userInfo" class="user-info"></span>
+    <div class="rightbar">
+      <!-- Registration/Login -->
+      <input id="fullName" class="input" placeholder="Full name *" />
+      <input id="email" class="input" type="email" placeholder="Email (required for editors)" />
+      <input id="org" class="input" placeholder="Organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Sponsor/ Partner</option>
+        <option>Account manager</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+        <option>Strategic Partnership & Resource Advisor</option>
+        <option>Program Knowledge Support</option>
+        <option>Engagement & Fundraising</option>
+        <option>Public Engagement</option>
+        <option>Finance Officer</option>
+        <option>IT specialist</option>
+        <option>HR Officer</option>
+        <option>Corporate Positioning</option>
+        <option>Other</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="Password *" />
+      <button id="signupBtn" class="btn">Register</button>
+      <button id="signinBtn" class="btn primary">Login</button>
+      <button id="signoutBtn" class="btn" style="display:none">Logout</button>
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
   </div>
 
   <!-- Tabs -->
@@ -93,26 +116,28 @@
   <section id="goals" class="active" role="tabpanel">
     <div class="card">
       <h2>Goals</h2>
-      <div class="filters">
-        <select id="gOwner"></select>
-        <select id="gStatus"></select>
-        <input type="date" id="gStartFrom" />
-        <input type="date" id="gEndTo" />
-        <input type="text" id="gSearch" class="search" placeholder="Search description" />
-        <button id="gReset" class="btn">Reset</button>
-      </div>
       <div class="tableWrap">
         <table id="tblGoals">
           <thead>
-            <tr>
+            <tr class="labels">
               <th>ID</th>
-              <th><div class="th-duo"><span class="th-en">Goal (SMART)</span><span class="th-nl">Doel (SMART)</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Start</span><span class="th-nl">Start</span></div></th>
-              <th><div class="th-duo"><span class="th-en">End</span><span class="th-nl">Einde</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Notes</span><span class="th-nl">Notities</span></div></th>
+              <th>Goal (SMART)</th>
+              <th>Owner</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
+              <th>Notes</th>
               <th>Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input type="text" id="gSearch" class="input" placeholder="Search in goal/notes" /></th>
+              <th><select id="gOwner" class="input"></select></th>
+              <th><input type="date" id="gStartFrom" class="input" /></th>
+              <th><input type="date" id="gEndTo" class="input" /></th>
+              <th><select id="gStatus" class="input"></select></th>
+              <th></th>
+              <th><button id="gReset" class="btn">Reset</button></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -125,26 +150,28 @@
   <section id="risks" role="tabpanel">
     <div class="card">
       <h2>Risks</h2>
-      <div class="filters">
-        <select id="rOwner"></select>
-        <select id="rLikelihood"></select>
-        <select id="rImpact"></select>
-        <select id="rStatus"></select>
-        <input type="text" id="rSearch" class="search" placeholder="Search description" />
-        <button id="rReset" class="btn">Reset</button>
-      </div>
       <div class="tableWrap">
         <table id="tblRisks">
           <thead>
-            <tr>
+            <tr class="labels">
               <th>ID</th>
-              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Likelihood</span><span class="th-nl">Kans</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Impact</span><span class="th-nl">Impact</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Mitigation</span><span class="th-nl">Mitigatie</span></div></th>
+              <th>Description</th>
+              <th>Owner</th>
+              <th>Likelihood</th>
+              <th>Impact</th>
+              <th>Status</th>
+              <th>Mitigation</th>
               <th>Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input type="text" id="rSearch" class="input" placeholder="Search description/mitigation" /></th>
+              <th><select id="rOwner" class="input"></select></th>
+              <th><select id="rLikelihood" class="input"></select></th>
+              <th><select id="rImpact" class="input"></select></th>
+              <th><select id="rStatus" class="input"></select></th>
+              <th></th>
+              <th><button id="rReset" class="btn">Reset</button></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -157,24 +184,26 @@
   <section id="issues" role="tabpanel">
     <div class="card">
       <h2>Issues</h2>
-      <div class="filters">
-        <select id="iOwner"></select>
-        <select id="iSeverity"></select>
-        <select id="iStatus"></select>
-        <input type="text" id="iSearch" class="search" placeholder="Search description" />
-        <button id="iReset" class="btn">Reset</button>
-      </div>
       <div class="tableWrap">
         <table id="tblIssues">
           <thead>
-            <tr>
+            <tr class="labels">
               <th>ID</th>
-              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Severity</span><span class="th-nl">Ernst</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Resolution</span><span class="th-nl">Resolutie</span></div></th>
+              <th>Description</th>
+              <th>Owner</th>
+              <th>Severity</th>
+              <th>Status</th>
+              <th>Resolution</th>
               <th>Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input type="text" id="iSearch" class="input" placeholder="Search description/resolution" /></th>
+              <th><select id="iOwner" class="input"></select></th>
+              <th><select id="iSeverity" class="input"></select></th>
+              <th><select id="iStatus" class="input"></select></th>
+              <th></th>
+              <th><button id="iReset" class="btn">Reset</button></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -187,25 +216,28 @@
   <section id="plans" role="tabpanel">
     <div class="card">
       <h2>Plans</h2>
-      <div class="filters">
-        <select id="pOwner"></select>
-        <select id="pStatus"></select>
-        <input type="text" id="pGoalId" placeholder="Filter by Goal ID (e.g. G1)" />
-        <input type="text" id="pSearch" class="search" placeholder="Search description" />
-        <button id="pReset" class="btn">Reset</button>
-      </div>
       <div class="tableWrap">
         <table id="tblPlans">
           <thead>
-            <tr>
+            <tr class="labels">
               <th>ID</th>
-              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Goal Link</span><span class="th-nl">Koppeling Goal</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Start</span><span class="th-nl">Start</span></div></th>
-              <th><div class="th-duo"><span class="th-en">End</span><span class="th-nl">Einde</span></div></th>
-              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
+              <th>Description</th>
+              <th>Owner</th>
+              <th>Goal Link</th>
+              <th>Start</th>
+              <th>End</th>
+              <th>Status</th>
               <th>Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input type="text" id="pSearch" class="input" placeholder="Search description" /></th>
+              <th><select id="pOwner" class="input"></select></th>
+              <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
+              <th></th>
+              <th></th>
+              <th><select id="pStatus" class="input"></select></th>
+              <th><button id="pReset" class="btn">Reset</button></th>
             </tr>
           </thead>
           <tbody></tbody>
@@ -214,12 +246,12 @@
     </div>
   </section>
 
-  <footer>© <span id="yr"></span> Dorcas / GRIPlog – bilingual viewer (anonymous).</footer>
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -238,32 +270,96 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    // Tabs
+    // --- Language toggle ---
+    let uiLang = 'en';
+    $('#langSelect').addEventListener('change', ()=>{ uiLang = $('#langSelect').value; renderAll(); });
+
+    // --- Auth / Registration ---
+    const editableRoles = new Set([
+      'Account manager','Projectmanager','Strategic Program Advisor','Thematic Expert','Strategic Partnership & Resource Advisor','Program Knowledge Support','Engagement & Fundraising','Public Engagement','Finance Officer','IT specialist','HR Officer','Corporate Positioning'
+    ]);
+
+    const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
+
+    function slugEmailFromName(name){
+      return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40) + '@griplog.local';
+    }
+    function firstNameOf(full){ return (full||'').trim().split(/\s+/)[0]||''; }
+
+    $('#signupBtn').addEventListener('click', async ()=>{
+      const fullName = $('#fullName').value.trim();
+      const email = ($('#email').value||'').trim();
+      const org = $('#org').value.trim();
+      const role = $('#role').value;
+      const pass = $('#password').value;
+
+      // Validation
+      if(!fullName){ alert('Full name is required.'); return; }
+      if(!org){ alert('Organization is required.'); return; }
+      if(!pass){ alert('Password is required.'); return; }
+      if(!firstNameOf(fullName)){ alert('First name is required.'); return; }
+      if(editableRoles.has(role) && !email){ alert('Email is required for editors (selected role).'); return; }
+
+      const usedEmail = email || slugEmailFromName(fullName);
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, usedEmail, pass);
+        // save profile doc
+        const profile = { uid: cred.user.uid, fullName, firstName: firstNameOf(fullName), email: email||'', org, role, createdAt: serverTimestamp() };
+        await setDoc(doc(db,'users', cred.user.uid), profile);
+        await updateProfile(cred.user, { displayName: fullName });
+        alert('Registered. You are now logged in.');
+      }catch(e){ alert('Register failed: '+e.message); }
+    });
+
+    $('#signinBtn').addEventListener('click', async ()=>{
+      const fullName = $('#fullName').value.trim();
+      const email = ($('#email').value||'').trim();
+      const role = $('#role').value; // to decide if email required
+      const pass = $('#password').value;
+
+      if(!fullName){ alert('Full name is required.'); return; }
+      if(editableRoles.has(role) && !email){ alert('Email is required for editors.'); return; }
+      if(!pass){ alert('Password is required.'); return; }
+
+      const usedEmail = email || slugEmailFromName(fullName);
+      try{
+        await signInWithEmailAndPassword(auth, usedEmail, pass);
+      }catch(e){ alert('Login failed: '+e.message); }
+    });
+
+    $('#signoutBtn').addEventListener('click', async ()=>{ await signOut(auth); });
+
+    let canEdit = false; // client flag
+    onAuthStateChanged(auth, async (user)=>{
+      if(user){
+        authDot.classList.add('ok');
+        $('#signoutBtn').style.display='inline-block';
+        $('#signinBtn').style.display='inline-block'; // kept visible if another user wants to switch
+        $('#signupBtn').style.display='inline-block';
+        const docRef = doc(db,'users', user.uid);
+        const snap = await getDoc(docRef);
+        const profile = snap.exists()? snap.data() : { fullName: user.displayName||user.email, role:'Viewer', email: user.email||'' };
+        canEdit = editableRoles.has(profile.role);
+        authTxt.textContent = canEdit? 'Editor' : 'Viewer';
+        userInfo.textContent = `Logged in as: ${profile.fullName} – ${profile.role}${profile.email? ' ('+profile.email+')':''}`;
+        loadAll();
+      } else {
+        authDot.classList.remove('ok');
+        $('#signoutBtn').style.display='none';
+        authTxt.textContent = 'Not signed in';
+        userInfo.textContent = '';
+        canEdit = false;
+      }
+      renderAll();
+    });
+
+    // --- Tabs ---
     $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       $$('.tabs button').forEach(b=>b.classList.remove('active'));
       btn.classList.add('active');
       const tab = btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
       renderTab(tab);
     }));
-
-    // Language
-    let uiLang = 'en';
-    $('#langSelect').addEventListener('change', ()=>{ uiLang = $('#langSelect').value; renderAll(); });
-
-    // Auth (anonymous)
-    const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
-    onAuthStateChanged(auth, (user)=>{
-      if(user){
-        authDot.classList.add('ok');
-        authTxt.textContent = 'Viewer (Anonymous)';
-        const display = ($('#viewerName').value||'Guest');
-        userInfo.textContent = `Logged in as: ${display} (Role: Viewer)`;
-        loadAll();
-      } else {
-        authDot.classList.remove('ok'); authTxt.textContent = 'Not connected';
-      }
-    });
-    signInAnonymously(auth).catch(e=> alert('Anonymous login failed: '+e.message));
 
     // ===== Data =====
     let cache = {goals:[], risks:[], issues:[], plans:[]};
@@ -293,7 +389,7 @@
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
     // Filters UI
-    function fillSelect(sel, arr, ph){ $(sel).innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+    function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
     function buildFilterOptions(){
       fillSelect('#gOwner', owners, 'Owner');
       fillSelect('#gStatus', statuses.goals, 'Status');
@@ -307,17 +403,15 @@
       fillSelect('#pOwner', owners, 'Owner');
       fillSelect('#pStatus', statuses.plans, 'Status');
 
-      // Change handlers
-      ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id).addEventListener('input', renderGoals));
-      ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id).addEventListener('input', renderRisks));
-      ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id).addEventListener('input', renderIssues));
-      ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id).addEventListener('input', renderPlans));
+      ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
+      ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
+      ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
+      ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
 
-      // Reset buttons
-      $('#gReset').onclick = ()=>{ $('#gOwner').value=''; $('#gStatus').value=''; $('#gStartFrom').value=''; $('#gEndTo').value=''; $('#gSearch').value=''; renderGoals(); };
-      $('#rReset').onclick = ()=>{ $('#rOwner').value=''; $('#rLikelihood').value=''; $('#rImpact').value=''; $('#rStatus').value=''; $('#rSearch').value=''; renderRisks(); };
-      $('#iReset').onclick = ()=>{ $('#iOwner').value=''; $('#iSeverity').value=''; $('#iStatus').value=''; $('#iSearch').value=''; renderIssues(); };
-      $('#pReset').onclick = ()=>{ $('#pOwner').value=''; $('#pStatus').value=''; $('#pGoalId').value=''; $('#pSearch').value=''; renderPlans(); };
+      $('#gReset')?.addEventListener('click', ()=>{ $('#gOwner').value=''; $('#gStatus').value=''; $('#gStartFrom').value=''; $('#gEndTo').value=''; $('#gSearch').value=''; renderGoals(); });
+      $('#rReset')?.addEventListener('click', ()=>{ $('#rOwner').value=''; $('#rLikelihood').value=''; $('#rImpact').value=''; $('#rStatus').value=''; $('#rSearch').value=''; renderRisks(); });
+      $('#iReset')?.addEventListener('click', ()=>{ $('#iOwner').value=''; $('#iSeverity').value=''; $('#iStatus').value=''; $('#iSearch').value=''; renderIssues(); });
+      $('#pReset')?.addEventListener('click', ()=>{ $('#pOwner').value=''; $('#pStatus').value=''; $('#pGoalId').value=''; $('#pSearch').value=''; renderPlans(); });
     }
 
     // Render dispatcher
@@ -326,7 +420,9 @@
     }
     function renderTab(kind){ if(kind==='goals') renderGoals(); else if(kind==='risks') renderRisks(); else if(kind==='issues') renderIssues(); else renderPlans(); }
 
-    // Renderers
+    // Renderers (read-only unless canEdit)
+    function actionsCell(){ return canEdit ? `<div class="row-actions"><button class="btn" disabled>Edit</button><button class="btn danger" disabled>Del</button></div>` : '—'; }
+
     function renderGoals(){
       const tbody=$('#tblGoals tbody'); tbody.innerHTML='';
       let rows=[...cache.goals];
@@ -334,7 +430,7 @@
       const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
       const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
       const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
-      const q=$('#gSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.goal).en+" "+getML(r.goal).nl+" "+getML(r.notes).en+" "+getML(r.notes).nl).toLowerCase().includes(q));
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> (getML(r.goal).en+" "+getML(r.goal).nl+" "+getML(r.notes).en+" "+getML(r.notes).nl).toLowerCase().includes(q));
       rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
       rows.forEach(r=>{
         const tr=document.createElement('tr');
@@ -345,7 +441,7 @@
           <td>${escapeHtml(r.end||'')}</td>
           <td>${escapeHtml(r.status||'')}</td>
           <td>${cellStack(getML(r.notes).en, getML(r.notes).nl)}</td>
-          <td class="row-actions">—</td>`;
+          <td>${actionsCell()}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -357,7 +453,7 @@
       const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
       const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
       const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-      const q=$('#rSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.mitigation).en+" "+getML(r.mitigation).nl).toLowerCase().includes(q));
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.mitigation).en+" "+getML(r.mitigation).nl).toLowerCase().includes(q));
       rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
       rows.forEach(r=>{
         const tr=document.createElement('tr');
@@ -368,7 +464,7 @@
           <td>${escapeHtml(r.impact||'')}</td>
           <td>${escapeHtml(r.status||'')}</td>
           <td>${cellStack(getML(r.mitigation).en, getML(r.mitigation).nl)}</td>
-          <td class="row-actions">—</td>`;
+          <td>${actionsCell()}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -379,7 +475,7 @@
       const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
       const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
       const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-      const q=$('#iSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.resolution).en+" "+getML(r.resolution).nl).toLowerCase().includes(q));
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.resolution).en+" "+getML(r.resolution).nl).toLowerCase().includes(q));
       rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
       rows.forEach(r=>{
         const tr=document.createElement('tr');
@@ -389,7 +485,7 @@
           <td>${escapeHtml(r.severity||'')}</td>
           <td>${escapeHtml(r.status||'')}</td>
           <td>${cellStack(getML(r.resolution).en, getML(r.resolution).nl)}</td>
-          <td class="row-actions">—</td>`;
+          <td>${actionsCell()}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -400,7 +496,7 @@
       const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
       const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
       const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
-      const q=$('#pSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl).toLowerCase().includes(q));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl).toLowerCase().includes(q));
       rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
       rows.forEach(r=>{
         const tr=document.createElement('tr');
@@ -411,13 +507,14 @@
           <td>${escapeHtml(r.start||'')}</td>
           <td>${escapeHtml(r.end||'')}</td>
           <td>${escapeHtml(r.status||'')}</td>
-          <td class="row-actions">—</td>`;
+          <td>${actionsCell()}</td>`;
         tbody.appendChild(tr);
       });
     }
 
-    // Initial render
-    loadAll().catch(err=> alert('Failed to load: '+err.message));
+    // Init
+    buildFilterOptions();
+    renderAll();
   </script>
 </body>
 </html>
