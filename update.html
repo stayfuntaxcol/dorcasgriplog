@@ -6,10 +6,7 @@
   <title>GRIPlog – Honey Value Chain (Bilingual NL/EN)</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{
-      --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;
-      --brand:#0ea5a3;--brand-ink:#064e4a;--danger:#ef4444;--ok:#10b981;--amber:#f59e0b;
-    }
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
@@ -21,8 +18,6 @@
     .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
-    .btn.danger{background:#fee2e2;border-color:#fecaca}
-    .btn:disabled{opacity:.5;cursor:not-allowed}
     .input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
     .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
@@ -31,7 +26,7 @@
 
     nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
-    nav.tabs button.active{background:var(--brand);color:#fff}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
 
     section{display:none;padding:14px 16px}
     section.active{display:block}
@@ -55,13 +50,10 @@
     .stacked .en{font-weight:600}
     .stacked .nl{color:var(--muted);font-size:13px}
 
-    .row-actions{display:flex;gap:6px}
+    .row-actions{display:flex;gap:6px;color:#9ca3af}
 
     footer{padding:16px;color:var(--muted);font-size:12px}
-
-    @media (max-width: 880px){
-      th, td{font-size:13px}
-    }
+    @media (max-width: 880px){ th, td{font-size:13px} }
   </style>
 </head>
 <body>
@@ -89,7 +81,140 @@
     <span id="userInfo" class="user-info"></span>
   </div>
 
-  <footer>© <span id="yr"></span> Dorcas / GRIPlog – bilingual viewer/editor with role-based permissions.</footer>
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <h2>Goals</h2>
+      <div class="filters">
+        <select id="gOwner"></select>
+        <select id="gStatus"></select>
+        <input type="date" id="gStartFrom" />
+        <input type="date" id="gEndTo" />
+        <input type="text" id="gSearch" class="search" placeholder="Search description" />
+        <button id="gReset" class="btn">Reset</button>
+      </div>
+      <div class="tableWrap">
+        <table id="tblGoals">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th><div class="th-duo"><span class="th-en">Goal (SMART)</span><span class="th-nl">Doel (SMART)</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Start</span><span class="th-nl">Start</span></div></th>
+              <th><div class="th-duo"><span class="th-en">End</span><span class="th-nl">Einde</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Notes</span><span class="th-nl">Notities</span></div></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <h2>Risks</h2>
+      <div class="filters">
+        <select id="rOwner"></select>
+        <select id="rLikelihood"></select>
+        <select id="rImpact"></select>
+        <select id="rStatus"></select>
+        <input type="text" id="rSearch" class="search" placeholder="Search description" />
+        <button id="rReset" class="btn">Reset</button>
+      </div>
+      <div class="tableWrap">
+        <table id="tblRisks">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Likelihood</span><span class="th-nl">Kans</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Impact</span><span class="th-nl">Impact</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Mitigation</span><span class="th-nl">Mitigatie</span></div></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <h2>Issues</h2>
+      <div class="filters">
+        <select id="iOwner"></select>
+        <select id="iSeverity"></select>
+        <select id="iStatus"></select>
+        <input type="text" id="iSearch" class="search" placeholder="Search description" />
+        <button id="iReset" class="btn">Reset</button>
+      </div>
+      <div class="tableWrap">
+        <table id="tblIssues">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Severity</span><span class="th-nl">Ernst</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Resolution</span><span class="th-nl">Resolutie</span></div></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <h2>Plans</h2>
+      <div class="filters">
+        <select id="pOwner"></select>
+        <select id="pStatus"></select>
+        <input type="text" id="pGoalId" placeholder="Filter by Goal ID (e.g. G1)" />
+        <input type="text" id="pSearch" class="search" placeholder="Search description" />
+        <button id="pReset" class="btn">Reset</button>
+      </div>
+      <div class="tableWrap">
+        <table id="tblPlans">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th><div class="th-duo"><span class="th-en">Description</span><span class="th-nl">Omschrijving</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Owner</span><span class="th-nl">Eigenaar</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Goal Link</span><span class="th-nl">Koppeling Goal</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Start</span><span class="th-nl">Start</span></div></th>
+              <th><div class="th-duo"><span class="th-en">End</span><span class="th-nl">Einde</span></div></th>
+              <th><div class="th-duo"><span class="th-en">Status</span><span class="th-nl">Status</span></div></th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – bilingual viewer (anonymous).</footer>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
@@ -113,9 +238,19 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
+    // Tabs
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      const tab = btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderTab(tab);
+    }));
+
+    // Language
     let uiLang = 'en';
     $('#langSelect').addEventListener('change', ()=>{ uiLang = $('#langSelect').value; renderAll(); });
 
+    // Auth (anonymous)
     const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
     onAuthStateChanged(auth, (user)=>{
       if(user){
@@ -123,15 +258,18 @@
         authTxt.textContent = 'Viewer (Anonymous)';
         const display = ($('#viewerName').value||'Guest');
         userInfo.textContent = `Logged in as: ${display} (Role: Viewer)`;
-        renderAll();
+        loadAll();
       } else {
-        authDot.classList.remove('ok');
-        authTxt.textContent = 'Not connected';
+        authDot.classList.remove('ok'); authTxt.textContent = 'Not connected';
       }
     });
-    signInAnonymously(auth).catch(e=>{ alert('Anonymous login failed: '+e.message); });
+    signInAnonymously(auth).catch(e=> alert('Anonymous login failed: '+e.message));
 
+    // ===== Data =====
     let cache = {goals:[], risks:[], issues:[], plans:[]};
+    const owners = ["", "Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"]; 
+    const statuses = {goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"]};
+    const tri = ["","Laag","Middel","Hoog"];
 
     async function loadAll(){
       const [g,r,i,p] = await Promise.all([
@@ -144,16 +282,141 @@
       cache.risks = r.docs.map(d=>({id:d.id, ...d.data()}));
       cache.issues= i.docs.map(d=>({id:d.id, ...d.data()}));
       cache.plans = p.docs.map(d=>({id:d.id, ...d.data()}));
+      buildFilterOptions();
       renderAll();
     }
 
+    // Helpers
     function idNum(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
     function getML(v){ return (v && typeof v==='object')? v : {en:(v||''), nl:''}; }
+    function cellStack(en, nl){ return uiLang==='en' ? `<div class="en">${escapeHtml(en||'')}</div>` : `<div class="stacked"><div class="en">${escapeHtml(en||'')}</div><div class="nl">${escapeHtml(nl||'')}</div></div>`; }
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-    function renderAll(){
-      console.log('Render all tables (placeholder).');
+    // Filters UI
+    function fillSelect(sel, arr, ph){ $(sel).innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+    function buildFilterOptions(){
+      fillSelect('#gOwner', owners, 'Owner');
+      fillSelect('#gStatus', statuses.goals, 'Status');
+      fillSelect('#rOwner', owners, 'Owner');
+      fillSelect('#rLikelihood', tri, 'Likelihood');
+      fillSelect('#rImpact', tri, 'Impact');
+      fillSelect('#rStatus', statuses.risks, 'Status');
+      fillSelect('#iOwner', owners, 'Owner');
+      fillSelect('#iSeverity', tri, 'Severity');
+      fillSelect('#iStatus', statuses.issues, 'Status');
+      fillSelect('#pOwner', owners, 'Owner');
+      fillSelect('#pStatus', statuses.plans, 'Status');
+
+      // Change handlers
+      ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id).addEventListener('input', renderGoals));
+      ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id).addEventListener('input', renderRisks));
+      ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id).addEventListener('input', renderIssues));
+      ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id).addEventListener('input', renderPlans));
+
+      // Reset buttons
+      $('#gReset').onclick = ()=>{ $('#gOwner').value=''; $('#gStatus').value=''; $('#gStartFrom').value=''; $('#gEndTo').value=''; $('#gSearch').value=''; renderGoals(); };
+      $('#rReset').onclick = ()=>{ $('#rOwner').value=''; $('#rLikelihood').value=''; $('#rImpact').value=''; $('#rStatus').value=''; $('#rSearch').value=''; renderRisks(); };
+      $('#iReset').onclick = ()=>{ $('#iOwner').value=''; $('#iSeverity').value=''; $('#iStatus').value=''; $('#iSearch').value=''; renderIssues(); };
+      $('#pReset').onclick = ()=>{ $('#pOwner').value=''; $('#pStatus').value=''; $('#pGoalId').value=''; $('#pSearch').value=''; renderPlans(); };
     }
 
+    // Render dispatcher
+    function renderAll(){
+      renderTab($('#goals').classList.contains('active')? 'goals': $('#risks').classList.contains('active')? 'risks': $('#issues').classList.contains('active')? 'issues': 'plans');
+    }
+    function renderTab(kind){ if(kind==='goals') renderGoals(); else if(kind==='risks') renderRisks(); else if(kind==='issues') renderIssues(); else renderPlans(); }
+
+    // Renderers
+    function renderGoals(){
+      const tbody=$('#tblGoals tbody'); tbody.innerHTML='';
+      let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.goal).en+" "+getML(r.goal).nl+" "+getML(r.notes).en+" "+getML(r.notes).nl).toLowerCase().includes(q));
+      rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${escapeHtml(r.id)}</td>
+          <td>${cellStack(getML(r.goal).en, getML(r.goal).nl)}</td>
+          <td>${escapeHtml(r.owner||'')}</td>
+          <td>${escapeHtml(r.start||'')}</td>
+          <td>${escapeHtml(r.end||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${cellStack(getML(r.notes).en, getML(r.notes).nl)}</td>
+          <td class="row-actions">—</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderRisks(){
+      const tbody=$('#tblRisks tbody'); tbody.innerHTML='';
+      let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.mitigation).en+" "+getML(r.mitigation).nl).toLowerCase().includes(q));
+      rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${escapeHtml(r.id)}</td>
+          <td>${cellStack(getML(r.description).en, getML(r.description).nl)}</td>
+          <td>${escapeHtml(r.owner||'')}</td>
+          <td>${escapeHtml(r.likelihood||'')}</td>
+          <td>${escapeHtml(r.impact||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${cellStack(getML(r.mitigation).en, getML(r.mitigation).nl)}</td>
+          <td class="row-actions">—</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderIssues(){
+      const tbody=$('#tblIssues tbody'); tbody.innerHTML='';
+      let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl+" "+getML(r.resolution).en+" "+getML(r.resolution).nl).toLowerCase().includes(q));
+      rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${escapeHtml(r.id)}</td>
+          <td>${cellStack(getML(r.description).en, getML(r.description).nl)}</td>
+          <td>${escapeHtml(r.owner||'')}</td>
+          <td>${escapeHtml(r.severity||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${cellStack(getML(r.resolution).en, getML(r.resolution).nl)}</td>
+          <td class="row-actions">—</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function renderPlans(){
+      const tbody=$('#tblPlans tbody'); tbody.innerHTML='';
+      let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value.toLowerCase(); if(q) rows=rows.filter(r=> (getML(r.description).en+" "+getML(r.description).nl).toLowerCase().includes(q));
+      rows.sort((a,b)=> idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML=`<td>${escapeHtml(r.id)}</td>
+          <td>${cellStack(getML(r.description).en, getML(r.description).nl)}</td>
+          <td>${escapeHtml(r.owner||'')}</td>
+          <td>${escapeHtml(r.goalId||'')}</td>
+          <td>${escapeHtml(r.start||'')}</td>
+          <td>${escapeHtml(r.end||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td class="row-actions">—</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Initial render
     loadAll().catch(err=> alert('Failed to load: '+err.message));
   </script>
 </body>
