@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain (Bilingual NL/EN)</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{
+      --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb;
+      --brand:#0ea5a3;--brand-ink:#064e4a;--danger:#ef4444;--ok:#10b981;--amber:#f59e0b;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:800;font-size:18px}
+    header .sub{color:var(--muted);font-size:12px}
+
+    .toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);margin-left:8px}
+
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:var(--brand);color:#fff}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
+    .filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+    select, input[type="text"], input[type="date"]{border:1px solid var(--line);border-radius:8px;padding:6px 8px;font-size:14px;background:#fff}
+    .search{min-width:240px}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+    .th-duo{display:flex;flex-direction:column;line-height:1.15}
+    .th-en{font-weight:700}
+    .th-nl{color:var(--muted);font-size:12px}
+
+    .stacked{display:flex;flex-direction:column;gap:4px}
+    .stacked .en{font-weight:600}
+    .stacked .nl{color:var(--muted);font-size:13px}
+
+    .row-actions{display:flex;gap:6px}
+
+    footer{padding:16px;color:var(--muted);font-size:12px}
+
+    @media (max-width: 880px){
+      th, td{font-size:13px}
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans — bilingual EN/NL</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <label>View:</label>
+    <select id="langSelect" class="input">
+      <option value="en" selected>English (default)</option>
+      <option value="nl">Nederlands (bilingual view)</option>
+    </select>
+
+    <div style="width:1px;height:24px;background:var(--line);"></div>
+
+    <label for="viewerName">Name (required to view):</label>
+    <input id="viewerName" class="input" placeholder="Your name" />
+    <button id="enterBtn" class="btn">Enter</button>
+
+    <div id="authBlock" style="display:flex;align-items:center;gap:8px;margin-left:auto">
+      <input id="email" class="input" type="email" placeholder="Admin email" />
+      <input id="password" class="input" type="password" placeholder="Password" />
+      <button id="signinBtn" class="btn primary">Sign in</button>
+      <button id="signoutBtn" class="btn" style="display:none">Sign out</button>
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Viewer mode</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </div>
+
+  <!-- rest of the HTML stays the same -->
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
+
+    // ... (tabs, language, viewer gating unchanged) ...
+
+    const authDot = $('#authDot'), authTxt = $('#authTxt'), userInfo = $('#userInfo');
+    $('#signinBtn').addEventListener('click', async ()=>{
+      const email = $('#email').value.trim();
+      const pass  = $('#password').value.trim();
+      if(!email || !pass){ alert('Enter email and password.'); return; }
+      try{ await signInWithEmailAndPassword(auth, email, pass); }
+      catch(e){ alert('Sign-in failed: '+e.message); }
+    });
+    $('#signoutBtn').addEventListener('click', async ()=>{ await signOut(auth); });
+
+    let isAdmin = false;
+    onAuthStateChanged(auth, (user)=>{
+      isAdmin = !!user;
+      if(isAdmin){
+        authDot.classList.add('ok');
+        authTxt.textContent = 'Admin (EN edit)';
+        $('#signinBtn').style.display='none';
+        $('#signoutBtn').style.display='inline-block';
+        userInfo.textContent = `Logged in as: ${user.email} (Role: Admin)`;
+      } else {
+        authDot.classList.remove('ok');
+        authTxt.textContent = 'Viewer mode';
+        $('#signinBtn').style.display='inline-block';
+        $('#signoutBtn').style.display='none';
+        userInfo.textContent = `Logged in as: ${$('#viewerName').value || 'Anonymous'} (Role: Viewer)`;
+      }
+      toggleAdminButtons();
+      renderAll();
+    });
+
+    // ... (rest of the script unchanged) ...
+  </script>
+</body>
+</html>
