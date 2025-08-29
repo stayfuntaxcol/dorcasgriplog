@@ -1,326 +1,463 @@
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>TRAID → GRIP Importer + Editor (Kitui Honey Value Chain)</title>
+  <title>GRIPlog – Honey Value Chain (Kitui, Kenya)</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{ --bg:#f7faf9;--card:#fff;--ink:#1f2937;--muted:#6b7280;--brand:#0ea5a3;--accent:#0b8d8b;--line:#e5e7eb;--warn:#ef4444;--ok:#10b981; }
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#1f2937;--muted:#6b7280;--brand:#0ea5a3;--brand-ink:#064e4a;--line:#e5e7eb;--tab:#0b8d8b;--warn:#ef4444;--ok:#10b981;}
     *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;background:var(--bg);color:var(--ink)}
-    header{padding:16px 18px;border-bottom:1px solid var(--line);background:var(--card)}
-    h1{margin:0 0 4px 0;font-size:20px}
-    p{margin:6px 0}
-    .wrap{max-width:1100px;margin:16px auto;padding:0 16px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .btn{appearance:none;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px;cursor:pointer}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    header{display:flex;align-items:center;gap:14px;padding:14px 18px;border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:700;font-size:20px}
+    header .sub{color:var(--muted);font-size:12px}
+    /* Auth bar */
+    #authbar{display:flex;flex-wrap:wrap;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:#f0f5f5}
+    .input, select, input, textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;background:#fff}
+    .btn{appearance:none;border:1px solid var(--line);background:var(--card);padding:8px 12px;border-radius:8px;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
     .btn:disabled{opacity:.5;cursor:not-allowed}
-    .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
-    .ok{background:var(--ok)} .warn{background:var(--warn)}
-    .input, input, select, textarea{border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:14px;background:#fff}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border:1px solid var(--line);padding:6px 8px;font-size:13px;vertical-align:top}
-    th{background:#f4faf9;text-align:left}
-    code.small{font-size:12px;background:#f3f4f6;padding:2px 4px;border-radius:6px}
-    .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-    .kpi{border:1px solid var(--line);border-radius:10px;padding:10px;background:#fff}
-    .kpi .lab{font-size:12px;color:var(--muted)}
+    .loginNote{margin-left:auto;color:var(--muted);font-size:12px}
+    #who{font-size:12px;color:var(--muted);display:flex;flex-direction:column;text-transform:lowercase}
+    /* Tabs */
+    nav.tabs{display:flex;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line);background:var(--card)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:10px 12px;border-radius:10px;font-weight:600;cursor:pointer}
+    nav.tabs button.active{background:var(--tab);color:#fff}
+    section{display:none;padding:16px 18px}
+    section.active{display:block}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    .card + .card{margin-top:16px}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top}
+    th{background:#f9fbfb;text-align:left;font-size:13px}
+    td{background:#fff}
+    .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:8px}
+    .kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px}
+    .kpi .label{color:var(--muted);font-size:12px}
     .kpi .val{font-weight:800;font-size:20px}
-    @media (max-width:820px){.kpis{grid-template-columns:repeat(2,1fr)}}
-    footer{padding:16px;color:var(--muted);font-size:12px;text-align:center}
-    .note{color:var(--muted);font-size:12px}
+    .row-actions{display:flex;gap:6px}
+    .filters input, .filters select{width:100%}
+    .filters .resetCell{display:flex;justify-content:flex-start}
+    .filters .resetCell button{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff}
   </style>
 </head>
 <body>
-<header class="wrap">
-  <h1>TRAID → GRIP Importer + Editor</h1>
-  <p>Log in met rol. Upload je (T)RAID-bestand naar GRIP (Firestore) en beheer data (CRUD).</p>
-</header>
-
-<main class="wrap">
-  <!-- AUTH -->
-  <div class="card">
-    <h3 style="margin:0 0 8px 0">Inloggen / Registreren</h3>
-    <div class="row">
-      <input id="fullName" class="input" placeholder="Volledige naam *" />
-      <input id="email" class="input" type="email" placeholder="Email (verplicht voor editors)" />
-      <input id="org" class="input" placeholder="Organisatie *" />
-      <select id="role" class="input">
-        <option value="Viewer" selected>Viewer (read-only)</option>
-        <option>Sponsor/ Partner</option>
-        <option>Account manager</option>
-        <option>Projectmanager</option>
-        <option>Strategic Program Advisor</option>
-        <option>Thematic Expert</option>
-        <option>Strategic Partnership & Resource Advisor</option>
-        <option>Program Knowledge Support</option>
-        <option>Engagement & Fundraising</option>
-        <option>Public Engagement</option>
-        <option>Finance Officer</option>
-        <option>IT specialist</option>
-        <option>HR Officer</option>
-        <option>Corporate Positioning</option>
-        <option>Other</option>
-      </select>
-      <input id="password" class="input" type="password" placeholder="Wachtwoord *" />
-      <button id="btnSignup" class="btn">Register</button>
-      <button id="btnSignin" class="btn primary">Login</button>
-      <button id="btnSignout" class="btn" style="display:none">Logout</button>
-      <span class="pill"><span id="authDot" class="dot"></span><span id="authTxt">Niet aangemeld</span></span>
-      <span id="who" class="pill"></span>
+  <header>
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'"/>
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans</div>
     </div>
-    <p class="note">Editor-rollen kunnen **uploaden** en **CRUD**. Viewers alleen lezen.</p>
+  </header>
+
+  <div id="authbar">
+    <input id="fullName" class="input" placeholder="Full name *" />
+    <input id="email" class="input" type="email" placeholder="Email (required for editors)" />
+    <input id="org" class="input" placeholder="Organization *" />
+    <select id="role" class="input">
+      <option value="Viewer" selected>Viewer (read-only)</option>
+      <option>Sponsor/ Partner</option>
+      <option>Account manager</option>
+      <option>Admin</option>
+      <option>Projectmanager</option>
+      <option>Strategic Program Advisor</option>
+      <option>Thematic Expert</option>
+      <option>Strategic Partnership & Resource Advisor</option>
+      <option>Program Knowledge Support</option>
+      <option>Engagement & Fundraising</option>
+      <option>Public Engagement</option>
+      <option>Finance Officer</option>
+      <option>IT specialist</option>
+      <option>HR Officer</option>
+      <option>Corporate Positioning</option>
+      <option>Other</option>
+    </select>
+    <input id="password" class="input" type="password" placeholder="Password *" />
+    <button id="btnSignup" class="btn">Register</button>
+    <button id="btnSignin" class="btn primary">Login</button>
+    <button id="btnSignout" class="btn" style="display:none">Logout</button>
+    <div id="who"></div>
+    <div class="loginNote">anonymous login is disabled</div>
   </div>
 
-  <!-- IMPORTER -->
-  <div class="card">
-    <h3 style="margin:0 0 8px 0">Importeer (T)RAID → GRIP</h3>
-    <div class="row">
-      <input id="filePick" type="file" accept=".html,.json" hidden />
-      <button id="btnPick" class="btn">Kies TRAID bestand</button>
-      <button id="btnUpload" class="btn primary" disabled>Upload naar Firestore</button>
-      <span class="pill">Upload-toegang: <strong id="perm">Viewer</strong></span>
-    </div>
-    <p class="note">Beslissingen (D) worden niet geüpload. Project: <code class="small">griplog</code></p>
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals" role="tab">G – Goals</button>
+    <button data-tab="risks" role="tab">R – Risks</button>
+    <button data-tab="issues" role="tab">I – Issues</button>
+    <button data-tab="plans" role="tab">P – Plans</button>
+  </nav>
 
-    <div class="kpis" style="margin-top:8px">
-      <div class="kpi"><div class="lab">Goals (Targets)</div><div id="nGoals" class="val">0</div></div>
-      <div class="kpi"><div class="lab">Risks</div><div id="nRisks" class="val">0</div></div>
-      <div class="kpi"><div class="lab">Issues</div><div id="nIssues" class="val">0</div></div>
-      <div class="kpi"><div class="lab">Plans (Actions)</div><div id="nPlans" class="val">0</div></div>
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <h2>Goals (SMART)</h2>
+      <p class="help">Specific, Measurable, Achievable, Relevant, Time-bound.</p>
+      <div class="kpis" id="kpiGoals">
+        <div class="kpi"><div class="label">Total goals</div><div class="val" id="kpiGoalsTotal">0</div></div>
+        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiGoalsIn">0</div></div>
+        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiGoalsDone">0</div></div>
+      </div>
+      <div class="tableWrap">
+        <table id="tblGoals">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Goal</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:130px">Start</th>
+              <th style="width:130px">End</th>
+              <th style="width:140px">Status</th>
+              <th>Notes</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+            <tr class="filters">
+              <th><!-- id sort asc by default --></th>
+              <th><input id="fGoalsDesc" placeholder="Search description" /></th>
+              <th>
+                <select id="fGoalsOwner"><option value="">All</option></select>
+              </th>
+              <th><input id="fGoalsStart" type="date"></th>
+              <th><input id="fGoalsEnd" type="date"></th>
+              <th>
+                <select id="fGoalsStatus">
+                  <option value="">All</option><option>Open</option><option>In progress</option><option>Done</option>
+                </select>
+              </th>
+              <th></th>
+              <th class="resetCell"><button id="resetGoals">Reset</button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn" id="addGoal" style="margin-top:10px;display:none">+ New Goal</button>
     </div>
+  </section>
 
-    <table id="prevTbl" style="display:none">
-      <thead><tr>
-        <th>Type</th><th>ID</th><th>Omschrijving</th><th>Owner</th><th>Extra</th>
-      </tr></thead>
-      <tbody></tbody>
-    </table>
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <h2>Risks</h2>
+      <p class="help">Likelihood • Impact • Mitigation.</p>
+      <div class="kpis" id="kpiRisks">
+        <div class="kpi"><div class="label">Total risks</div><div class="val" id="kpiRisksTotal">0</div></div>
+        <div class="kpi"><div class="label">High priority</div><div class="val" id="kpiRisksHigh">0</div></div>
+        <div class="kpi"><div class="label">Open</div><div class="val" id="kpiRisksOpen">0</div></div>
+      </div>
+      <div class="tableWrap">
+        <table id="tblRisks">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Description</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:120px">Likelihood</th>
+              <th style="width:120px">Impact</th>
+              <th style="width:140px">Status</th>
+              <th>Mitigation</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input id="fRisksDesc" placeholder="Search description" /></th>
+              <th><select id="fRisksOwner"><option value="">All</option></select></th>
+              <th>
+                <select id="fRisksLik"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select>
+              </th>
+              <th>
+                <select id="fRisksImp"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select>
+              </th>
+              <th>
+                <select id="fRisksStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Done</option><option>Closed</option></select>
+              </th>
+              <th></th>
+              <th class="resetCell"><button id="resetRisks">Reset</button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn" id="addRisk" style="margin-top:10px;display:none">+ New Risk</button>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <h2>Issues</h2>
+      <p class="help">Open problems and resolution.</p>
+      <div class="kpis" id="kpiIssues">
+        <div class="kpi"><div class="label">Total issues</div><div class="val" id="kpiIssuesTotal">0</div></div>
+        <div class="kpi"><div class="label">Blocked</div><div class="val" id="kpiIssuesBlocked">0</div></div>
+        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiIssuesDone">0</div></div>
+      </div>
+      <div class="tableWrap">
+        <table id="tblIssues">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Description</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:120px">Severity</th>
+              <th style="width:140px">Status</th>
+              <th>Resolution / Note</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input id="fIssuesDesc" placeholder="Search description" /></th>
+              <th><select id="fIssuesOwner"><option value="">All</option></select></th>
+              <th><select id="fIssuesSev"><option value="">All</option><option>Low</option><option>Medium</option><option>High</option></select></th>
+              <th><select id="fIssuesStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Blocked</option><option>Done</option></select></th>
+              <th></th>
+              <th class="resetCell"><button id="resetIssues">Reset</button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn" id="addIssue" style="margin-top:10px;display:none">+ New Issue</button>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <h2>Plans</h2>
+      <p class="help">Concrete steps to reach goals.</p>
+      <div class="kpis" id="kpiPlans">
+        <div class="kpi"><div class="label">Total plans</div><div class="val" id="kpiPlansTotal">0</div></div>
+        <div class="kpi"><div class="label">In progress</div><div class="val" id="kpiPlansIn">0</div></div>
+        <div class="kpi"><div class="label">Done</div><div class="val" id="kpiPlansDone">0</div></div>
+      </div>
+      <div class="tableWrap">
+        <table id="tblPlans">
+          <thead>
+            <tr>
+              <th style="width:70px">ID</th>
+              <th>Description</th>
+              <th style="width:160px">Owner</th>
+              <th style="width:160px">Goal link</th>
+              <th style="width:130px">Start</th>
+              <th style="width:130px">End</th>
+              <th style="width:140px">Status</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+            <tr class="filters">
+              <th></th>
+              <th><input id="fPlansDesc" placeholder="Search description" /></th>
+              <th><select id="fPlansOwner"><option value="">All</option></select></th>
+              <th><input id="fPlansGoal" placeholder="Goal ID" /></th>
+              <th><input id="fPlansStart" type="date"></th>
+              <th><input id="fPlansEnd" type="date"></th>
+              <th><select id="fPlansStatus"><option value="">All</option><option>Open</option><option>In progress</option><option>Done</option></select></th>
+              <th class="resetCell"><button id="resetPlans">Reset</button></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <button class="btn" id="addPlan" style="margin-top:10px;display:none">+ New Plan</button>
+    </div>
+  </section>
+
+  <div class="card" style="margin: 16px 18px">
+    <h2>Data sync</h2>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="loadBtn">Load from Firestore</button>
+      <button class="btn primary" id="saveBtn">Save to Firestore</button>
+      <button class="btn" id="exportBtn">Export JSON</button>
+      <button class="btn" id="importBtn">Import JSON</button>
+      <input type="file" id="fileInput" accept="application/json" hidden>
+    </div>
   </div>
 
-  <!-- SIMPLE CRUD -->
-  <div class="card">
-    <h3 style="margin:0 0 8px 0">Beheer data (CRUD)</h3>
-    <div class="row">
-      <select id="crudColl" class="input">
-        <option value="goals">goals</option>
-        <option value="risks">risks</option>
-        <option value="issues">issues</option>
-        <option value="plans">plans</option>
-      </select>
-      <input id="crudId" class="input" placeholder="Document ID (bijv. G1/R1/I1/P1)" />
-      <button id="btnCreate" class="btn" disabled>Create</button>
-      <button id="btnUpdate" class="btn" disabled>Update</button>
-      <button id="btnDelete" class="btn" disabled>Delete</button>
-      <span class="pill">Rechten: <strong id="crudPerm">Viewer</strong></span>
-    </div>
-    <p class="note">Plak hier geldige JSON voor het document:</p>
-    <textarea id="crudJson" rows="10" style="width:100%" placeholder='{"id":"G1","goal":"...","owner":"...","start":"YYYY-MM-DD","end":"YYYY-MM-DD","status":"Open","notes":"..."}'></textarea>
-  </div>
+  <footer style="padding:14px 18px;color:var(--muted);font-size:12px">© <span id="yr"></span> Dorcas / GRIPlog</footer>
 
-  <div class="card">
-    <h3 style="margin:0 0 8px 0">Firebase configuratie</h3>
-    <ul style="margin:6px 0 0 18px">
-      <li>Project: <code class="small">griplog</code></li>
-      <li>API Key: <code class="small">AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps</code></li>
-      <li>App ID: <code class="small">1:1097061844582:web:5fc1c25e320af9c9384fa7</code></li>
-    </ul>
-  </div>
-</main>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-<footer>© <span id="yr"></span> Dorcas / GRIPlog Importer + Editor</footer>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
 
-<script type="module">
-  // ---- Firebase (modular) ----
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
-  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-  import { getFirestore, setDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
-    authDomain: "griplog.firebaseapp.com",
-    projectId: "griplog",
-    storageBucket: "griplog.appspot.com",
-    messagingSenderId: "1097061844582",
-    appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
-  };
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
 
-  const $ = (q,root=document)=>root.querySelector(q);
-  $('#yr').textContent = new Date().getFullYear();
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const owners = ["Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"]; 
 
-  // ---- Rollen met bewerkrechten ----
-  const EDIT_ROLES = new Set([
-    'Account manager','Projectmanager','Strategic Program Advisor','Thematic Expert',
-    'Strategic Partnership & Resource Advisor','Program Knowledge Support',
-    'Engagement & Fundraising','Public Engagement','Finance Officer','IT specialist',
-    'HR Officer','Corporate Positioning'
-  ]);
-
-  function firstName(full){ return (full||'').trim().split(/\s+/)[0]||''; }
-  function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40) + '@griplog.local'; }
-
-  let CAN_EDIT = false; // client-flag
-
-  // ---- Auth handlers ----
-  $('#btnSignup').onclick = async ()=>{
-    const fullName=$('#fullName').value.trim();
-    const email=($('#email').value||'').trim();
-    const org=$('#org').value.trim();
-    const role=$('#role').value;
-    const pass=$('#password').value;
-    if(!fullName||!org||!pass){ alert('Vul verplichte velden in'); return; }
-    if(EDIT_ROLES.has(role) && !email){ alert('Email is verplicht voor editor-rollen'); return; }
-    const usedEmail = email || slugEmailFromName(fullName);
-    try{
-      const cred = await createUserWithEmailAndPassword(auth, usedEmail, pass);
-      await updateProfile(cred.user, { displayName: fullName });
-      await setDoc(doc(db,'users',cred.user.uid), { fullName, firstName:firstName(fullName), email, org, role, createdAt: (new Date()).toISOString() });
-      alert('Geregistreerd. Je bent nu ingelogd.');
-    }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'Account bestaat al. Log in.' : e.message); }
-  };
-
-  $('#btnSignin').onclick = async ()=>{
-    const fullName=$('#fullName').value.trim();
-    const email=($('#email').value||'').trim();
-    const role=$('#role').value;
-    const pass=$('#password').value;
-    if(!fullName||!pass){ alert('Vul verplichte velden in'); return; }
-    if(EDIT_ROLES.has(role) && !email){ alert('Email is verplicht voor editor-rollen'); return; }
-    const usedEmail = email || slugEmailFromName(fullName);
-    try{ await signInWithEmailAndPassword(auth, usedEmail, pass); }
-    catch(e){ alert('Login mislukt: '+e.message); }
-  };
-
-  $('#btnSignout').onclick = ()=> signOut(auth);
-
-  onAuthStateChanged(auth, async (user)=>{
-    const authDot = $('#authDot'), authTxt = $('#authTxt'), who=$('#who');
-    if(!user){
-      CAN_EDIT=false; authDot.classList.remove('ok'); authTxt.textContent='Niet aangemeld';
-      $('#btnSignout').style.display='none';
-      who.textContent='';
-      setEditPermissions();
-      return;
+    function ownerSelect(val=''){ return `<select>${owners.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`; }
+    function statusSelect(kind, val='Open'){
+      const m = { goals:['Open','In progress','Done'], risks:['Open','In progress','Done','Closed'], issues:['Open','In progress','Blocked','Done'], plans:['Open','In progress','Done'] };
+      return `<select>${m[kind].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
     }
-    authDot.classList.add('ok'); authTxt.textContent='Aangemeld'; $('#btnSignout').style.display='inline-block';
-    try {
-      // lees profiel (role)
-      const resp = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users/${user.uid}`);
-      let role = 'Viewer', fullName = user.displayName || user.email || '';
-      if(resp.ok){ const json = await resp.json();
-        const fields = json.fields || {};
-        role = fields.role?.stringValue || 'Viewer';
-        fullName = fields.fullName?.stringValue || fullName;
+    const tri = ['Low','Medium','High'];
+    function triSelect(val='Medium'){ return `<select>${tri.map(x=>`<option${x===val?' selected':''}>${x}</option>`).join('')}</select>`; }
+
+    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40) + '@griplog.local'; }
+    function firstName(full){ return (full||'').trim().split(/\s+/)[0]||''; }
+
+    let CAN_EDIT = false;
+
+    // Tabs
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{ $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active'); }));
+
+    // Auth
+    $('#btnSignup').onclick = async ()=>{
+      const fullName=$('#fullName').value.trim();
+      const email=($('#email').value||'').trim();
+      const org=$('#org').value.trim();
+      const role=$('#role').value;
+      const pass=$('#password').value;
+      if(!fullName||!org||!pass){ alert('Fill required fields'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('Editors must provide an email'); return; }
+      const usedEmail = email || slugEmailFromName(fullName);
+      try{
+        const cred = await createUserWithEmailAndPassword(auth, usedEmail, pass);
+        await updateProfile(cred.user,{ displayName: fullName });
+        await setDoc(doc(db,'users',cred.user.uid), { fullName, firstName:firstName(fullName), email, org, role, createdAt: new Date().toISOString() });
+        alert('Registered. You are now logged in.');
+      }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'Account exists. Please login.' : e.message); }
+    };
+
+    $('#btnSignin').onclick = async ()=>{
+      const fullName=$('#fullName').value.trim();
+      const email=($('#email').value||'').trim();
+      const role=$('#role').value;
+      const pass=$('#password').value;
+      if(!fullName||!pass){ alert('Fill required fields'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('Editors must provide an email'); return; }
+      const usedEmail = email || slugEmailFromName(fullName);
+      try{ await signInWithEmailAndPassword(auth, usedEmail, pass); }
+      catch(e){ alert('Login failed: '+e.message); }
+    };
+
+    $('#btnSignout').onclick = ()=> signOut(auth);
+
+    onAuthStateChanged(auth, async (user)=>{
+      const who=$('#who');
+      if(!user){ CAN_EDIT=false; $('#btnSignout').style.display='none'; who.innerHTML=''; toggleEditUI(false); return; }
+      $('#btnSignout').style.display='inline-block';
+      try{
+        const resp = await fetch(`https://firestore.googleapis.com/v1/projects/${firebaseConfig.projectId}/databases/(default)/documents/users/${user.uid}`);
+        let role='Viewer', fullName=user.displayName||user.email||'';
+        if(resp.ok){ const json=await resp.json(); const f=json.fields||{}; role=f.role?.stringValue||role; fullName=f.fullName?.stringValue||fullName; }
+        CAN_EDIT = EDIT_ROLES.has(role);
+        who.innerHTML = `<span>${fullName}</span><span>${role}</span>`; // stacked, lowercase via CSS
+        toggleEditUI(CAN_EDIT);
+      }catch(err){ console.warn(err); toggleEditUI(false); }
+    });
+
+    function toggleEditUI(can){
+      $('#addGoal').style.display = can? 'inline-block':'none';
+      $('#addRisk').style.display = can? 'inline-block':'none';
+      $('#addIssue').style.display = can? 'inline-block':'none';
+      $('#addPlan').style.display = can? 'inline-block':'none';
+      $('#saveBtn').disabled = !can;
+    }
+
+    // Add row
+    $('#addGoal').onclick = ()=> addRow('goals');
+    $('#addRisk').onclick = ()=> addRow('risks');
+    $('#addIssue').onclick = ()=> addRow('issues');
+    $('#addPlan').onclick = ()=> addRow('plans');
+
+    function addRow(kind){
+      const tbody = {goals:'#tblGoals',risks:'#tblRisks',issues:'#tblIssues',plans:'#tblPlans'}[kind];
+      const tb = document.querySelector(tbody+ ' tbody');
+      const nextId = generateNextId(tb, kind.charAt(0).toUpperCase());
+      const tr = document.createElement('tr');
+      tr.innerHTML = rowTemplate(kind, nextId);
+      tb.appendChild(tr); computeKpis();
+    }
+
+    function rowTemplate(kind, id){
+      if(kind==='goals'){
+        return `
+          <td contenteditable="true">${id}</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td><input type="date"/></td>
+          <td><input type="date"/></td>
+          <td>${statusSelect('goals','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions">
+            <button class="btn" data-edit>Edit</button>
+            <button class="btn" data-del>Del</button>
+          </td>`;
       }
-      CAN_EDIT = EDIT_ROLES.has(role);
-      $('#perm').textContent = CAN_EDIT? 'Editor' : 'Viewer';
-      $('#crudPerm').textContent = CAN_EDIT? 'Editor' : 'Viewer';
-      who.textContent = `${fullName} – ${role}`;
-      setEditPermissions();
-    } catch(err){ console.warn('Kon rol niet laden', err); setEditPermissions(); }
-  });
-
-  function setEditPermissions(){
-    $('#btnUpload').disabled = !CAN_EDIT || !window.__GRIP;
-    $('#btnCreate').disabled = !CAN_EDIT;
-    $('#btnUpdate').disabled = !CAN_EDIT;
-    $('#btnDelete').disabled = !CAN_EDIT;
-  }
-
-  // ---------- IMPORTER ----------
-  let parsed = { targets:[], risks:[], actions:[], issues:[], decisions:[] };
-  $('#btnPick').onclick = ()=> $('#filePick').click();
-  $('#filePick').onchange = async (e)=>{
-    const f = e.target.files[0]; if(!f) return;
-    const text = await f.text();
-    try{
-      if(f.name.toLowerCase().endsWith('.json')) parsed = JSON.parse(text); else parsed = parseTraidHtml(text);
-      resequenceIds(parsed);
-      const grip = mapToGrip(parsed);
-      preview(grip);
-      window.__GRIP = grip;
-      setEditPermissions();
-    }catch(err){ console.error(err); alert('Kon bestand niet parseren: '+ err.message); }
-  };
-
-  function parseTraidHtml(html){
-    const docEl = new DOMParser().parseFromString(html, 'text/html');
-    const readTable = (id, cols)=>{
-      const rows = []; const tbody = docEl.querySelector('#'+id+' tbody'); if(!tbody) return rows;
-      tbody.querySelectorAll('tr').forEach(tr=>{
-        const obj = {}; cols.forEach((c,idx)=>{ const td = tr.children[idx]; if(!td){ obj[c]=''; return; }
-          const sel = td.querySelector('select'); let v = sel? (sel.value||sel.selectedOptions?.[0]?.value||'') : (td.textContent||''); obj[c] = v.trim(); }); rows.push(obj);
-      }); return rows;
-    };
-    return {
-      targets:   readTable('targetsTable',  ["id","desc","owner","start","end","status","detail","added"]),
-      risks:     readTable('risksTable',    ["id","desc","owner","chance","impact","status","mitigation","added"]),
-      actions:   readTable('actionsTable',  ["id","desc","owner","target","start","end","status","added"]),
-      issues:    readTable('issuesTable',   ["id","desc","owner","location","deadline","impact","status","added"]),
-      decisions: readTable('decisionsTable',["id","desc","owner","why","date","impact","status","added"])
-    };
-  }
-  function resequenceIds(data){ const maps = {targets:'T', risks:'R', actions:'A', issues:'I', decisions:'D'}; Object.keys(maps).forEach(k=>{ let c=1; (data[k]||[]).forEach(it=>{ it.id = maps[k]+(c++); }); }); }
-
-  function mapToGrip(src){
-    const goals = (src.targets||[]).map(t=>({ id:t.id.replace(/^T/,'G'), goal:t.desc||'', owner:t.owner||'', start:t.start||'', end:t.end||'', status:mapStatus(t.status), notes:t.detail||'' }));
-    const risks = (src.risks||[]).map(r=>({ id:r.id, description:r.desc||'', owner:r.owner||'', likelihood:normalizeTri(r.chance), impact:normalizeTri(r.impact), status:mapStatus(r.status), mitigation:r.mitigation||'' }));
-    const issues= (src.issues||[]).map(i=>({ id:i.id, description:i.desc||'', owner:i.owner||'', severity:normalizeTri(i.impact), status:mapStatusIssue(i.status), resolution:(i.location?('Locatie: '+i.location+'. '):'')+(i.deadline?('Deadline: '+i.deadline+'. '):'') }));
-    const plans = (src.actions||[]).map(a=>({ id:a.id.replace(/^A/,'P'), description:a.desc||'', owner:a.owner||'', goalId:(a.target||'').replace(/^T/,'G'), start:a.start||'', end:a.end||'', status:mapStatusPlan(a.status) }));
-    return {goals,risks,issues,plans};
-  }
-  function normalizeTri(v){ if(!v) return 'Middel'; const s=(v||'').toLowerCase(); if(s.startsWith('laag')) return 'Laag'; if(s.startsWith('hoog')) return 'Hoog'; return 'Middel'; }
-  function mapStatus(v){ const s=(v||'').toLowerCase(); if(s.includes('progress')) return 'In progress'; if(s.includes('closed')||s.includes('done')) return 'Closed'; return 'Open'; }
-  function mapStatusPlan(v){ const s=(v||'').toLowerCase(); if(s.includes('progress')) return 'In progress'; if(s.includes('closed')||s.includes('done')) return 'Done'; return 'Open'; }
-  function mapStatusIssue(v){ const s=(v||'').toLowerCase(); if(s.includes('blocked')) return 'Blocked'; if(s.includes('progress')) return 'In progress'; if(s.includes('closed')||s.includes('done')) return 'Done'; return 'Open'; }
-
-  function preview(grip){
-    const n = (id,val)=> document.querySelector(id).textContent = String(val);
-    n('#nGoals', grip.goals.length); n('#nRisks', grip.risks.length); n('#nIssues', grip.issues.length); n('#nPlans', grip.plans.length);
-    const tbl = document.querySelector('#prevTbl'); tbl.style.display = ''; const tbody = tbl.querySelector('tbody'); tbody.innerHTML='';
-    const add = (type,row,idKey,descKey,ownerKey,extra)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${type}</td><td>${row[idKey]||''}</td><td>${escapeHtml(row[descKey]||'')}</td><td>${escapeHtml(row[ownerKey]||'')}</td><td>${escapeHtml(extra||'')}</td>`; tbody.appendChild(tr); };
-    grip.goals.forEach(g=>add('Goal', g, 'id','goal','owner', (g.start?g.start+' → ':'')+(g.end||'')));
-    grip.risks.forEach(r=>add('Risk', r, 'id','description','owner', `Kans:${r.likelihood}, Impact:${r.impact}`));
-    grip.issues.forEach(i=>add('Issue', i, 'id','description','owner', `Ernst:${i.severity}, Status:${i.status}`));
-    grip.plans.forEach(p=>add('Plan', p, 'id','description','owner', `Goal:${p.goalId}, ${p.start}→${p.end}`));
-  }
-  function escapeHtml(s){return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');}
-
-  // Upload (alleen editors)
-  document.getElementById('btnUpload').onclick = async ()=>{
-    if(!CAN_EDIT){ alert('Geen editor-rechten. Kies een editor-rol en log in.'); return; }
-    const g = window.__GRIP; if(!g){ alert('Geen data geladen.'); return; }
-    try{
-      const tasks=[]; g.goals.forEach(row=>tasks.push(setDoc(doc(db,'goals',row.id),row))); g.risks.forEach(row=>tasks.push(setDoc(doc(db,'risks',row.id),row))); g.issues.forEach(row=>tasks.push(setDoc(doc(db,'issues',row.id),row))); g.plans.forEach(row=>tasks.push(setDoc(doc(db,'plans',row.id),row)));
-      await Promise.all(tasks);
-      alert('Upload voltooid: '+(g.goals.length+g.risks.length+g.issues.length+g.plans.length)+' records.');
-    }catch(err){ alert('Upload fout: '+err.message+'\nControleer Firestore rules en je rol.'); }
-  };
-
-  // ---------- SIMPLE CRUD (alleen editors) ----------
-  async function crudWrite(kind){
-    if(!CAN_EDIT){ alert('Geen editor-rechten.'); return; }
-    const coll = $('#crudColl').value; const id=$('#crudId').value.trim(); if(!id){ alert('Voer een ID in.'); return; }
-    let data; try{ data = JSON.parse($('#crudJson').value||'{}'); }catch{ alert('JSON ongeldig.'); return; }
-    if(kind==='delete'){
-      // Soft-delete door lege setDoc (of vervang met echte delete via REST/extra import)
-      data = { __deleted:true };
+      if(kind==='risks'){
+        return `
+          <td contenteditable="true">R0</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td>${triSelect('Medium')}</td>
+          <td>${triSelect('Medium')}</td>
+          <td>${statusSelect('risks','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
+      }
+      if(kind==='issues'){
+        return `
+          <td contenteditable="true">I0</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td>${triSelect('Medium')}</td>
+          <td>${statusSelect('issues','Open')}</td>
+          <td contenteditable="true"></td>
+          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
+      }
+      if(kind==='plans'){
+        return `
+          <td contenteditable="true">P0</td>
+          <td contenteditable="true"></td>
+          <td>${ownerSelect()}</td>
+          <td><input type="text" placeholder="Goal ID (e.g. G1)"/></td>
+          <td><input type="date"/></td>
+          <td><input type="date"/></td>
+          <td>${statusSelect('plans','Open')}</td>
+          <td class="row-actions"><button class="btn" data-edit>Edit</button><button class="btn" data-del>Del</button></td>`;
+      }
+      return '';
     }
-    try{
-      await setDoc(doc(db, coll, id), data, { merge: (kind==='update') });
-      alert(kind==='delete' ? 'Gemarkeerd als verwijderd.' : 'Opgeslagen.');
-    }catch(err){ alert('Schrijffout: '+err.message); }
-  }
-  document.getElementById('btnCreate').onclick = ()=> crudWrite('create');
-  document.getElementById('btnUpdate').onclick = ()=> crudWrite('update');
-  document.getElementById('btnDelete').onclick = ()=> crudWrite('delete');
 
-</script>
-</body>
-</html>
+    // Delete (with confirm) and simple edit toggle (cells are always editable for editors, but we keep button for UX)
+    document.body.addEventListener('click', (e)=>{
+      if(e.target.matches('button[data-del]')){
+        if(!CAN_EDIT){ alert('No edit rights'); return; }
+        const tr=e.target.closest('tr'); if(confirm('Delete this row?')){ tr.remove(); computeKpis(); }
+      }
+    });
+
+    function generateNextId(tbody, prefix){
+      const ids = Array.from(tbody.querySelectorAll('tr td:first-child')).map(td=>td.textContent.trim()).filter(Boolean);
+      let max=0; ids.forEach(id=>{ const n=parseInt(id.replace(/\D/g,''))||0; if(n>max) max=n; });
+      return `${prefix}${max+1}`;
+    }
+
+    // Table extract/render
+    function tableToArray(kind){
+      const map={goals:'#tblGoals',risks:'#tblRisks',issues:'#tblIssues',plans:'#tblPlans'}[kind];
+      const rows = Array.from(document.querySelectorAll(`${map} tbody tr`));
+      return rows.map(tr=>{
+        const tds = Array.from(tr.querySelectorAll('td'));
+        if(kind==='goals') return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value||'', end:tds[4].querySelector('input').value||'', status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
+        if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').val
