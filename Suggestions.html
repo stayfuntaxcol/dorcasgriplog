@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -543,50 +544,32 @@
       rows.sort((a,b)=>num(a.id)-num(b.id));
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
     }
-// Helpers
-function escapeHtml(s){ return (s ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-function buildSelect(opts, value, editable){
-  const dis = editable ? '' : ' disabled';
-  return `<select${dis}>${
-    opts.map(o => `<option value="${escapeHtml(o)}"${o===value?' selected':''}>${escapeHtml(o)}</option>`).join('')
-  }</select>`;
-}
-function buildDateInput(val, editable){
-  return `<input type="date" value="${val||''}" ${editable? '' : 'disabled'} />`;
-}
-function textCell(val, editable){
-  return editable ? `<textarea>${escapeHtml(val||'')}</textarea>` : `<div>${escapeHtml(val||'')}</div>`;
-}
 
-// Suggestions – render one row
-function rowSuggestion(r, editable){
-  const subjectSel = buildSelect(suggestionSubjects, r.subject || '', editable);
-  const ownerSel   = buildSelect(['', ...ownerRoles], r.owner || '', editable);
-  const statusSel  = buildSelect(suggestionStatus, r.status || '', editable);
-  const revRoleSel = buildSelect(suggestionReviewer, r.reviewerRole || '', editable);
-  const subDate    = buildDateInput(r.submitted, editable);
-  const revDate    = buildDateInput(r.reviewed, editable);
-
-  const actions = CAN_EDIT
-    ? `<div class="row-actions">
-         <button class="btn" data-edit="suggestions" data-id="${escapeHtml(r.id||'')}">${editable ? 'Lock' : 'Edit'}</button>
-         <button class="btn danger" data-del="suggestions" data-id="${escapeHtml(r.id||'')}">Del</button>
-       </div>`
-    : '—';
-
-  return `
-    <td>${escapeHtml(r.id || '')}</td>
-    <td>${textCell(r.description, editable)}</td>
-    <td>${subjectSel}</td>
-    <td>${ownerSel}</td>
-    <td>${subDate}</td>
-    <td>${statusSel}</td>
-    <td>${revRoleSel}</td>
-    <td>${revDate}</td>
-    <td>${textCell(r.comments, editable)}</td>
-    <td>${actions}</td>
-  `;
-}
+    // Suggestions – render, extract, add, delete
+    function rowSuggestion(r, editable){
+      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select ${editable?'' : 'disabled'}>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
+      const actions    = (CAN_EDIT? `<div class="row-actions">
+        <button class="btn" data-edit="suggestions">Edit</button>
+        <button class="btn danger" data-del="suggestions">Del</button>
+      </div>` : '—');
+      return `
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td ${editable? '': ''}>${textCell(r.description, editable)}</td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td>${textCell(r.comments, editable)}</td>
+        <td>${actions}</td>
+      `;
+    }
 
     function renderSuggestions(){
       const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
