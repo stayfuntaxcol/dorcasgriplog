@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:800;font-size:18px}
+    header .sub{color:var(--muted);font-size:12px}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);margin-left:8px}
+
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
+    nav.tabs .push-right{margin-left:auto}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar .left{display:flex;gap:8px;align-items:center}
+    .sectionbar .right{display:flex;gap:8px;align-items:center}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+    thead tr.filters th{background:#fff}
+
+    .row-actions{display:flex;gap:6px}
+    footer{padding:16px;color:var(--muted);font-size:12px}
+    @media (max-width: 880px){ th, td{font-size:13px} }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="leftbar">
+      <button id="loadBtn" class="btn">Load from Database</button>
+      <button id="saveBtn" class="btn primary" disabled>Save to Database</button>
+    </div>
+    <div class="rightbar">
+      <input id="fullName" class="input" placeholder="Full name *" />
+      <input id="email" class="input" type="email" placeholder="Email (required for editors)" />
+      <input id="org" class="input" placeholder="Organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Admin</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="Password *" />
+      <button id="signupBtn" class="btn">Register</button>
+      <button id="signinBtn" class="btn primary">Login</button>
+      <button id="signoutBtn" class="btn" style="display:none">Logout</button>
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">Not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+    <button class="push-right" data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="notifications">N – Notifications</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right"><button class="btn" id="addGoalBtn" disabled>+ New Goal</button></div>
+      </div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Goal (SMART)</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th>Notes</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="gSearch" class="input" placeholder="Search goal/notes" /></th>
+            <th><select id="gOwner" class="input"></select></th>
+            <th><input type="date" id="gStartFrom" class="input" /></th>
+            <th><input type="date" id="gEndTo" class="input" /></th>
+            <th><select id="gStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="gReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right"><button class="btn" id="addRiskBtn" disabled>+ New Risk</button></div>
+      </div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th>
+            <th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th>
+            <th>Mitigation</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="rSearch" class="input" placeholder="Search description/mitigation" /></th>
+            <th><select id="rOwner" class="input"></select></th>
+            <th><select id="rLikelihood" class="input"></select></th>
+            <th><select id="rImpact" class="input"></select></th>
+            <th><select id="rStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="rReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right"><button class="btn" id="addIssueBtn" disabled>+ New Issue</button></div>
+      </div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th>Resolution</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="iSearch" class="input" placeholder="Search description/resolution" /></th>
+            <th><select id="iOwner" class="input"></select></th>
+            <th><select id="iSeverity" class="input"></select></th>
+            <th><select id="iStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="iReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right"><button class="btn" id="addPlanBtn" disabled>+ New Plan</button></div>
+      </div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:140px">Goal Link</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="pSearch" class="input" placeholder="Search description" /></th>
+            <th><select id="pOwner" class="input"></select></th>
+            <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
+            <th></th>
+            <th></th>
+            <th><select id="pStatus" class="input"></select></th>
+            <th><button id="pReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Suggestions -->
+  <section id="suggestions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right"><button class="btn" id="addSuggestionBtn">+ New Suggestion</button></div>
+      </div>
+      <table id="tblSuggestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:180px">Owner</th>
+            <th style="width:140px">Submitted</th>
+            <th style="width:140px">Status</th>
+            <th style="width:180px">Reviewer Role</th>
+            <th style="width:140px">Reviewed</th>
+            <th>Comments</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="help">Iedere gebruiker met een rol mag een Suggestion indienen.</p>
+    </div>
+  </section>
+
+  <!-- Notifications -->
+  <section id="notifications" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Notifications</h2></div>
+        <div class="right">
+          <button class="btn" id="addNotificationBtn" style="display:none">+ New Notification</button>
+        </div>
+      </div>
+      <table id="tblNotifications">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:150px">Status</th>
+            <th style="width:210px">Role</th>
+            <th style="width:140px">Date</th>
+            <th style="width:90px">Stars</th>
+            <th>Comments</th>
+            <th style="width:200px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="help">Iedere gebruiker met een rol mag 1⭐ per notification geven. Alleen Admin kan notifications bewerken/verwijderen.</p>
+    </div>
+  </section>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import {
+      getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, increment
+    } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    // --- Firebase config ---
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
+
+    // --- Init ---
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const $  = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
+
+    // --- Roles / Rights ---
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const owners  = ["","Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"];
+    const statuses= {goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"]};
+    const tri     = ["","Low","Medium","High"];
+    const suggSubjects = ["New Goal","New Risk","New Issue","New Plan","New Suggestion"];
+    const suggStatus   = ["","Approved","Considered","Dismissed"];
+    const suggReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+    const notifSubjects= ["New Goal","New Risk","New Issue","New Plan","New Suggestion","Goal","Risk","Issue","Plan","Suggestion"];
+    const notifStatuses= ["Added","Edited","Deleted","Reviewed","Approved","Dismissed","Considered"];
+    const notifRoles   = ["Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+
+    let CAN_EDIT=false;
+    let CURRENT_ROLE='Viewer';
+    let CURRENT_UID=null;
+
+    // --- Auth helpers ---
+    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+'@griplog.local'; }
+    async function upsertUserDoc(uid,data){
+      const ref=doc(db,'users',uid); const snap=await getDoc(ref);
+      await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true});
+    }
+
+    // --- Register / Login / Logout ---
+    $('#signupBtn').onclick = async ()=>{
+      const fullName=$('#fullName').value.trim();
+      const email=($('#email').value||'').trim();
+      const org=$('#org').value.trim();
+      const role=$('#role').value;
+      const pass=$('#password').value;
+      if(!fullName||!org||!pass){ alert('Full name, organization, password are required.'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('Editors must provide an email.'); return; }
+      const usedEmail=email||slugEmailFromName(fullName);
+      try{
+        const cred=await createUserWithEmailAndPassword(auth, usedEmail, pass);
+        await updateProfile(cred.user,{displayName:fullName});
+        await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() });
+        alert('Registered. You can now login.');
+        await signOut(auth);
+      }catch(e){ alert(e.code==='auth/email-already-in-use'?'Account exists. Please login.':e.message); }
+    };
+
+    $('#signinBtn').onclick = async ()=>{
+      const fullName=$('#fullName').value.trim();
+      const email=($('#email').value||'').trim();
+      const rolePick=$('#role').value;
+      const pass=$('#password').value;
+      if(!fullName||!pass){ alert('Full name and password required.'); return; }
+      if(EDIT_ROLES.has(rolePick) && !email){ alert('Editors must provide an email.'); return; }
+      const usedEmail=email||slugEmailFromName(fullName);
+      try{
+        const cred=await signInWithEmailAndPassword(auth, usedEmail, pass);
+        if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
+      }catch(e){ alert('Login failed: '+e.message); }
+    };
+
+    $('#signoutBtn').onclick=()=>signOut(auth);
+
+    // --- Data cache ---
+    let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],notifications:[]};
+
+    // --- Auth state ---
+    onAuthStateChanged(auth, async (user)=>{
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
+      if(!user){
+        authDot.classList.remove('ok'); authTxt.textContent='Not signed in'; userInfo.textContent='';
+        $('#signoutBtn').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; return;
+      }
+      $('#signoutBtn').style.display='inline-block'; authDot.classList.add('ok');
+
+      let role='Viewer', full=(user.displayName||user.email||'');
+      try{
+        const snap=await getDoc(doc(db,'users',user.uid));
+        if(snap.exists()){
+          const d=snap.data(); role=d.role||role; full=d.fullName||full;
+          if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer';
+        }else{
+          await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' });
+        }
+      }catch(err){ console.warn('role load failed', err); }
+
+      const isEditor=EDIT_ROLES.has(role)&&!!user.email;
+      authTxt.textContent=isEditor?'Editor':'Viewer';
+      userInfo.textContent=`${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      CURRENT_ROLE=role; CURRENT_UID=user.uid;
+      setEditMode(isEditor);
+      await loadAll();
+
+      // Alleen Admin ziet handmatige + New Notification
+      $('#addNotificationBtn').style.display = (role==='Admin') ? 'inline-block' : 'none';
+    });
+
+    function setEditMode(can){
+      CAN_EDIT=!!can;
+      $('#saveBtn').disabled=!CAN_EDIT;
+      $('#addGoalBtn').disabled=!CAN_EDIT;
+      $('#addRiskBtn').disabled=!CAN_EDIT;
+      $('#addIssueBtn').disabled=!CAN_EDIT;
+      $('#addPlanBtn').disabled=!CAN_EDIT;
+      renderAll();
+    }
+    function isCurrentAdmin(){ return CURRENT_ROLE==='Admin'; }
+    function hasRole(){ return CURRENT_ROLE && CURRENT_ROLE!=='Viewer'; }
+
+    // --- UI helpers ---
+    function idNum(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    function ownerSelect(val=''){ return `<select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`; }
+    function statusSelect(kind,val='Open'){ const arr=statuses[kind]; return `<select ${!CAN_EDIT?'disabled':''}>${arr.map(s=>`<option ${s===val?'selected':''}>${s}</option>`).join('')}</select>`; }
+    function triSelect(val='Medium'){ return `<select ${!CAN_EDIT?'disabled':''}><option ${val==='Low'?'selected':''}>Low</option><option ${val==='Medium'?'selected':''}>Medium</option><option ${val==='High'?'selected':''}>High</option></select>`; }
+
+    // --- Tabs ---
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderTab(tab);
+    }));
+
+    // --- Load / Save ---
+    async function loadAll(){
+      const [g,r,i,p,s,n] = await Promise.all([
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+        getDocs(collection(db,'suggestions')),
+        getDocs(collection(db,'notifications')),
+      ]);
+      cache.goals        = g.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.risks        = r.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.issues       = i.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.plans        = p.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.suggestions  = s.docs.map(d=>({id:d.id, ...d.data()}));
+      cache.notifications= n.docs.map(d=>({id:d.id, ...d.data()}));
+      buildFilterOptions();
+      renderAll();
+    }
+
+    async function saveAll(){
+      if(!CAN_EDIT){ alert('No edit rights'); return; }
+      const all = {
+        goals: tableToArray('goals'),
+        risks: tableToArray('risks'),
+        issues: tableToArray('issues'),
+        plans: tableToArray('plans'),
+        suggestions: tableToArray('suggestions')
+      };
+      const tasks=[];
+      all.goals.forEach(r=>tasks.push(setDoc(doc(db,'goals', r.id), r)));
+      all.risks.forEach(r=>tasks.push(setDoc(doc(db,'risks', r.id), r)));
+      all.issues.forEach(r=>tasks.push(setDoc(doc(db,'issues', r.id), r)));
+      all.plans.forEach(r=>tasks.push(setDoc(doc(db,'plans', r.id), r)));
+      // suggestions edits alleen door editors; server rules bewaken dit
+      all.suggestions.forEach(r=>tasks.push(setDoc(doc(db,'suggestions', r.id), r)));
+      await Promise.all(tasks);
+      alert('Saved to Database');
+      await loadAll();
+    }
+
+    // --- Filters (owner/status etc.) ---
+    function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+    function buildFilterOptions(){
+      fillSelect('#gOwner', owners, 'Owner'); fillSelect('#gStatus', statuses.goals, 'Status');
+      fillSelect('#rOwner', owners, 'Owner'); fillSelect('#rLikelihood', tri, 'Likelihood'); fillSelect('#rImpact', tri, 'Impact'); fillSelect('#rStatus', statuses.risks, 'Status');
+      fillSelect('#iOwner', owners, 'Owner'); fillSelect('#iSeverity', tri, 'Severity'); fillSelect('#iStatus', statuses.issues, 'Status');
+      fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
+    }
+
+    // --- Renderers ---
+    function actionsCell(coll){ 
+      if(!CAN_EDIT && coll!=='suggestions') return '—';
+      return `<div class="row-actions">
+        ${ (coll!=='notifications') ? `<button class="btn" data-edit="${coll}">Edit</button>
+        <button class="btn danger" data-del="${coll}">Del</button>` : '' }
+      </div>`;
+    }
+    function rowGoal(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td>${statusSelect('goals', r.status||'Open')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
+        <td>${actionsCell('goals')}</td>`;
+    }
+    function rowRisk(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td>${triSelect(r.likelihood||'Medium')}</td>
+        <td>${triSelect(r.impact||'Medium')}</td>
+        <td>${statusSelect('risks', r.status||'Open')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
+        <td>${actionsCell('risks')}</td>`;
+    }
+    function rowIssue(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td>${triSelect(r.severity||'Medium')}</td>
+        <td>${statusSelect('issues', r.status||'Open')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
+        <td>${actionsCell('issues')}</td>`;
+    }
+    function rowPlan(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td><input type="text" value="${r.goalId||''}" placeholder="G#" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td>${statusSelect('plans', r.status||'Open')}</td>
+        <td>${actionsCell('plans')}</td>`;
+    }
+
+    // Suggestions row
+    function rowSuggestion(r, editable){
+      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select ${editable?'' : 'disabled'}>${['','Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'].map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
+      const actions    = (CAN_EDIT? `<div class="row-actions">
+        <button class="btn" data-edit="suggestions">Edit</button>
+        <button class="btn danger" data-del="suggestions">Del</button>
+      </div>` : '—');
+      return `
+        <td>${escapeHtml(r.id||'')}</td>
+        <td>${editable?`<textarea>${escapeHtml(r.description||'')}</textarea>`:`<div>${escapeHtml(r.description||'')}</div>`}</td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td>${editable?`<textarea>${escapeHtml(r.comments||'')}</textarea>`:`<div>${escapeHtml(r.comments||'')}</div>`}</td>
+        <td>${actions}</td>
+      `;
+    }
+
+    function notifActionsCell(n){
+      const canStar = hasRole();
+      const admin   = isCurrentAdmin();
+      const starBtn = `<button class="btn" data-star="${n.id}" ${canStar?'':'disabled'}>⭐ Star</button>`;
+      const adminBtns = admin ? `
+        <button class="btn" data-edit="notifications" data-id="${n.id}">Edit</button>
+        <button class="btn danger" data-del="notifications" data-id="${n.id}">Del</button>` : '';
+      return `<div class="row-actions">${starBtn}${adminBtns}</div>`;
+    }
+    function rowNotification(n){
+      return `
+        <td>${escapeHtml(n.id||'')}</td>
+        <td>${escapeHtml(n.description||'')}</td>
+        <td>${escapeHtml(n.subject||'')}</td>
+        <td>${escapeHtml(n.status||'')}</td>
+        <td>${escapeHtml(n.role||'')}</td>
+        <td>${escapeHtml(n.date||'')}</td>
+        <td>${typeof n.stars==='number'? n.stars : 0}</td>
+        <td>${escapeHtml(n.comments||'')}</td>
+        <td>${notifActionsCell(n)}</td>
+      `;
+    }
+
+    // --- Render sections ---
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML='';
+      let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
+    }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML='';
+      let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+    }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML='';
+      let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
+    }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML='';
+      let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value?.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
+    }
+    function renderSuggestions(){
+      const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
+      const rows=[...cache.suggestions].sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.innerHTML = rowSuggestion(r, CAN_EDIT); // editors kunnen waarden aanpassen
+        tbody.appendChild(tr);
+      });
+    }
+    function renderNotifications(){
+      const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
+      const rows=[...cache.notifications].sort((a,b)=>idNum(a.id)-idNum(b.id));
+      rows.forEach(n=>{
+        const tr=document.createElement('tr'); tr.innerHTML=rowNotification(n); tbody.appendChild(tr);
+      });
+    }
+
+    function renderAll(){
+      const active=document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      renderTab(active);
+      $('#saveBtn').disabled=!CAN_EDIT;
+    }
+    function renderTab(kind){
+      if(kind==='goals') renderGoals();
+      else if(kind==='risks') renderRisks();
+      else if(kind==='issues') renderIssues();
+      else if(kind==='plans') renderPlans();
+      else if(kind==='suggestions') renderSuggestions();
+      else renderNotifications();
+    }
+
+    // --- Table extractors ---
+    function tableToArray(kind){
+      if(kind==='suggestions'){
+        return Array.from(document.querySelectorAll(`#tblSuggestions tbody tr`)).map(tr=>{
+          const tds=Array.from(tr.querySelectorAll('td'));
+          return {
+            id: tds[0].innerText.trim(),
+            description: (tds[1].querySelector('textarea,div').value || tds[1].querySelector('textarea,div').innerText || '').trim(),
+            subject: tds[2].querySelector('select').value,
+            owner: tds[3].querySelector('select').value,
+            submitted: tds[4].querySelector('input').value || '',
+            status: tds[5].querySelector('select').value,
+            reviewerRole: tds[6].querySelector('select').value,
+            reviewed: tds[7].querySelector('input').value || '',
+            comments: (tds[8].querySelector('textarea,div').value || tds[8].querySelector('textarea,div').innerText || '').trim()
+          };
+        }).filter(x=>x && x.id);
+      }
+      const map = { goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans' }[kind];
+      return Array.from(document.querySelectorAll(`${map} tbody tr`)).map(tr=>{
+        const tds=Array.from(tr.querySelectorAll('td'));
+        if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value||'', end:tds[4].querySelector('input').value||'', status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
+        if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').value, status:tds[5].querySelector('select').value, mitigation:tds[6].innerText.trim() };
+        if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, severity:tds[3].querySelector('select').value, status:tds[4].querySelector('select').value, resolution:tds[5].innerText.trim() };
+        if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, goalId:tds[3].querySelector('input').value.trim(), start:tds[4].querySelector('input').value||'', end:tds[5].querySelector('input').value||'', status:tds[6].querySelector('select').value };
+      }).filter(r=>r && r.id);
+    }
+
+    // --- ID helpers ---
+    function nextIdFromCache(arr,prefix){ let m=0; arr.forEach(x=>{ const n=idNum(x.id||''); if(n>m) m=n; }); return prefix+(m+1); }
+    function nextNotifId(){ return nextIdFromCache(cache.notifications,'N'); }
+
+    // --- Notifications helper ---
+    async function createNotification({subject,status,role,refId,description,comments}){
+      const id = nextNotifId();
+      const date = new Date().toISOString().slice(0,10);
+      const data = {
+        id, subject, status, role, date,
+        description: description||'',
+        comments: comments||'',
+        refId: refId||'',
+        stars: 0, starredBy: {}
+      };
+      await setDoc(doc(db,'notifications', id), data);
+      cache.notifications.push(data);
+      renderNotifications();
+    }
+
+    // --- Add rows ---
+    $('#addGoalBtn').onclick = ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextIdFromCache(cache.goals,'G');
+      const tr=document.createElement('tr');
+      tr.innerHTML=rowGoal({id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''});
+      $('#tblGoals tbody').appendChild(tr);
+      // Notification
+      createNotification({subject:'New Goal', status:'Added', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+    };
+    $('#addRiskBtn').onclick = ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextIdFromCache(cache.risks,'R');
+      const tr=document.createElement('tr');
+      tr.innerHTML=rowRisk({id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''});
+      $('#tblRisks tbody').appendChild(tr);
+      createNotification({subject:'New Risk', status:'Added', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+    };
+    $('#addIssueBtn').onclick= ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextIdFromCache(cache.issues,'I');
+      const tr=document.createElement('tr');
+      tr.innerHTML=rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''});
+      $('#tblIssues tbody').appendChild(tr);
+      createNotification({subject:'New Issue', status:'Added', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+    };
+    $('#addPlanBtn').onclick = ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextIdFromCache(cache.plans,'P');
+      const tr=document.createElement('tr');
+      tr.innerHTML=rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'});
+      $('#tblPlans tbody').appendChild(tr);
+      createNotification({subject:'New Plan', status:'Added', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+    };
+
+    // Suggestions: iedereen met rol mag toevoegen
+    $('#addSuggestionBtn').onclick = ()=>{
+      if(!hasRole()){ alert('You need a role to submit a Suggestion.'); return; }
+      const id = nextIdFromCache(cache.suggestions,'S');
+      const today = new Date().toISOString().slice(0,10);
+      const tr=document.createElement('tr');
+      tr.innerHTML = rowSuggestion({id,description:'',subject:'New Suggestion',owner:CURRENT_ROLE,submitted: today, status:'', reviewerRole:'', reviewed:'', comments:''}, true);
+      $('#tblSuggestions tbody').appendChild(tr);
+      // Notification voor nieuwe Suggestion
+      createNotification({subject:'New Suggestion', status:'Added', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+    };
+
+    // --- Delete rows (met notificatie) + Star handler ---
+    document.addEventListener('click', async (e)=>{
+      // Star
+      const star = e.target.closest('button[data-star]');
+      if(star){
+        if(!hasRole()){ alert('Only users with a role can star.'); return; }
+        const id = star.dataset.star;
+        try{
+          await updateDoc(doc(db,'notifications', id), {
+            stars: increment(1),
+            [`starredBy.${CURRENT_UID}`]: true
+          });
+          await loadAll();
+        }catch(err){ alert('Star failed: '+err.message); }
+        return;
+      }
+
+      // Delete
+      const delBtn = e.target.closest('button[data-del]');
+      if(delBtn){
+        const tr = delBtn.closest('tr'); if(!tr) return;
+        const table = tr.closest('table')?.id; // e.g. tblGoals
+        const id = tr.querySelector('td:first-child')?.innerText.trim();
+        const collMap = { tblGoals:'goals', tblRisks:'risks', tblIssues:'issues', tblPlans:'plans', tblSuggestions:'suggestions', tblNotifications:'notifications' };
+        const coll = collMap[table];
+        if(!coll || !id){ tr.remove(); return; }
+        if(coll==='notifications' && !isCurrentAdmin()){ alert('Only Admin can delete notifications.'); return; }
+        if(!CAN_EDIT && coll!=='suggestions' && coll!=='notifications'){ alert('No edit rights'); return; }
+
+        if(confirm(`Delete ${id} from ${coll}?`)){
+          try{
+            await deleteDoc(doc(db, coll.replace('tbl',''), id)); // safeguard if mis-mapped
+          }catch{}
+          tr.remove();
+          // Notification bij verwijderen (geen self-loop)
+          if(coll!=='tblNotifications'){
+            const subjMap={tblGoals:'Goal',tblRisks:'Risk',tblIssues:'Issue',tblPlans:'Plan',tblSuggestions:'Suggestion'};
+            const subj=subjMap[coll]||'Item';
+            createNotification({subject: subj, status:'Deleted', role: CURRENT_ROLE, refId: id, description:''}).catch(console.error);
+          }
+        }
+      }
+    });
+
+    // --- Buttons ---
+    $('#loadBtn').onclick = async ()=>{ try{ await loadAll(); }catch(e){ alert('Load failed: '+e.message); } };
+    $('#saveBtn').onclick = async ()=>{ try{ await saveAll(); }catch(e){ alert('Save failed: '+e.message); } };
+
+    // --- First render ---
+    buildFilterOptions();
+    renderAll();
+
+    // OPTIONAL: handmatige admin add notification (verbergt voor niet-admin)
+    $('#addNotificationBtn')?.addEventListener('click', async ()=>{
+      if(!isCurrentAdmin()) return;
+      await createNotification({subject:'Notification', status:'Added', role:'Admin', refId:'', description:'Manual notification'});
+    });
+  </script>
+
+  <!-- Google Translate (optioneel, visueel) -->
+  <div id="google_translate_element"></div>
+  <script>
+    function googleTranslateElementInit(){ new google.translate.TranslateElement({pageLanguage:'en'}, 'google_translate_element'); }
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
