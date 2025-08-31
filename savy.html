@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+    header{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:800;font-size:18px}
+    header .sub{color:var(--muted);font-size:12px}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);margin-left:8px;text-transform:lowercase}
+
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
+    nav.tabs .push-right{margin-left:auto}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar .left{display:flex;gap:8px;align-items:center}
+    .sectionbar .right{display:flex;gap:8px;align-items:center}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+
+    .row-actions{display:flex;gap:6px}
+
+    footer{padding:16px;color:var(--muted);font-size:12px}
+    @media (max-width: 880px){ th, td{font-size:13px} }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="leftbar">
+      <button id="btnLoad" class="btn">Load from Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
+    </div>
+
+    <div class="rightbar">
+      <input id="fullName" class="input" placeholder="full name *" />
+      <input id="email" class="input" type="email" placeholder="email (required for editors)" />
+      <input id="org" class="input" placeholder="organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Admin</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="password *" />
+      <button id="btnSignup" class="btn">register</button>
+      <button id="btnSignin" class="btn primary">login</button>
+      <button id="btnSignout" class="btn" style="display:none">logout</button>
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+    <button class="push-right" data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="notifications">N – Notifications</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right"><button class="btn" id="addGoalBtn" disabled>+ New Goal</button></div>
+      </div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Goal (SMART)</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th>Notes</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right"><button class="btn" id="addRiskBtn" disabled>+ New Risk</button></div>
+      </div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th>
+            <th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th>
+            <th>Mitigation</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right"><button class="btn" id="addIssueBtn" disabled>+ New Issue</button></div>
+      </div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th>Resolution</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right"><button class="btn" id="addPlanBtn" disabled>+ New Plan</button></div>
+      </div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:140px">Goal Link</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Suggestions -->
+  <section id="suggestions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right"><button class="btn" id="addSuggestionBtn">+ New Suggestion</button></div>
+      </div>
+      <table id="tblSuggestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:180px">Owner</th>
+            <th style="width:140px">Submitted</th>
+            <th style="width:140px">Status</th>
+            <th style="width:180px">Reviewer Role</th>
+            <th style="width:140px">Reviewed</th>
+            <th>Comments</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Notifications -->
+  <section id="notifications" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Notifications</h2></div>
+        <div class="right"><!-- admin-only actions could go here --></div>
+      </div>
+      <table id="tblNotifications">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:150px">Status</th>
+            <th style="width:150px">Role</th>
+            <th style="width:140px">Date</th>
+            <th>Comments</th>
+            <th style="width:100px">Stars</th>
+            <th style="width:140px">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
+
+    // Roles / rights
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
+    const owners=["","Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"];
+    const statuses={ goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+    const tri=["","Low","Medium","High"];
+
+    // Suggestions constants (renamed)
+    const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
+    const suggestionStatus   = ["","Approved","Considered","Dismissed"];
+    const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+
+    let CAN_EDIT=false; let CURRENT_ROLE='Viewer'; let CURRENT_UID=null;
+
+    let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],notifications:[]};
+    let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[]};
+
+    // Auth helpers
+    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
+    async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
+
+    // Register/Login/Logout
+    $('#btnSignup').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!org||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await createUserWithEmailAndPassword(auth, used, pass);
+        await updateProfile(cred.user,{displayName:fullName});
+        await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() });
+        alert('registered. please login.');
+        await signOut(auth);
+      }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'account exists. login.' : e.message); }
+    };
+    $('#btnSignin').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(rolePick) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await signInWithEmailAndPassword(auth, used, pass);
+        if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
+      }catch(e){ alert('login failed: '+e.message); }
+    };
+    $('#btnSignout').onclick=()=>signOut(auth);
+
+    onAuthStateChanged(auth, async (user)=>{
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); return; }
+      $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok');
+
+      let role='Viewer', full=user.displayName||user.email||'';
+      try{
+        const snap=await getDoc(doc(db,'users',user.uid));
+        if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
+        else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
+      }catch(err){ console.warn('role load failed', err); }
+
+      CURRENT_ROLE = role; CURRENT_UID = user.uid;
+      const isEditor = EDIT_ROLES.has(role) && !!user.email;
+      authTxt.textContent = isEditor? 'editor' : 'viewer';
+      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      setEditMode(isEditor);
+      await loadAll();
+    });
+
+    function setEditMode(can){
+      CAN_EDIT=!!can;
+      $('#btnSaveAll').disabled=!CAN_EDIT;
+      $('#addGoalBtn').disabled=!CAN_EDIT;
+      $('#addRiskBtn').disabled=!CAN_EDIT;
+      $('#addIssueBtn').disabled=!CAN_EDIT;
+      $('#addPlanBtn').disabled=!CAN_EDIT;
+      renderAll();
+    }
+
+    // Tabs
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderTab(tab);
+    }));
+
+    // ---- Notification helpers
+    function makeNote({subject,status,relatedId,description,comments=''}) {
+      return {
+        id: relatedId,
+        description: description||'',
+        subject, status,
+        role: CURRENT_ROLE||'Viewer',
+        date: new Date().toISOString().slice(0,10),
+        comments,
+        stars: 0,
+        starredBy: {}
+      };
+    }
+    function pickDesc(label,row){
+      if(label==='Goal') return row.goal||'';
+      if(label==='Risk') return row.description||'';
+      if(label==='Issue') return row.description||'';
+      if(label==='Plan') return row.description||'';
+      return '';
+    }
+
+    // Load / Save
+    async function loadAll(){
+      const [g,r,i,p,s,n] = await Promise.all([
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+        getDocs(collection(db,'suggestions')),
+        getDocs(collection(db,'notifications')),
+      ]);
+
+      prevCache = JSON.parse(JSON.stringify(cache));
+
+      cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+      cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+      cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+      cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+      cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()})); // include doc id for stars/del
+
+      renderAll();
+    }
+
+    async function saveAll(){
+      if(!CAN_EDIT){ alert('no edit rights'); return; }
+      const tasks=[]; const notes=[];
+
+      const newGoals = rowsFromTable('goals');
+      const newRisks = rowsFromTable('risks');
+      const newIssues= rowsFromTable('issues');
+      const newPlans = rowsFromTable('plans');
+      const newSugs  = rowsFromTable('suggestions');
+
+      const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
+      const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
+
+      function upserts(prevArr, nextArr, coll, label){
+        const prevMap = byId(prevArr);
+        nextArr.forEach(row=>{
+          tasks.push(setDoc(doc(db,coll,row.id), row));
+          if(!prevMap[row.id]){
+            notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
+          } else if(changed(prevMap[row.id], row)){
+            notes.push(makeNote({subject: label, status:'Edited', relatedId: row.id, description: pickDesc(label,row)}));
+          }
+        });
+      }
+
+      upserts(prevCache.goals, newGoals, 'goals', 'Goal');
+      upserts(prevCache.risks, newRisks, 'risks', 'Risk');
+      upserts(prevCache.issues,newIssues,'issues','Issue');
+      upserts(prevCache.plans, newPlans, 'plans', 'Plan');
+
+      // Suggestions + review states
+      const prevS = byId(prevCache.suggestions);
+      newSugs.forEach(row=>{
+        tasks.push(setDoc(doc(db,'suggestions',row.id), row));
+        const before = prevS[row.id];
+        if(!before){ notes.push(makeNote({subject:'New Suggestion', status:'Added', relatedId: row.id, description: row.description||''})); }
+        else if(changed(before,row)){ notes.push(makeNote({subject:'Suggestion', status:'Edited', relatedId: row.id, description: row.description||''})); }
+        const st=row.status||''; const pst=before?.status||'';
+        if(st && st!==pst && ['Approved','Dismissed','Considered'].includes(st)){
+          notes.push(makeNote({subject:'Suggestion', status: st, relatedId: row.id, description: row.description||''}));
+        }
+      });
+
+      await Promise.all(tasks);
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
+      alert('saved to firestore');
+      await loadAll();
+    }
+    $('#btnLoad').onclick=loadAll;
+    $('#btnSaveAll').onclick=saveAll;
+
+    // Helpers
+    function num(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    function actionsCell(coll){
+      if(!CAN_EDIT && coll!=='suggestions') return '—';
+      const disabled = (coll==='suggestions' && !CAN_EDIT) ? 'disabled' : '';
+      if(coll==='suggestions' && !CAN_EDIT) return '—';
+      return `<div class="row-actions">
+        <button class="btn" data-edit="${coll}" ${disabled}>Edit</button>
+        <button class="btn danger" data-del="${coll}" ${disabled}>Del</button>
+      </div>`;
+    }
+
+    // Renderers
+    function rowGoal(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.goals.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
+        <td>${actionsCell('goals')}</td>`;
+    }
+    function rowRisk(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.likelihood?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.impact?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.risks.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
+        <td>${actionsCell('risks')}</td>`;
+    }
+    function rowIssue(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.severity?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.issues.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
+        <td>${actionsCell('issues')}</td>`;
+    }
+    function rowPlan(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
+        <td><input type="text" value="${r.goalId||''}" placeholder="G#" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.plans.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td>${actionsCell('plans')}</td>`;
+    }
+
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; (cache.goals||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); }); }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; (cache.risks||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; (cache.issues||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); }); }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; (cache.plans||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); }); }
+
+    // Suggestions – render, extract, add, delete
+    function rowSuggestion(r, editable){
+      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select ${editable?'' : 'disabled'}>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
+      const actions    = (CAN_EDIT? `<div class="row-actions">
+        <button class="btn" data-edit="suggestions">Edit</button>
+        <button class="btn danger" data-del="suggestions">Del</button>
+      </div>` : '—');
+      return `
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td ${editable? '': ''}>${editable?`<textarea>${escapeHtml(r.description||'')}</textarea>`:`<div>${escapeHtml(r.description||'')}</div>`}</td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td>${editable?`<textarea>${escapeHtml(r.comments||'')}</textarea>`:`<div>${escapeHtml(r.comments||'')}</div>`}</td>
+        <td>${actions}</td>
+      `;
+    }
+    function renderSuggestions(){ const tbody=$('#tblSuggestions tbody'); tbody.innerHTML=''; (cache.suggestions||[]).sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowSuggestion(r, true); tbody.appendChild(tr); }); }
+
+    // Notifications render + actions
+    function renderNotifications(rows){
+      const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
+      rows.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+      rows.forEach(r=>{
+        const tr=document.createElement('tr');
+        tr.dataset.docid = r.__id || '';
+        tr.innerHTML=`<td>${escapeHtml(r.id||'')}</td>
+          <td>${escapeHtml(r.description||'')}</td>
+          <td>${escapeHtml(r.subject||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${escapeHtml(r.role||'')}</td>
+          <td>${escapeHtml(r.date||'')}</td>
+          <td>${escapeHtml(r.comments||'')}</td>
+          <td><button class="btn ghost" data-star>⭐</button> <span>${r.stars||0}</span></td>
+          <td>${(CURRENT_ROLE==='Admin')?`<button class="btn danger" data-del-note>Del</button>`:'—'}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    document.addEventListener('click', async (e)=>{
+      // star
+      if(e.target.matches('[data-star]')){
+        const row = e.target.closest('tr'); const id=row?.dataset.docid;
+        if(!id){ return; }
+        if(!CURRENT_UID){ alert('login required to star'); return; }
+        const ref=doc(db,'notifications',id);
+        const snap=await getDoc(ref);
+        if(snap.exists()){
+          const data=snap.data();
+          if(data.starredBy && data.starredBy[CURRENT_UID]) return; // already starred
+          const stars=(data.stars||0)+1;
+          await updateDoc(ref,{ stars, [`starredBy.${CURRENT_UID}`]: true });
+          const list = await getDocs(collection(db,'notifications'));
+          cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+          renderNotifications(cache.notifications);
+        }
+      }
+      // delete note
+      if(e.target.matches('[data-del-note]')){
+        if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete'); return; }
+        const row = e.target.closest('tr'); const id=row?.dataset.docid;
+        if(!id) return;
+        if(!confirm('Delete this notification?')) return;
+        await deleteDoc(doc(db,'notifications',id));
+        const list = await getDocs(collection(db,'notifications'));
+        cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+        renderNotifications(cache.notifications);
+      }
+    });
+
+    // Delete rows (entities) + create notification
+    document.addEventListener('click', async (e)=>{
+      const delBtn = e.target.closest('button[data-del]');
+      if(!delBtn) return;
+      const table = delBtn.dataset.del;
+      if(table!=='suggestions' && !CAN_EDIT){ alert('no edit rights'); return; }
+      const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
+      const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions'};
+      const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
+      if(!confirm(`Delete ${id} from ${coll}?`)) return;
+      try{
+        await deleteDoc(doc(db, coll, id));
+        tr.remove();
+        await addDoc(collection(db,'notifications'), makeNote({
+          subject: table==='suggestions' ? 'Suggestion' : table.slice(0,1).toUpperCase()+table.slice(1,-1),
+          status:'Deleted',
+          relatedId:id,
+          description:''
+        }));
+        const list = await getDocs(collection(db,'notifications'));
+        cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+        renderNotifications(cache.notifications);
+      }catch(err){ alert('delete failed: '+err.message); }
+    });
+
+    function renderAll(){
+      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      renderTab(active);
+      $('#btnSaveAll').disabled = !CAN_EDIT;
+    }
+    function renderTab(kind){
+      if(kind==='goals') renderGoals();
+      else if(kind==='risks') renderRisks();
+      else if(kind==='issues') renderIssues();
+      else if(kind==='plans') renderPlans();
+      else if(kind==='suggestions') renderSuggestions();
+      else renderNotifications(cache.notifications||[]);
+    }
+
+    // Table extractors
+    function rowsFromTable(kind){
+      const sel = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans', suggestions:'#tblSuggestions'}[kind];
+      if(kind==='goals')  return Array.from(document.querySelectorAll(`${sel} tbody tr`)).map(tr=>{const t=tr.querySelectorAll('td');return { id:t[0].innerText.trim(), goal:t[1].innerText.trim(), owner:t[2].querySelector('select').value, start:t[3].querySelector('input').value||'', end:t[4].querySelector('input').value||'', status:t[5].querySelector('select').value, notes:t[6].innerText.trim() };}).filter(x=>x.id);
+      if(kind==='risks')  return Array.from(document.querySelectorAll(`${sel} tbody tr`)).map(tr=>{const t=tr.querySelectorAll('td');return { id:t[0].innerText.trim(), description:t[1].innerText.trim(), owner:t[2].querySelector('select').value, likelihood:t[3].querySelector('select').value, impact:t[4].querySelector('select').value, status:t[5].querySelector('select').value, mitigation:t[6].innerText.trim() };}).filter(x=>x.id);
+      if(kind==='issues') return Array.from(document.querySelectorAll(`${sel} tbody tr`)).map(tr=>{const t=tr.querySelectorAll('td');return { id:t[0].innerText.trim(), description:t[1].innerText.trim(), owner:t[2].querySelector('select').value, severity:t[3].querySelector('select').value, status:t[4].querySelector('select').value, resolution:t[5].innerText.trim() };}).filter(x=>x.id);
+      if(kind==='plans')  return Array.from(document.querySelectorAll(`${sel} tbody tr`)).map(tr=>{const t=tr.querySelectorAll('td');return { id:t[0].innerText.trim(), description:t[1].innerText.trim(), owner:t[2].querySelector('select').value, goalId:t[3].querySelector('input').value.trim(), start:t[4].querySelector('input').value||'', end:t[5].querySelector('input').value||'', status:t[6].querySelector('select').value };}).filter(x=>x.id);
+      if(kind==='suggestions') return Array.from(document.querySelectorAll(`${sel} tbody tr`)).map(tr=>{const t=tr.querySelectorAll('td'); return { id:t[0].innerText.trim(), description:(t[1].querySelector('textarea,div').value||t[1].querySelector('textarea,div').innerText||'').trim(), subject:t[2].querySelector('select').value, owner:t[3].querySelector('select').value, submitted:t[4].querySelector('input').value||'', status:t[5].querySelector('select').value, reviewerRole:t[6].querySelector('select').value, reviewed:t[7].querySelector('input').value||'', comments:(t[8].querySelector('textarea,div').value||t[8].querySelector('textarea,div').innerText||'').trim() }; }).filter(x=>x.id);
+      return [];
+    }
+
+    // Add row helpers
+    function nextId(arr, prefix){ let m=0; arr.forEach(x=>{ const n=parseInt(String(x.id||'').replace(/\D+/g,''))||0; if(n>m) m=n; }); return prefix + (m+1); }
+    $('#addGoalBtn').onclick = ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('goals'); const id=nextId(arr,'G'); const tr=document.createElement('tr'); tr.innerHTML=`${rowGoal({id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''})}`; $('#tblGoals tbody').appendChild(tr); };
+    $('#addRiskBtn').onclick = ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('risks'); const id=nextId(arr,'R'); const tr=document.createElement('tr'); tr.innerHTML=`${rowRisk({id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''})}`; $('#tblRisks tbody').appendChild(tr); };
+    $('#addIssueBtn').onclick= ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('issues');const id=nextId(arr,'I'); const tr=document.createElement('tr'); tr.innerHTML=`${rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''})}`; $('#tblIssues tbody').appendChild(tr); };
+    $('#addPlanBtn').onclick = ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('plans'); const id=nextId(arr,'P'); const tr=document.createElement('tr'); tr.innerHTML=`${rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'})}`; $('#tblPlans tbody').appendChild(tr); };
+
+    $('#addSuggestionBtn').onclick = ()=>{
+      const arr = rowsFromTable('suggestions');
+      const id  = nextId(arr,'S');
+      const today = new Date().toISOString().slice(0,10);
+      const tr=document.createElement('tr');
+      tr.innerHTML = rowSuggestion({id,description:'',subject:'',owner:'',submitted: today, status:'', reviewerRole:'', reviewed:'', comments:''}, true);
+      $('#tblSuggestions tbody').appendChild(tr);
+    };
+
+    // Initial
+    renderAll();
+  </script>
+</body>
+</html>
