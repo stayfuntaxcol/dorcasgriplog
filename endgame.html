@@ -33,7 +33,6 @@
     nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
     nav.tabs button.active{background:#0ea5a3;color:#fff}
-    nav.tabs .push-right{margin-left:auto}
 
     section{display:none;padding:14px 16px}
     section.active{display:block}
@@ -41,7 +40,6 @@
     .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
     h2{margin:0 0 6px 0;font-size:18px}
     p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
-
     .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
     .sectionbar .left{display:flex;gap:8px;align-items:center}
     .sectionbar .right{display:flex;gap:8px;align-items:center}
@@ -50,7 +48,6 @@
     th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
     th{background:#f9fbfb;text-align:left}
     thead tr.filters th{background:#fff}
-
     .row-actions{display:flex;gap:6px}
 
     footer{padding:16px;color:var(--muted);font-size:12px}
@@ -70,6 +67,11 @@
     <div class="leftbar">
       <button id="btnLoad" class="btn">Load from Firestore</button>
       <button id="btnSaveAll" class="btn primary" disabled>Save all</button>
+      <button class="btn" id="addGoalBtn"  disabled>+ Goal</button>
+      <button class="btn" id="addRiskBtn"  disabled>+ Risk</button>
+      <button class="btn" id="addIssueBtn" disabled>+ Issue</button>
+      <button class="btn" id="addPlanBtn"  disabled>+ Plan</button>
+      <button class="btn" id="addSuggestionBtn">+ Suggestion</button>
     </div>
 
     <div class="rightbar">
@@ -92,39 +94,92 @@
     </div>
   </div>
 
-  <!-- Tabs -->
   <nav class="tabs" role="tablist">
     <button class="active" data-tab="goals">G – Goals</button>
     <button data-tab="risks">R – Risks</button>
     <button data-tab="issues">I – Issues</button>
     <button data-tab="plans">P – Plans</button>
-    <button class="push-right" data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="suggestions">S – Suggestions</button>
     <button data-tab="notifications">N – Notifications</button>
   </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar"><div class="left"><h2>Goals</h2></div></div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th><th>Goal (SMART)</th><th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th><th style="width:130px">End</th>
+            <th style="width:140px">Status</th><th>Notes</th><th style="width:140px">Actions</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar"><div class="left"><h2>Risks</h2></div></div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th><th>Description</th><th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th><th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th><th>Mitigation</th><th style="width:140px">Actions</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar"><div class="left"><h2>Issues</h2></div></div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th><th>Description</th><th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th><th style="width:140px">Status</th>
+            <th>Resolution</th><th style="width:140px">Actions</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar"><div class="left"><h2>Plans</h2></div></div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th><th>Description</th><th style="width:160px">Owner</th>
+            <th style="width:140px">Goal Link</th><th style="width:130px">Start</th><th style="width:130px">End</th>
+            <th style="width:140px">Status</th><th style="width:140px">Actions</th>
+          </tr>
+        </thead><tbody></tbody>
+      </table>
+    </div>
+  </section>
 
   <!-- Suggestions -->
   <section id="suggestions" role="tabpanel">
     <div class="card">
-      <div class="sectionbar">
-        <div class="left"><h2>Suggestions</h2></div>
-        <div class="right"><button class="btn" id="addSuggestionBtn">+ New Suggestion</button></div>
-      </div>
+      <div class="sectionbar"><div class="left"><h2>Suggestions</h2></div></div>
       <table id="tblSuggestions">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
-            <th style="width:150px">Subject</th>
-            <th style="width:180px">Owner</th>
-            <th style="width:140px">Submitted</th>
-            <th style="width:140px">Status</th>
-            <th style="width:180px">Reviewer Role</th>
-            <th style="width:140px">Reviewed</th>
-            <th>Comments</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:70px">ID</th><th>Description</th><th style="width:150px">Subject</th>
+            <th style="width:180px">Owner</th><th style="width:140px">Submitted</th>
+            <th style="width:140px">Status</th><th style="width:180px">Reviewer Role</th>
+            <th style="width:140px">Reviewed</th><th>Comments</th><th style="width:140px">Actions</th>
           </tr>
-        </thead>
-        <tbody></tbody>
+        </thead><tbody></tbody>
       </table>
     </div>
   </section>
@@ -132,13 +187,7 @@
   <!-- Notifications -->
   <section id="notifications" role="tabpanel">
     <div class="card">
-      <div class="sectionbar">
-        <div class="left"><h2>Notifications</h2></div>
-        <div class="right">
-          <!-- alleen Admin kan een losse (handmatige) notification toevoegen, verstoppen we via JS -->
-          <button class="btn" id="addNotifBtn" style="display:none">+ New Notification</button>
-        </div>
-      </div>
+      <div class="sectionbar"><div class="left"><h2>Notifications</h2></div></div>
       <table id="tblNotifications">
         <thead>
           <tr class="labels">
@@ -150,32 +199,29 @@
             <th style="width:140px">Date</th>
             <th>Comments</th>
             <th style="width:110px">Stars</th>
-            <th style="width:160px">Actions</th>
+            <th style="width:140px">Actions</th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
-      <p class="help">Everyone can ⭐ a notification. Only <strong>Admin</strong> can edit or delete notifications.</p>
     </div>
   </section>
 
-  <!-- Simple placeholders for the 4 main tabs so the file stays self-contained -->
-  <section id="goals" class="active" role="tabpanel"><div class="card"><h2>Goals</h2><p class="help">Placeholder table (wire into your existing Goals UI if needed).</p></div></section>
-  <section id="risks" role="tabpanel"><div class="card"><h2>Risks</h2><p class="help">Placeholder table.</p></div></section>
-  <section id="issues" role="tabpanel"><div class="card"><h2>Issues</h2><p class="help">Placeholder table.</p></div></section>
-  <section id="plans" role="tabpanel"><div class="card"><h2>Plans</h2><p class="help">Placeholder table.</p></div></section>
-
   <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
 
-<script type="module"> import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js"; import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js"; import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, increment, query, where } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js"; const firebaseConfig = { apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps", authDomain: "griplog.firebaseapp.com", projectId: "griplog", storageBucket: "griplog.appspot.com", messagingSenderId: "1097061844582", appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7" }; const app = initializeApp(firebaseConfig); const auth = getAuth(app); const db = getFirestore(app); const $ = (q,root=document)=>root.querySelector(q); const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q)); $('#yr').textContent = new Date().getFullYear(); // ------- Auth minimal (ongewijzigd t.o.v. jouw versie) ------- const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']); let CURRENT_UID = null; let CURRENT_ROLE = 'Viewer'; function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; } async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); } $('#btnSignup').onclick=async ()=>{ const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value; if(!fullName||!org||!pass){ alert('fill required fields'); return; } if(EDIT_ROLES.has(role) && !email){ alert('email required for editors'); return; } const used=email||slugEmailFromName(fullName); try{ const cred=await createUserWithEmailAndPassword(auth, used, pass); await updateProfile(cred.user,{displayName:fullName}); await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() }); alert('registered. please login.'); await signOut(auth); }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'account exists. login.' : e.message); } }; $('#btnSignin').onclick=async ()=>{ const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value; if(!fullName||!pass){ alert('fill required fields'); return; } if(EDIT_ROLES.has(rolePick) && !email){ alert('email required for editors'); return; } const used=email||slugEmailFromName(fullName); try{ const cred=await signInWithEmailAndPassword(auth, used, pass); if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); } }catch(e){ alert('login failed: '+e.message); } }; $('#btnSignout').onclick=()=>signOut(auth); onAuthStateChanged(auth, async (user)=>{ const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo'); if(!user){ CURRENT_UID=null; CURRENT_ROLE='Viewer'; authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; renderAll(); return; } $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID = user.uid; CURRENT_ROLE = 'Viewer'; let full=user.displayName||user.email||''; try{ const snap=await getDoc(doc(db,'users',user.uid)); if(snap.exists()){ const d=snap.data(); CURRENT_ROLE=d.role||'Viewer'; full=d.fullName||full; } else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); } }catch(_){} authTxt.textContent = CURRENT_ROLE.toLowerCase(); userInfo.textContent = `${(full||'').toLowerCase()} – ${CURRENT_ROLE.toLowerCase()}`; await loadAll(); }); // ================== ⭐ STAR SYSTEM (generic) ================== // Storage-model per document: // - stars: number (totaal) // - starredBy: map { "<uid>": timestamp true|ISO|string } -> we zetten serverTimestamp(), rules kunnen true vereisen. // // Helpers: function hasStar(data, uid){ return !!(data?.starredBy && data.starredBy[uid]); } function starCellHTML(coll, id, data){ const count = data?.stars || 0; const already = (CURRENT_UID && hasStar(data, CURRENT_UID)); const title = already ? 'You starred this' : 'Add star'; return ` <button class="btn ghost" title="${title}" data-star="${coll}:${id}" ${already?'disabled':''}>⭐</button> <span data-stars="${coll}:${id}">${count}</span> `; } async function starDoc(coll, id){ if(!CURRENT_UID){ alert('sign in to star'); return; } const ref = doc(db, coll, id); const snap = await getDoc(ref); if(!snap.exists()) return; const data = snap.data(); if(hasStar(data, CURRENT_UID)) return; // dubbel voorkomen aan clientzijde // patch: +1 en markeer uid const patch = { stars: increment(1) }; patch[`starredBy.${CURRENT_UID}`] = new Date().toISOString(); // of true; zorg dat je rules dit toestaan await updateDoc(ref, patch); // UI bijwerken als de cel aanwezig is const cnt = document.querySelector(`[data-stars="${coll}:${id}"]`); if(cnt) cnt.textContent = String((data.stars||0)+1); const btn = document.querySelector(`[data-star="${coll}:${id}"]`); if(btn) btn.disabled = true; } function wireStarClicks(){ document.addEventListener('click', async (e)=>{ const key = e.target?.dataset?.star; if(!key) return; const [coll, id] = key.split(':'); try{ await starDoc(coll, id); } catch(err){ alert('star failed: '+err.message); } }); } // Overzicht: items die IK heb gestarred (per collectie) async function listMyStars(){ if(!CURRENT_UID){ alert('sign in first'); return; } const cols = ['goals','risks','issues','plans','suggestions','notifications']; const results = []; for(const c of cols){ // Firestore ondersteunt map-query: where("starredBy.<uid>", "==", true|<value>) // We zoeken op niet-null; hier gebruiken we "== true" als je rules true opslaan. const qy = query(collection(db, c), where(`starredBy.${CURRENT_UID}`, '!=', null)); try{ const snap = await getDocs(qy); snap.docs.forEach(d=>results.push({coll:c, id:d.id, ...d.data()})); }catch(_){ /* collectie kan ontbreken → negeren */ } } if(results.length===0){ alert('No stars yet.'); return; } const lines = results .sort((a,b)=>(a.coll+a.id).localeCompare(b.coll+b.id)) .map(r=>`${r.coll.toUpperCase()} • ${r.id} • ${r.subject||r.description||r.goal||''}`); alert(`Your starred items:\n\n${lines.join('\n')}`); } // Voeg knopje toe in toolbar (rechts) om eigen sterren te bekijken (function addMyStarsButton(){ const btn = document.createElement('button'); btn.className='btn'; btn.textContent='My ⭐'; btn.title='Show items you starred'; btn.id='btnMyStars'; $('.rightbar')?.prepend(btn); btn.onclick = listMyStars; })(); // ================== NOTIFICATIONS (met ⭐) ================== async function loadNotifications(){ const snap = await getDocs(collection(db,'notifications')); const rows = snap.docs.map(d=>({id:d.id,...d.data()})); renderNotifications(rows); } function renderNotifications(rows){ const tbody=$('#tblNotifications tbody'); tbody.innerHTML=''; rows.sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // nieuwste eerst rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=` <td>${r.id}</td> <td>${escapeHtml(r.description||'')}</td> <td>${escapeHtml(r.subject||'')}</td> <td>${escapeHtml(r.status||'')}</td> <td>${escapeHtml(r.role||'')}</td> <td>${escapeHtml(r.date||'')}</td> <td>${escapeHtml(r.comments||'')}</td> <td>${starCellHTML('notifications', r.id, r)}</td> <td>${(CURRENT_ROLE==='Admin')?('<button class="btn danger" data-del-notif="'+r.id+'">Del</button>'):'—'}</td>`; tbody.appendChild(tr); }); } // Delete (Admin) document.addEventListener('click', async (e)=>{ if(e.target?.dataset?.delNotif){ if(CURRENT_ROLE!=='Admin'){ alert('Admin only'); return; } const id=e.target.dataset.delNotif; if(!confirm(`Delete notification ${id}?`)) return; await deleteDoc(doc(db,'notifications',id)); loadNotifications(); } }); // ---------- Utilities ---------- function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); } async function loadAll(){ await loadNotifications(); } function renderAll(){ const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'notifications'; if(active==='notifications') loadNotifications(); } // Init $('#btnLoad').onclick = loadAll; $('#btnSaveAll').onclick = ()=> alert('Hook your bulk save here.'); wireStarClicks(); loadAll(); </script> Hoe voeg je ⭐ toe aan Goals/Risks/Issues/Plans/Suggestions? 
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-In jouw rij-renderfunctie (waar je <td>…</td> opbouwt), voeg een extra kolom toe met:
-
-// voorbeeld voor Goals: <td>${starCellHTML('goals', row.id, row)}</td> 
-
-En zorg dat het document de velden heeft (bij save/seed):
-
-{ id:'G1', goal:'…', /* … */ stars: 0, starredBy: {} } 
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
@@ -185,15 +231,22 @@ En zorg dat het document de velden heeft (bij save/seed):
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    // ---------- Roles / rights ----------
+    // Roles / rights
     const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    let CAN_ADMIN = false;  // only Admin can edit/delete notifications
-    let CURRENT_UID = null;
+    let CAN_EDIT=false, IS_ADMIN=false, CURRENT_UID=null, CURRENT_ROLE='Viewer', CURRENT_NAME='';
 
+    // Owners & status choices
+    const owners=["","Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"];
+    const statuses={ goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"], suggestion:["","Approved","Considered","Dismissed"] };
+    const tri=["","Low","Medium","High"];
+
+    // Cache of server data for diffing
+    let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],notifications:[]};
+
+    // ---------- Auth ----------
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
 
-    // ---------- Auth UI ----------
     $('#btnSignup').onclick=async ()=>{
       const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
       if(!fullName||!org||!pass){ alert('fill required fields'); return; }
@@ -214,7 +267,6 @@ En zorg dat het document de velden heeft (bij save/seed):
       const used=email||slugEmailFromName(fullName);
       try{
         const cred=await signInWithEmailAndPassword(auth, used, pass);
-        // Optional: update chosen role at login
         if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
       }catch(e){ alert('login failed: '+e.message); }
     };
@@ -222,268 +274,407 @@ En zorg dat het document de velden heeft (bij save/seed):
 
     onAuthStateChanged(auth, async (user)=>{
       const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ CURRENT_UID=null; CAN_ADMIN=false; authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; $('#addNotifBtn').style.display='none'; renderAll(); return; }
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok');
+      CURRENT_UID = user.uid;
 
-      CURRENT_UID=user.uid;
       let role='Viewer', full=user.displayName||user.email||'';
       try{
         const snap=await getDoc(doc(db,'users',user.uid));
-        if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; }
+        if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
         else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
       }catch(err){ console.warn('role load failed', err); }
 
-      CAN_ADMIN = (role === 'Admin') && !!user.email;
-      authTxt.textContent = CAN_ADMIN ? 'admin' : 'viewer';
+      CURRENT_ROLE = role; CURRENT_NAME = (full||'');
+      const isEditor = EDIT_ROLES.has(role) && !!user.email;
+      IS_ADMIN = (role==='Admin');
+      authTxt.textContent = isEditor? 'editor' : 'viewer';
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
-      // show add notification button only to Admin
-      $('#addNotifBtn').style.display = CAN_ADMIN ? 'inline-block' : 'none';
-
+      setEditMode(isEditor);
       await loadAll();
     });
 
-    // ---------- Tabs ----------
-    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
-      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
-      renderTab(tab);
-    }));
-
-    function renderAll(){
-      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
-      renderTab(active);
-    }
-    function renderTab(kind){
-      if(kind==='notifications') loadNotifications();
-      else if(kind==='suggestions') loadSuggestions();
-      // other tabs are placeholders in this file
+    function setEditMode(can){
+      CAN_EDIT=!!can;
+      $('#btnSaveAll').disabled=!CAN_EDIT;
+      $('#addGoalBtn').disabled=!CAN_EDIT;
+      $('#addRiskBtn').disabled=!CAN_EDIT;
+      $('#addIssueBtn').disabled=!CAN_EDIT;
+      $('#addPlanBtn').disabled=!CAN_EDIT;
+      // suggestions: anyone can add via button (kept enabled)
+      renderAll();
     }
 
-    // ---------- Suggestions (minimal) ----------
-    const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan","New Suggestion","Goal","Risk","Issue","Plan","Suggestion"];
-    const suggestionStatus   = ["","Added","Edited","Deleted","Reviewed","Approved","Dismissed","Considered"];
-    const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+    // ---------- Loading / Saving ----------
+    $('#btnLoad').onclick=loadAll;
+    $('#btnSaveAll').onclick=saveAll;
 
-    async function loadSuggestions(){
-      const snap = await getDocs(collection(db,'suggestions'));
-      const rows = snap.docs.map(d=>({id:d.id,...d.data()})).sort((a,b)=>num(a.id)-num(b.id));
-      renderSuggestions(rows);
+    async function loadAll(){
+      try{
+        const [g,r,i,p,s,n] = await Promise.all([
+          getDocs(collection(db,'goals')),
+          getDocs(collection(db,'risks')),
+          getDocs(collection(db,'issues')),
+          getDocs(collection(db,'plans')),
+          getDocs(collection(db,'suggestions')),
+          getDocs(collection(db,'notifications')),
+        ]);
+        cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+        cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+        cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+        cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+        cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+        cache.notifications = n.docs.map(d=>({id:d.id,...d.data()}));
+        renderAll();
+      }catch(err){ alert('Load failed: '+err.message); console.error(err); }
     }
 
+    async function saveAll(){
+      if(!CAN_EDIT){ alert('no edit rights'); return; }
+      const nowISO = new Date().toISOString().slice(0,10);
+
+      const tblGoals = rowsFromTable('goals');
+      const tblRisks = rowsFromTable('risks');
+      const tblIssues= rowsFromTable('issues');
+      const tblPlans = rowsFromTable('plans');
+      const tblSugg  = rowsFromTable('suggestions');
+
+      // Diff: added / edited / deleted
+      const diffs = {
+        goals: diffById(cache.goals, tblGoals),
+        risks: diffById(cache.risks, tblRisks),
+        issues: diffById(cache.issues, tblIssues),
+        plans: diffById(cache.plans, tblPlans),
+        suggestions: diffById(cache.suggestions, tblSugg),
+      };
+
+      const tasks = [];
+      tblGoals.forEach(r=>tasks.push(setDoc(doc(db,'goals',r.id), r)));
+      tblRisks.forEach(r=>tasks.push(setDoc(doc(db,'risks',r.id), r)));
+      tblIssues.forEach(r=>tasks.push(setDoc(doc(db,'issues',r.id), r)));
+      tblPlans.forEach(r=>tasks.push(setDoc(doc(db,'plans',r.id), r)));
+      tblSugg.forEach(r=>tasks.push(setDoc(doc(db,'suggestions',r.id), r)));
+
+      // Generate notifications for diffs
+      queueDiffNotifications(diffs.goals,'Goal',tblGoals,cache.goals, nowISO, tasks);
+      queueDiffNotifications(diffs.risks,'Risk',tblRisks,cache.risks, nowISO, tasks);
+      queueDiffNotifications(diffs.issues,'Issue',tblIssues,cache.issues, nowISO, tasks);
+      queueDiffNotifications(diffs.plans,'Plan',tblPlans,cache.plans, nowISO, tasks);
+      // For suggestions: detect special review statuses
+      queueSuggestionNotifications(diffs.suggestions, tblSugg, cache.suggestions, nowISO, tasks);
+
+      try{
+        await Promise.all(tasks);
+        alert('saved to firestore');
+        await loadAll();
+      }catch(err){ alert('Save failed: '+err.message); console.error(err); }
+    }
+
+    // ---------- Diff & Notification helpers ----------
+    function shallowEqual(a,b){
+      const ka=Object.keys(a||{}), kb=Object.keys(b||{});
+      if(ka.length!==kb.length) return false;
+      for(const k of ka){ if(a[k]!==b[k]) return false; }
+      return true;
+    }
+    function mapById(arr){ const m={}; (arr||[]).forEach(x=>{ if(x && x.id) m[x.id]=x; }); return m; }
+    function diffById(prevArr, nextArr){
+      const prev=mapById(prevArr), next=mapById(nextArr);
+      const added=[], edited=[], deleted=[];
+      for(const id in next){ if(!prev[id]) added.push(next[id]); else if(!shallowEqual(stripId(prev[id]), stripId(next[id]))) edited.push(next[id]); }
+      for(const id in prev){ if(!next[id]) deleted.push(prev[id]); }
+      return {added, edited, deleted};
+    }
+    function stripId(o){ const c={...o}; delete c.id; return c; }
+
+    function subjectFor(kind, isNew){ return isNew ? `New ${kind}` : kind; }
+    function notifyDocId(){ return 'N'+Date.now().toString(); }
+    function actorRole(){ return CURRENT_ROLE || 'Viewer'; }
+
+    function queueDiffNotifications(diff, kind, nowRows, oldRows, dateISO, tasks){
+      diff.added.forEach(r=>{
+        tasks.push(setDoc(doc(db,'notifications', notifyDocId()), {
+          id: notifyDocId(), description: (r.description||r.goal||r.notes||'').slice(0,240),
+          subject: subjectFor(kind,true), status:'Added', role: actorRole(),
+          date: dateISO, comments:'', stars:0, starredBy:{}
+        }));
+      });
+      diff.edited.forEach(r=>{
+        tasks.push(setDoc(doc(db,'notifications', notifyDocId()), {
+          id: notifyDocId(), description: (r.description||r.goal||r.notes||'').slice(0,240),
+          subject: subjectFor(kind,false), status:'Edited', role: actorRole(),
+          date: dateISO, comments:'', stars:0, starredBy:{}
+        }));
+      });
+      diff.deleted.forEach(r=>{
+        tasks.push(setDoc(doc(db,'notifications', notifyDocId()), {
+          id: notifyDocId(), description: (r.description||r.goal||r.notes||r.id||'').slice(0,240),
+          subject: subjectFor(kind,false), status:'Deleted', role: actorRole(),
+          date: dateISO, comments:'', stars:0, starredBy:{}
+        }));
+      });
+    }
+
+    function queueSuggestionNotifications(diff, nextRows, prevRows, dateISO, tasks){
+      // Basic add/edit/delete like others
+      queueDiffNotifications(diff,'Suggestion', nextRows, prevRows, dateISO, tasks);
+      // Review statuses: Approved / Dismissed / Considered
+      const prev=mapById(prevRows); const next=mapById(nextRows);
+      Object.keys(next).forEach(id=>{
+        const before = prev[id]?.status || '';
+        const after  = next[id]?.status || '';
+        const isReview = ['Approved','Dismissed','Considered'].includes(after) && after!==before;
+        if(isReview){
+          tasks.push(setDoc(doc(db,'notifications', notifyDocId()), {
+            id: notifyDocId(),
+            description: (next[id].description||'').slice(0,240),
+            subject: 'Suggestion',
+            status: after, // Approved / Dismissed / Considered
+            role: actorRole(),
+            date: dateISO,
+            comments: (next[id].comments||''),
+            stars:0, starredBy:{}
+          }));
+        }
+      });
+    }
+
+    // ---------- Renderers ----------
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+    function ownerSelect(val=''){ return `<select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`; }
+    function selectOf(arr,val,enabled){ return `<select ${enabled?'' : 'disabled'}>${arr.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>`; }
+
+    function rowGoal(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}"   ${!CAN_EDIT?'disabled':''}/></td>
+        <td>${selectOf(statuses.goals, r.status||'', CAN_EDIT)}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
+        <td>${CAN_EDIT? `<div class="row-actions"><button class="btn danger" data-del="goals">Del</button></div>` : '—'}</td>`;
+    }
+    function rowRisk(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td>${selectOf(tri, r.likelihood||'', CAN_EDIT)}</td>
+        <td>${selectOf(tri, r.impact||'', CAN_EDIT)}</td>
+        <td>${selectOf(statuses.risks, r.status||'', CAN_EDIT)}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
+        <td>${CAN_EDIT? `<div class="row-actions"><button class="btn danger" data-del="risks">Del</button></div>` : '—'}</td>`;
+    }
+    function rowIssue(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td>${selectOf(tri, r.severity||'', CAN_EDIT)}</td>
+        <td>${selectOf(statuses.issues, r.status||'', CAN_EDIT)}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
+        <td>${CAN_EDIT? `<div class="row-actions"><button class="btn danger" data-del="issues">Del</button></div>` : '—'}</td>`;
+    }
+    function rowPlan(r){
+      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
+        <td>${ownerSelect(r.owner||'')}</td>
+        <td><input type="text" value="${r.goalId||''}" placeholder="G#" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
+        <td><input type="date" value="${r.end||''}"   ${!CAN_EDIT?'disabled':''}/></td>
+        <td>${selectOf(statuses.plans, r.status||'', CAN_EDIT)}</td>
+        <td>${CAN_EDIT? `<div class="row-actions"><button class="btn danger" data-del="plans">Del</button></div>` : '—'}</td>`;
+    }
     function rowSuggestion(r, editable){
-      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-      const ownerSel   = `<input type="text" value="${r.owner||''}" ${editable?'' : 'disabled'} />`;
-      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
-      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subjectSel = `<select ${editable?'' : 'disabled'}>${["","Add new Goal","Add new Risk","Add new Issue","Add new Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<input type="text" value="${escapeHtml(r.owner||'')}" ${editable? '' : 'disabled'} />`;
+      const statusSel  = `<select ${editable?'' : 'disabled'}>${statuses.suggestion.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
       const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
-      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
-      const actions    = `<div class="row-actions">
-        <button class="btn" data-save-sug="${r.id}">Save</button>
-        <button class="btn danger" data-del-sug="${r.id}">Del</button>
-      </div>`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}"  ${editable?'' : 'disabled'} />`;
       return `
-        <td contenteditable="false">${escapeHtml(r.id||'')}</td>
-        <td>${editable? `<textarea>${escapeHtml(r.description||'')}</textarea>` : `<div>${escapeHtml(r.description||'')}</div>`}</td>
+        <td contenteditable="${editable}">${escapeHtml(r.id||'')}</td>
+        <td>${editable? `<textarea>${escapeHtml(r.description||'')}</textarea>` : escapeHtml(r.description||'')}</td>
         <td>${subjectSel}</td>
         <td>${ownerSel}</td>
         <td>${subDate}</td>
         <td>${statusSel}</td>
-        <td>${revRoleSel}</td>
+        <td><input type="text" value="${escapeHtml(r.reviewerRole||'')}" ${editable? '' : 'disabled'} /></td>
         <td>${revDate}</td>
-        <td>${editable? `<textarea>${escapeHtml(r.comments||'')}</textarea>` : `<div>${escapeHtml(r.comments||'')}</div>`}</td>
-        <td>${actions}</td>`;
+        <td>${editable? `<textarea>${escapeHtml(r.comments||'')}</textarea>` : escapeHtml(r.comments||'')}</td>
+        <td>${editable? `<div class="row-actions"><button class="btn danger" data-del="suggestions">Del</button></div>` : '—'}</td>`;
+    }
+    function rowNotification(r){
+      const canEdit = IS_ADMIN;
+      const idCell = `<td>${escapeHtml(r.id||'')}</td>`;
+      const desc   = canEdit ? `<textarea>${escapeHtml(r.description||'')}</textarea>` : `<div>${escapeHtml(r.description||'')}</div>`;
+      const subj   = `<select ${canEdit?'' : 'disabled'}>${["New Goal","New Risk","New Issue","New Plan","New Suggestion","Goal","Risk","Issue","Plan","Suggestion"].map(s=>`<option ${s===(r.subject||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const status = `<select ${canEdit?'' : 'disabled'}>${["Added","Edited","Deleted","Reviewed","Approved","Dismissed","Considered"].map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const role   = `<select ${canEdit?'' : 'disabled'}>${["Admin","Strategic Program Advisor","Thematic Expert","Projectmanager","Viewer"].map(s=>`<option ${s===(r.role||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const date   = `<input type="date" value="${r.date||''}" ${canEdit?'' : 'disabled'} />`;
+      const comm   = canEdit ? `<textarea>${escapeHtml(r.comments||'')}</textarea>` : `<div>${escapeHtml(r.comments||'')}</div>`;
+      const starUI = `<button class="btn ghost" data-star="${r._docId||r.id}">⭐</button> <span data-stars="${r._docId||r.id}">${r.stars||0}</span>`;
+      const actions= canEdit ? `<button class="btn" data-edit-noti="${r._docId||r.id}">Edit</button> <button class="btn danger" data-del-noti="${r._docId||r.id}">Del</button>` : '—';
+      return `${idCell}<td>${desc}</td><td>${subj}</td><td>${status}</td><td>${role}</td><td>${date}</td><td>${comm}</td><td>${starUI}</td><td>${actions}</td>`;
     }
 
-    function renderSuggestions(rows){
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; cache.goals.sort((a,b)=>num(a.id)-num(b.id)); cache.goals.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); }); }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; cache.risks.sort((a,b)=>num(a.id)-num(b.id)); cache.risks.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; cache.issues.sort((a,b)=>num(a.id)-num(b.id)); cache.issues.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); }); }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; cache.plans.sort((a,b)=>num(a.id)-num(b.id)); cache.plans.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); }); }
+    function renderSuggestions(){
       const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
-      rows.forEach(r=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML = rowSuggestion(r, true);
-        tbody.appendChild(tr);
+      cache.suggestions.sort((a,b)=>num(a.id)-num(b.id));
+      cache.suggestions.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowSuggestion(r, CAN_EDIT); tbody.appendChild(tr); });
+    }
+    function renderNotifications(){
+      const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
+      const rows = [...cache.notifications].map(d=>({ ...d, _docId: d.id })); // Firestore id == field id here
+      rows.sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // newest first
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowNotification(r); tbody.appendChild(tr); });
+    }
+
+    function renderAll(){
+      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      if(active==='goals') renderGoals();
+      else if(active==='risks') renderRisks();
+      else if(active==='issues') renderIssues();
+      else if(active==='plans') renderPlans();
+      else if(active==='suggestions') renderSuggestions();
+      else renderNotifications();
+    }
+
+    // ---------- Table extractors ----------
+    function rowsFromTable(kind){
+      const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans', suggestions:'#tblSuggestions'};
+      const sel = map[kind]; const rows = Array.from(document.querySelectorAll(`${sel} tbody tr`));
+      return rows.map(tr=>{
+        const tds = Array.from(tr.querySelectorAll('td'));
+        if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value||'', end:tds[4].querySelector('input').value||'', status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
+        if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').value, status:tds[5].querySelector('select').value, mitigation:tds[6].innerText.trim() };
+        if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, severity:tds[3].querySelector('select').value, status:tds[4].querySelector('select').value, resolution:tds[5].innerText.trim() };
+        if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, goalId:tds[3].querySelector('input').value.trim(), start:tds[4].querySelector('input').value||'', end:tds[5].querySelector('input').value||'', status:tds[6].querySelector('select').value };
+        if(kind==='suggestions'){
+          const descEl = tds[1].querySelector('textarea,div'); const commEl = tds[8].querySelector('textarea,div');
+          return {
+            id: tds[0].innerText.trim(),
+            description: (descEl.value ?? descEl.innerText ?? '').trim(),
+            subject: tds[2].querySelector('select').value,
+            owner: tds[3].querySelector('input').value.trim(),
+            submitted: tds[4].querySelector('input').value || '',
+            status: tds[5].querySelector('select').value,
+            reviewerRole: tds[6].querySelector('input').value.trim(),
+            reviewed: tds[7].querySelector('input').value || '',
+            comments: (commEl.value ?? commEl.innerText ?? '').trim()
+          };
+        }
+      }).filter(r=>r && r.id);
+    }
+
+    // ---------- Add row buttons + instant "Added" notifications ----------
+    function nextId(arr, prefix){ let m=0; (arr||[]).forEach(x=>{ const n=parseInt(String(x.id||'').replace(/\D+/g,''))||0; if(n>m) m=n; }); return prefix + (m+1); }
+    function quickNotify(subject,status,description=''){
+      const id = 'N'+Date.now();
+      const docRef = doc(db,'notifications', id);
+      return setDoc(docRef, {
+        id, subject, status,
+        role: CURRENT_ROLE||'Viewer',
+        description: (description||'').slice(0,240),
+        comments:'', date: new Date().toISOString().slice(0,10),
+        stars:0, starredBy:{}
       });
     }
 
-    // Add / Save / Delete suggestions (and create notifications accordingly)
+    $('#addGoalBtn').onclick = async ()=>{ if(!CAN_EDIT) return;
+      const id=nextId(cache.goals,'G'); const row={id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''};
+      cache.goals.push(row); renderGoals();
+      await quickNotify('New Goal','Added',`Created ${id}`);
+    };
+    $('#addRiskBtn').onclick = async ()=>{ if(!CAN_EDIT) return;
+      const id=nextId(cache.risks,'R'); const row={id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''};
+      cache.risks.push(row); renderRisks();
+      await quickNotify('New Risk','Added',`Created ${id}`);
+    };
+    $('#addIssueBtn').onclick= async ()=>{ if(!CAN_EDIT) return;
+      const id=nextId(cache.issues,'I'); const row={id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''};
+      cache.issues.push(row); renderIssues();
+      await quickNotify('New Issue','Added',`Created ${id}`);
+    };
+    $('#addPlanBtn').onclick = async ()=>{ if(!CAN_EDIT) return;
+      const id=nextId(cache.plans,'P'); const row={id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'};
+      cache.plans.push(row); renderPlans();
+      await quickNotify('New Plan','Added',`Created ${id}`);
+    };
     $('#addSuggestionBtn').onclick = async ()=>{
-      const id = await nextIdFromCollection('suggestions','S');
-      const today = new Date().toISOString().slice(0,10);
-      const payload = { id, description:'', subject:'New Suggestion', owner:'', submitted: today, status:'Added', reviewerRole:'', reviewed:'', comments:'' };
-      await setDoc(doc(db,'suggestions',id), payload);
-      await createNotification({ description:`${id} created`, subject:'New Suggestion', status:'Added', role:'Projectmanager', comments:'' });
-      await loadSuggestions();
+      const id=nextId(cache.suggestions,'S'); const today=new Date().toISOString().slice(0,10);
+      const row={id,description:'',subject:'',owner:CURRENT_NAME||'',submitted:today,status:'',reviewerRole:'',reviewed:'',comments:''};
+      cache.suggestions.push(row); renderSuggestions();
+      await quickNotify('New Suggestion','Added',`Created ${id}`);
     };
 
+    // ---------- Delete inline from tables → also notify Deleted ----------
     document.addEventListener('click', async (e)=>{
-      // save suggestion
-      if(e.target.dataset.saveSug){
-        const tr = e.target.closest('tr'); const id=e.target.dataset.saveSug;
-        const tds=Array.from(tr.querySelectorAll('td'));
-        const updated = {
-          id,
-          description: (tds[1].querySelector('textarea,div').value || tds[1].querySelector('textarea,div').innerText || '').trim(),
-          subject: tds[2].querySelector('select').value,
-          owner: tds[3].querySelector('input').value,
-          submitted: tds[4].querySelector('input').value||'',
-          status: tds[5].querySelector('select').value,
-          reviewerRole: tds[6].querySelector('select').value,
-          reviewed: tds[7].querySelector('input').value||'',
-          comments: (tds[8].querySelector('textarea,div').value || tds[8].querySelector('textarea,div').innerText || '').trim()
-        };
-        await setDoc(doc(db,'suggestions',id), updated);
-        const notifStatus = updated.reviewed ? 'Reviewed' : 'Edited';
-        await createNotification({ description:`${id} ${notifStatus.toLowerCase()}`, subject:'Suggestion', status:notifStatus, role: updated.reviewerRole||'Projectmanager', comments: updated.comments||'' });
-        alert('Suggestion saved');
-      }
-      // delete suggestion
-      if(e.target.dataset.delSug){
-        const id=e.target.dataset.delSug;
-        if(!confirm(`Delete ${id}?`)) return;
-        await deleteDoc(doc(db,'suggestions',id));
-        await createNotification({ description:`${id} deleted`, subject:'Suggestion', status:'Deleted', role:'Admin', comments:'' });
-        await loadSuggestions();
-      }
+      const btn = e.target.closest('button[data-del]');
+      if(!btn) return;
+      const coll = btn.dataset.del; if(!CAN_EDIT){ alert('no edit rights'); return; }
+      const tr = btn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
+      if(!id) return;
+      if(!confirm(`Delete ${id} from ${coll}?`)) return;
+      try{
+        await deleteDoc(doc(db, coll, id));
+        // Update cache and UI
+        cache[coll] = (cache[coll]||[]).filter(x=>x.id!==id);
+        if(coll==='goals') renderGoals(); else if(coll==='risks') renderRisks(); else if(coll==='issues') renderIssues(); else if(coll==='plans') renderPlans(); else if(coll==='suggestions') renderSuggestions();
+        // Notify
+        const subjectMap={goals:'Goal', risks:'Risk', issues:'Issue', plans:'Plan', suggestions:'Suggestion'};
+        await quickNotify(subjectMap[coll]||'Item','Deleted',`Deleted ${id}`);
+      }catch(err){ alert('Delete failed: '+err.message); }
     });
 
-    // ---------- Notifications ----------
-    const notifSubjects = ["New Goal","New Risk","New Issue","New Plan","New Suggestion","Goal","Risk","Issue","Plan","Suggestion"];
-    const notifStatus   = ["Added","Edited","Deleted","Reviewed","Approved","Dismissed","Considered"];
-    const notifRoles    = ["Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
-
-    async function loadNotifications(){
-      const snap = await getDocs(collection(db,'notifications'));
-      const rows = snap.docs.map(d=>({id:d.id,...d.data()}))
-        .sort((a,b)=> (b.date||'').localeCompare(a.date||'')); // newest first
-      renderNotifications(rows);
-    }
-
-    function renderNotifications(rows){
-      const tbody=$('#tblNotifications tbody');
-      tbody.innerHTML='';
-      rows.forEach(r=>{
-        const editableRow = CAN_ADMIN; // only Admin can edit
-        const subjSel  = `<select ${editableRow?'' : 'disabled'}>${notifSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-        const statusSel= `<select ${editableRow?'' : 'disabled'}>${notifStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
-        const roleSel  = `<select ${editableRow?'' : 'disabled'}>${notifRoles.map(s=>`<option ${s===r.role?'selected':''}>${s}</option>`).join('')}</select>`;
-        const dateInp  = `<input type="date" value="${(r.date||'').slice(0,10)}" ${editableRow?'' : 'disabled'} />`;
-        const descCell = editableRow? `<textarea>${escapeHtml(r.description||'')}</textarea>` : `<div>${escapeHtml(r.description||'')}</div>`;
-        const commCell = editableRow? `<textarea>${escapeHtml(r.comments||'')}</textarea>` : `<div>${escapeHtml(r.comments||'')}</div>`;
-        const starBtn  = `<button class="btn ghost" data-star="${r.id}">⭐</button> <span data-stars="${r.id}">${r.stars||0}</span>`;
-        const actions  = CAN_ADMIN
-          ? `<div class="row-actions">
-               <button class="btn" data-save-notif="${r.id}">Save</button>
-               <button class="btn danger" data-del-notif="${r.id}">Del</button>
-             </div>`
-          : '—';
-
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td>${r.id}</td>
-          <td>${descCell}</td>
-          <td>${subjSel}</td>
-          <td>${statusSel}</td>
-          <td>${roleSel}</td>
-          <td>${dateInp}</td>
-          <td>${commCell}</td>
-          <td>${starBtn}</td>
-          <td>${actions}</td>`;
-        tbody.appendChild(tr);
-      });
-    }
-
-    // Create notification (anywhere in app)
-    async function createNotification({description, subject, status, role, comments}){
-      const id = crypto.randomUUID();            // doc id
-      const date = new Date().toISOString().slice(0,10);
-      const docData = {
-        id, description: description||'',
-        subject: subject||'Suggestion',
-        status: status||'Added',
-        role: role||'Projectmanager',
-        date, comments: comments||'',
-        stars: 0, starredBy: {}
-      };
-      await setDoc(doc(db,'notifications', id), docData);
-    }
-    // Expose helper (optioneel voor je Goals/Risks/Issues/Plans pagina-logica)
-    window.createNotification = createNotification;
-
-    // Star & Admin actions
+    // ---------- Notifications: star / edit / delete ----------
     document.addEventListener('click', async (e)=>{
-      // ⭐
       if(e.target.dataset.star){
-        const id = e.target.dataset.star;
-        const ref=doc(db,'notifications',id);
-        const snap=await getDoc(ref);
-        if(!snap.exists()) return;
+        if(!CURRENT_UID){ alert('login required'); return; }
+        const id=e.target.dataset.star; const ref=doc(db,'notifications',id);
+        const snap=await getDoc(ref); if(!snap.exists()) return;
         const data=snap.data();
-        if(data.starredBy && data.starredBy[CURRENT_UID]) return; // al gestemd
-        const newStars = (data.stars||0)+1;
-        const patch = { stars: newStars };
-        patch[`starredBy.${CURRENT_UID}`] = true;
-        try{
-          await updateDoc(ref, patch);
-          // update UI count
-          const cnt = document.querySelector(`[data-stars="${id}"]`);
-          if(cnt) cnt.textContent = String(newStars);
-        }catch(err){ alert('star failed: '+err.message); }
+        if(data.starredBy && data.starredBy[CURRENT_UID]) return; // already
+        await updateDoc(ref, { [`starredBy.${CURRENT_UID}`]: true, stars: (data.stars||0)+1 });
+        await loadAll();
       }
-
-      // Save notif (Admin only)
-      if(e.target.dataset.saveNotif){
-        if(!CAN_ADMIN){ alert('Admin only'); return; }
-        const id = e.target.dataset.saveNotif;
-        const tr = e.target.closest('tr');
-        const tds=Array.from(tr.querySelectorAll('td'));
-        const updated = {
-          id,
-          description: (tds[1].querySelector('textarea,div').value || tds[1].querySelector('textarea,div').innerText || '').trim(),
+      if(e.target.dataset.delNoti){
+        if(!IS_ADMIN){ alert('only admin can delete notifications'); return; }
+        if(!confirm('Delete this notification?')) return;
+        await deleteDoc(doc(db,'notifications', e.target.dataset.delNoti));
+        await loadAll();
+      }
+      if(e.target.dataset.editNoti){
+        if(!IS_ADMIN){ alert('only admin can edit notifications'); return; }
+        // collect row values and persist
+        const row = e.target.closest('tr'); const tds=Array.from(row.querySelectorAll('td'));
+        const id = tds[0].innerText.trim();
+        const payload = {
+          description: tds[1].querySelector('textarea,div')?.value ?? tds[1].innerText.trim(),
           subject: tds[2].querySelector('select').value,
           status: tds[3].querySelector('select').value,
           role: tds[4].querySelector('select').value,
-          date: tds[5].querySelector('input').value || new Date().toISOString().slice(0,10),
-          comments: (tds[6].querySelector('textarea,div').value || tds[6].querySelector('textarea,div').innerText || '').trim(),
+          date: tds[5].querySelector('input').value || '',
+          comments: tds[6].querySelector('textarea,div')?.value ?? tds[6].innerText.trim(),
         };
-        try{
-          await setDoc(doc(db,'notifications',id), updated, {merge:true});
-          alert('notification saved');
-        }catch(err){ alert('save failed: '+err.message); }
-      }
-
-      // Delete notif (Admin only)
-      if(e.target.dataset.delNotif){
-        if(!CAN_ADMIN){ alert('Admin only'); return; }
-        const id = e.target.dataset.delNotif;
-        if(!confirm(`Delete notification ${id}?`)) return;
-        try{
-          await deleteDoc(doc(db,'notifications',id));
-          await loadNotifications();
-        }catch(err){ alert('delete failed: '+err.message); }
+        await updateDoc(doc(db,'notifications', id), payload);
+        await loadAll();
       }
     });
 
-    // Manual add (Admin)
-    $('#addNotifBtn').onclick = async ()=>{
-      if(!CAN_ADMIN) return;
-      await createNotification({ description:'manual notification', subject:'Suggestion', status:'Added', role:'Admin', comments:'' });
-      await loadNotifications();
-    };
-
-    // ---------- Load all first ----------
-    async function loadAll(){ await Promise.all([loadSuggestions(), loadNotifications()]); }
-    $('#btnLoad').onclick = loadAll;
-    // Save-all knop blijft hier zonder implementatie (je oude CRUD kan hieraan koppelen)
-    $('#btnSaveAll').onclick = ()=> alert('Hook your bulk save logic here.');
-
     // ---------- Utils ----------
-    function num(id){ const n=parseInt(String(id||'').replace(/\D+/g,''),10); return isNaN(n)?0:n; }
-    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-    async function nextIdFromCollection(coll,prefix){
-      const snap=await getDocs(collection(db,coll));
-      let max=0; snap.docs.forEach(d=>{ const n=parseInt(String(d.id||'').replace(/\D+/g,''))||0; if(n>max) max=n; });
-      return `${prefix}${max+1}`;
-    }
+    function num(id){ const n=parseInt(String(id).replace(/\D+/g,''))||0; return isNaN(n)?0:n; }
 
-    // Initial view
+    // Initial render
     renderAll();
+
+    // Tab switching
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderAll();
+    }));
   </script>
 </body>
 </html>
