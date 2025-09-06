@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,6 +5,80 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>GRIPlog – Honey Value Chain</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
+  <!--
+  FIRESTORE RULES (add these in your Firestore Security Rules and publish):
+
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{db}/documents {
+      function signedIn() { return request.auth != null; }
+
+      function userPath() { return /databases/$(db)/documents/users/$(request.auth.uid); }
+      function hasUserDoc() { return signedIn() && exists(userPath()); }
+      function userDoc() { return get(userPath()); }
+      function role() {
+        return hasUserDoc() && userDoc().data.role != null ? userDoc().data.role : 'Viewer';
+      }
+      function hasEmail() {
+        return signedIn() && request.auth.token.email != null && request.auth.token.email != "";
+      }
+      function isEditor() {
+        return hasEmail() && (role() in ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+      }
+      function isAdmin() { return role() == 'Admin' && hasEmail(); }
+      function idMatches(docId) { return request.resource.data.id == docId; }
+
+      match /users/{uid} {
+        allow read: if signedIn();
+        allow create: if signedIn() && request.auth.uid == uid;
+        allow update: if signedIn() && (request.auth.uid == uid || isAdmin());
+        allow delete: if signedIn() && isAdmin();
+      }
+
+      match /goals/{docId} {
+        allow read: if signedIn();
+        allow create, update: if isEditor() && idMatches(docId);
+        allow delete: if isEditor();
+      }
+      match /risks/{docId} {
+        allow read: if signedIn();
+        allow create, update: if isEditor() && idMatches(docId);
+        allow delete: if isEditor();
+      }
+      match /issues/{docId} {
+        allow read: if signedIn();
+        allow create, update: if isEditor() && idMatches(docId);
+        allow delete: if isEditor();
+      }
+      match /plans/{docId} {
+        allow read: if signedIn();
+        allow create, update: if isEditor() && idMatches(docId);
+        allow delete: if isEditor();
+      }
+
+      // Suggestions: everyone signed-in can create; editors can edit/delete.
+      // ⭐ One-star-per-user for any signed-in user.
+      match /suggestions/{docId} {
+        allow read: if signedIn();
+        allow create: if signedIn() && idMatches(docId)
+          && (request.resource.data.stars == null || request.resource.data.stars == 0)
+          && (request.resource.data.starredBy == null || request.resource.data.starredBy is map);
+        allow update: if signedIn() && (isSugStarUpdate() || isEditor());
+        allow delete: if signedIn() && isEditor();
+
+        function isSugStarUpdate() {
+          // allow *only* stars/starredBy to change, exactly +1 star by current user
+          let beforeStars = resource.data.stars == null ? 0 : resource.data.stars;
+          let beforeMap = resource.data.starredBy == null ? {} : resource.data.starredBy;
+          return request.resource.data.diff(resource.data).changedKeys().hasOnly(["stars","starredBy"]) &&
+                 beforeMap[request.auth.uid] == null &&
+                 request.resource.data.starredBy[request.auth.uid] == true &&
+                 request.resource.data.stars == (beforeStars + 1);
+        }
+      }
+    }
+  }
+  -->
   <style>
     :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
     *{box-sizing:border-box}
@@ -34,7 +107,7 @@
     nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
     nav.tabs button.active{background:#0ea5a3;color:#fff}
-    nav.tabs .push-right{margin-left:auto} /* duwt Suggestions naar rechts */
+    nav.tabs .push-right{margin-left:auto}
 
     section{display:none;padding:14px 16px}
     section.active{display:block}
@@ -53,9 +126,7 @@
     thead tr.filters th{background:#fff}
 
     .row-actions{display:flex;gap:6px}
-
-    footer{padding:16px;color:var(--muted);font-size:12px}
-    @media (max-width: 880px){ th, td{font-size:13px} }
+    .col-stars{white-space:nowrap}
   </style>
 </head>
 <body>
@@ -63,7 +134,7 @@
     <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
     <div>
       <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Suggestions</div>
     </div>
   </header>
 
@@ -71,7 +142,6 @@
     <div class="leftbar">
       <button id="btnLoad" class="btn">Load from Firestore</button>
       <button id="btnSaveAll" class="btn primary" disabled>Save all</button>
-      <button id="btnAddRow" class="btn ghost" style="display:none">+ New (current tab)</button>
     </div>
 
     <div class="rightbar">
@@ -254,13 +324,14 @@
             <th style="width:70px">ID</th>
             <th>Description</th>
             <th style="width:150px">Subject</th>
-            <th style="width:180px">Owner</th>
-            <th style="width:140px">Submitted</th>
-            <th style="width:140px">Status</th>
-            <th style="width:180px">Reviewer Role</th>
-            <th style="width:140px">Reviewed</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Submitted</th>
+            <th style="width:130px">Status</th>
+            <th style="width:160px">Reviewer Role</th>
+            <th style="width:130px">Reviewed</th>
             <th>Comments</th>
-            <th style="width:140px">Actions</th>
+            <th class="col-stars" style="width:120px">Stars</th>
+            <th style="width:120px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -271,6 +342,7 @@
             <th><select id="sStatus" class="input"></select></th>
             <th><select id="sReviewerRole" class="input"></select></th>
             <th><input type="date" id="sReviewed" class="input" /></th>
+            <th></th>
             <th></th>
             <th><button id="sReset" class="btn">Reset</button></th>
           </tr>
@@ -285,7 +357,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -304,26 +376,24 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    // Roles / rights
     const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
     const owners=["","Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"];
     const statuses={ goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
-    // Suggestions constants
-    const suggestionSubjects = ["","Add new Goal","Add new Risk","Add new Issue","Add new Plan"];
+    const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"]; // renamed
     const suggestionStatus   = ["","Approved","Considered","Dismissed"];
     const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
 
-    let CAN_EDIT=false;
+    let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer';
+
     let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[]};
 
-    // Auth helpers
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
 
-    // Register/Login/Logout
+    // Auth
     $('#btnSignup').onclick=async ()=>{
       const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
       if(!fullName||!org||!pass){ alert('fill required fields'); return; }
@@ -351,8 +421,8 @@
 
     onAuthStateChanged(auth, async (user)=>{
       const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); return; }
-      $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; return; }
+      $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid;
 
       let role='Viewer', full=user.displayName||user.email||'';
       try{
@@ -361,6 +431,7 @@
         else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
       }catch(err){ console.warn('role load failed', err); }
 
+      CURRENT_ROLE=role;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
       authTxt.textContent = isEditor? 'editor' : 'viewer';
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
@@ -375,7 +446,6 @@
       $('#addRiskBtn').disabled=!CAN_EDIT;
       $('#addIssueBtn').disabled=!CAN_EDIT;
       $('#addPlanBtn').disabled=!CAN_EDIT;
-      // Suggestions: iedereen mag indienen → knop blijft aan
       renderAll();
     }
 
@@ -411,8 +481,8 @@
       rowsFromTable('risks').forEach(r=>tasks.push(setDoc(doc(db,'risks',r.id), r)));
       rowsFromTable('issues').forEach(r=>tasks.push(setDoc(doc(db,'issues',r.id), r)));
       rowsFromTable('plans').forEach(r=>tasks.push(setDoc(doc(db,'plans',r.id), r)));
-      // suggestions alleen door editors te wijzigen (indienen kan los)
-      rowsFromTable('suggestions').forEach(r=>tasks.push(setDoc(doc(db,'suggestions',r.id), r)));
+      // suggestions blijven bewerkbaar voor editors; sterren gaan via losse update
+      rowsFromTable('suggestions').forEach(r=>tasks.push(setDoc(doc(db,'suggestions',r.id), r, {merge:true})));
       await Promise.all(tasks);
       alert('saved to firestore');
       await loadAll();
@@ -431,7 +501,6 @@
 
     function actionsCell(coll){ 
       if(!CAN_EDIT && coll!=='suggestions') return '—';
-      // voor suggestions: Edit/Del alleen voor editors
       const disabled = (coll==='suggestions' && !CAN_EDIT) ? 'disabled' : '';
       if(coll==='suggestions' && !CAN_EDIT) return '—';
       return `<div class="row-actions">
@@ -454,14 +523,12 @@
       fillSelect('#sStatus', suggestionStatus, 'Status');
       fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
 
-      // bind changes
       ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
       ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
       ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
       ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
       ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
 
-      // resets
       $('#gReset')?.addEventListener('click', ()=>{ ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(i=>$('#'+i).value=''); renderGoals(); });
       $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
       $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
@@ -469,7 +536,7 @@
       $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
     }
 
-    // Renderers for main tabs (same as before)
+    // Renders
     function rowGoal(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
@@ -510,6 +577,37 @@
         <td>${actionsCell('plans')}</td>`;
     }
 
+    function rowSuggestion(r, editable){
+      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select ${editable?'' : 'disabled'}>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
+      const actions    = (CAN_EDIT? `<div class="row-actions">
+        <button class="btn" data-edit="suggestions">Edit</button>
+        <button class="btn danger" data-del="suggestions">Del</button>
+      </div>` : '—');
+
+      const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
+      const starBtn = `<button class="btn ghost" data-star-sug ${already?'disabled':''}>⭐</button>`;
+      const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
+
+      return `
+        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
+        <td ${editable? '': ''}>${textCell(r.description, editable)}</td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td>${textCell(r.comments, editable)}</td>
+        <td class="col-stars">${starBtn} ${starCnt}</td>
+        <td>${actions}</td>
+      `;
+    }
+
     function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
       const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
       const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
@@ -545,32 +643,6 @@
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
     }
 
-    // Suggestions – render, extract, add, delete
-    function rowSuggestion(r, editable){
-      const subjectSel = `<select ${editable?'' : 'disabled'}>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-      const ownerSel   = `<select ${editable?'' : 'disabled'}>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
-      const statusSel  = `<select ${editable?'' : 'disabled'}>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
-      const revRoleSel = `<select ${editable?'' : 'disabled'}>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
-      const subDate    = `<input type="date" value="${r.submitted||''}" ${editable?'' : 'disabled'} />`;
-      const revDate    = `<input type="date" value="${r.reviewed||''}" ${editable?'' : 'disabled'} />`;
-      const actions    = (CAN_EDIT? `<div class="row-actions">
-        <button class="btn" data-edit="suggestions">Edit</button>
-        <button class="btn danger" data-del="suggestions">Del</button>
-      </div>` : '—');
-      return `
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
-        <td ${editable? '': ''}>${textCell(r.description, editable)}</td>
-        <td>${subjectSel}</td>
-        <td>${ownerSel}</td>
-        <td>${subDate}</td>
-        <td>${statusSel}</td>
-        <td>${revRoleSel}</td>
-        <td>${revDate}</td>
-        <td>${textCell(r.comments, editable)}</td>
-        <td>${actions}</td>
-      `;
-    }
-
     function renderSuggestions(){
       const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
       let rows=[...cache.suggestions];
@@ -593,12 +665,38 @@
 
       rows.sort((a,b)=>num(a.id)-num(b.id));
       rows.forEach(r=>{
+        // default fields to support stars UI
+        if(r.stars == null) r.stars = 0;
+        if(r.starredBy == null) r.starredBy = {};
         const tr=document.createElement('tr');
-        const editable = CAN_EDIT; // alleen editors kunnen waarden aanpassen
+        const editable = CAN_EDIT; // editors can edit fields; any signed-in can star
         tr.innerHTML = rowSuggestion(r, editable);
+        tr.dataset.sugid = r.id;
         tbody.appendChild(tr);
       });
     }
+
+    // Click: star on suggestions
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('[data-star-sug]');
+      if(!btn) return;
+      if(!CURRENT_UID){ alert('Please login to star.'); return; }
+      const tr = btn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
+      // optimistic disable
+      btn.disabled = true;
+      try{
+        const ref = doc(db,'suggestions', sugId);
+        // Only update stars + starredBy.<uid>
+        const row = Array.from(tr.children);
+        const cntEl = tr.querySelector('[data-star-count]');
+        const current = parseInt(cntEl?.textContent||'0',10) || 0;
+        await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
+        cntEl.textContent = String(current+1);
+      }catch(err){
+        alert('Star failed: '+err.message);
+        btn.disabled = false;
+      }
+    });
 
     // Table extractors
     function rowsFromTable(kind){
@@ -623,7 +721,8 @@
             status: tds[5].querySelector('select').value,
             reviewerRole: tds[6].querySelector('select').value,
             reviewed: tds[7].querySelector('input').value || '',
-            comments: (tds[8].querySelector('textarea,div').value || tds[8].querySelector('textarea,div').innerText || '').trim()
+            comments: (tds[8].querySelector('textarea,div').value || tds[8].querySelector('textarea,div').innerText || '').trim(),
+            // stars & starredBy are controlled via star button
           };
         }).filter(x=>x && x.id);
       }
@@ -636,36 +735,20 @@
     $('#addIssueBtn').onclick= ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('issues');const id=nextId(arr,'I'); const tr=document.createElement('tr'); tr.innerHTML=`${rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''})}`; $('#tblIssues tbody').appendChild(tr); };
     $('#addPlanBtn').onclick = ()=>{ if(!CAN_EDIT) return; const arr=rowsFromTable('plans'); const id=nextId(arr,'P'); const tr=document.createElement('tr'); tr.innerHTML=`${rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'})}`; $('#tblPlans tbody').appendChild(tr); };
 
-    // Suggestions: iedereen mag toevoegen (datumstempel auto ingevuld)
+    // Suggestions: everyone can add (stars init to 0)
     $('#addSuggestionBtn').onclick = ()=>{ 
       const arr = rowsFromTable('suggestions');
       const id  = nextId(arr,'S');
       const today = new Date().toISOString().slice(0,10);
       const tr=document.createElement('tr'); 
-      tr.innerHTML = rowSuggestion({id,description:'',subject:'',owner:'',submitted: today, status:'', reviewerRole:'', reviewed:'', comments:''}, true);
+      tr.innerHTML = rowSuggestion({id,description:'',subject:'',owner:'',submitted: today, status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}}, true);
       $('#tblSuggestions tbody').appendChild(tr);
     };
-
-    // Delete rows (with Firestore when known)
-    document.addEventListener('click', async (e)=>{
-      const delBtn = e.target.closest('button[data-del]');
-      if(!delBtn) return;
-      const table = delBtn.dataset.del;
-      if(table!=='suggestions' && !CAN_EDIT){ alert('no edit rights'); return; }
-      const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
-      const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions'};
-      const coll = collMap[table];
-      if(!coll||!id){ tr?.remove(); return; }
-      if(!confirm(`Delete ${id} from ${coll}?`)) return;
-      try{ await deleteDoc(doc(db, coll, id)); tr.remove(); }
-      catch(err){ alert('delete failed: '+err.message); }
-    });
 
     function renderAll(){
       const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
       renderTab(active);
       $('#btnSaveAll').disabled = !CAN_EDIT;
-      // add buttons reflect rights already
     }
     function renderTab(kind){
       if(kind==='goals') renderGoals();
@@ -675,16 +758,8 @@
       else renderSuggestions();
     }
 
-    // Initial
     buildFilterOptions();
     renderAll();
   </script>
-
-  <!-- Optional: Google Translate widget (visual only) -->
-  <div id="google_translate_element"></div>
-  <script>
-    function googleTranslateElementInit(){ new google.translate.TranslateElement({pageLanguage:'en'}, 'google_translate_element'); }
-  </script>
-  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </body>
 </html>
