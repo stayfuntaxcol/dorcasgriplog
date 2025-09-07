@@ -733,7 +733,53 @@
         tbody.appendChild(tr);
       });
     }
+// === PLAATS DIT BLOK ONDER JE "// Helpers" FUNCTIES (na escapeHtml) ===
 
+// Id-helper voor nieuwe rijen
+function nextId(arr, prefix){
+  let m=0; arr.forEach(x=>{
+    const n=parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10); if(n>m) m=n;
+  });
+  return prefix + (m+1);
+}
+
+// Add‑handlers (vereisen CAN_EDIT=true)
+$('#addGoalBtn').onclick = ()=>{
+  if(!CAN_EDIT) return;
+  const arr = rowsFromTable('goals');
+  const id = nextId(arr.length?arr:cache.goals, 'G');
+  const tr=document.createElement('tr');
+  tr.innerHTML = rowGoal({id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''});
+  $('#tblGoals tbody').appendChild(tr);
+};
+
+$('#addRiskBtn').onclick = ()=>{
+  if(!CAN_EDIT) return;
+  const arr = rowsFromTable('risks');
+  const id = nextId(arr.length?arr:cache.risks, 'R');
+  const tr=document.createElement('tr');
+  tr.innerHTML = rowRisk({id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''});
+  $('#tblRisks tbody').appendChild(tr);
+};
+
+$('#addIssueBtn').onclick = ()=>{
+  if(!CAN_EDIT) return;
+  const arr = rowsFromTable('issues');
+  const id = nextId(arr.length?arr:cache.issues, 'I');
+  const tr=document.createElement('tr');
+  tr.innerHTML = rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''});
+  $('#tblIssues tbody').appendChild(tr);
+};
+
+$('#addPlanBtn').onclick = ()=>{
+  if(!CAN_EDIT) return;
+  const arr = rowsFromTable('plans');
+  const id = nextId(arr.length?arr:cache.plans, 'P');
+  const tr=document.createElement('tr');
+  tr.innerHTML = rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'});
+  $('#tblPlans tbody').appendChild(tr);
+};
+    
     // Click handlers
     document.addEventListener('click', async (e)=>{
       // star suggestion
