@@ -332,6 +332,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { doc, runTransaction, serverTimestamp } from "firebase/firestore";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -740,21 +741,49 @@ async function toggleStar(db, sugId, uid) {
 
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      // star suggestion
-      const starBtn = e.target.closest('[data-star-sug]');
-      if(starBtn){
-        if(!CURRENT_UID){ alert('Please login to star.'); return; }
-        const tr = starBtn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
-        starBtn.disabled = true;
-        try{
-          const ref = doc(db,'suggestions', sugId);
-          const cntEl = tr.querySelector('[data-star-count]');
-          const current = parseInt(cntEl?.textContent||'0',10) || 0;
-          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
-          cntEl.textContent = String(current+1);
-        }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
-      }
+ // star/unstar suggestion (toggle)
+  const starBtn = e.target.closest('[data-star-sug]');
+  if (!starBtn) return;
 
+  if (!CURRENT_UID) { alert('Please login to star.'); return; }
+
+  const tr = starBtn.closest('tr');
+  const sugId = tr?.dataset.sugid;
+  if (!sugId) return;
+
+  const ref   = doc(db, 'suggestions', sugId);
+  const cntEl = tr.querySelector('[data-star-count]');
+
+  starBtn.disabled = true;
+  try {
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(ref);
+      const data = snap.exists() ? snap.data() : {};
+
+      const prevStars   = Number(data.stars || 0);
+      const prevStarred = !!(data.starredBy && data.starredBy[CURRENT_UID] === true);
+
+      const nextStarred = !prevStarred;
+      const nextStars   = prevStars + (nextStarred ? 1 : -1);
+      if (nextStars < 0) throw new Error('Star count underflow');
+
+      tx.set(ref, {
+        stars: nextStars,
+        [`starredBy.${CURRENT_UID}`]: nextStarred,
+        updatedAt: serverTimestamp()
+      }, { merge: true });
+
+      // Optimistic UI update (je kunt ook wachten op onSnapshot)
+      if (cntEl) cntEl.textContent = String(nextStars);
+      starBtn.classList.toggle('active', nextStarred);
+      starBtn.setAttribute('aria-pressed', String(nextStarred));
+    });
+  } catch (err) {
+    alert('Star toggle failed: ' + err.message);
+  } finally {
+    starBtn.disabled = false;
+  }
+      
       // delete entity row
       const delBtn = e.target.closest('button[data-del]');
       if(delBtn){
