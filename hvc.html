@@ -74,8 +74,8 @@
 
   <div class="toolbar">
     <div class="leftbar">
-      <button id="btnLoad" class="btn">Load from Firestore</button>
-      <button id="btnSaveAll" class="btn primary" disabled>Save all</button>
+      <button id="btnLoad" class="btn">Load Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
     </div>
 
     <div class="rightbar">
@@ -718,7 +718,7 @@
 
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      // star suggestion
+      // ⭐ star suggestion (toggle per user, real-time)
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -726,19 +726,69 @@
         starBtn.disabled = true;
         try{
           const ref = doc(db,'suggestions', sugId);
+          const snap = await getDoc(ref);
+          if(!snap.exists()) throw new Error('Suggestion not found');
+          const data = snap.data() || {};
+          const already = !!(data.starredBy && data.starredBy[CURRENT_UID]);
+          const current = parseInt(data.stars||0,10) || 0;
+          const updates = {};
+          let next = current;
+          if(already){
+            // un-star
+            next = Math.max(0, current - 1);
+            updates.stars = next;
+            updates[`starredBy.${CURRENT_UID}`] = false; // treat anything not true as unstarred
+          } else {
+            // add star
+            next = current + 1;
+            updates.stars = next;
+            updates[`starredBy.${CURRENT_UID}`] = true;
+          }
+          await updateDoc(ref, updates);
           const cntEl = tr.querySelector('[data-star-count]');
-          const current = parseInt(cntEl?.textContent||'0',10) || 0;
-          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
-          cntEl.textContent = String(current+1);
+          if(cntEl) cntEl.textContent = String(next);
+          starBtn.disabled = false;
         }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
       }
 
-      // delete entity row
+      // 🗑️ delete entity row (creates notification)
       const delBtn = e.target.closest('button[data-del]');
       if(delBtn){
         const table = delBtn.dataset.del; if(table!=='suggestions' && !CAN_EDIT){ alert('no edit rights'); return; }
         const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
         const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions'}; const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
         if(!confirm(`Delete ${id} from ${coll}?`)) return;
-        try{ await deleteDoc(doc(db, coll, id)); tr.remove(); await addDoc(collection(db,'notifications'), makeNote({subject: table==='suggestions'?'Suggestion': table.slice(0,1).toUpperCase()+table.slice(1,-1), status:'Deleted', relatedId:id, description:''}));
-          
+        try{
+          await deleteDoc(doc(db, coll, id));
+          tr.remove();
+          await addDoc(collection(db,'notifications'), makeNote({
+            subject: table==='suggestions' ? 'Suggestion' : table.slice(0,1).toUpperCase()+table.slice(1,-1),
+            status: 'Deleted',
+            relatedId: id,
+            description: ''
+          }));
+          const list = await getDocs(collection(db,'notifications'));
+          cache.notifications = list.docs.map(d=>({__id:d.id, ...d.data()}));
+          renderNotifications(cache.notifications);
+        }catch(err){ alert('delete failed: '+err.message); }
+      }
+
+      // 🗑️ delete notification (Admin only)
+      const delNoteBtn = e.target.closest('[data-del-note]');
+      if(delNoteBtn){
+        if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete'); return; }
+        const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
+        if(!confirm('Delete this notification?')) return;
+        try{
+          await deleteDoc(doc(db,'notifications', id));
+          const list = await getDocs(collection(db,'notifications'));
+          cache.notifications = list.docs.map(d=>({__id:d.id, ...d.data()}));
+          renderNotifications(cache.notifications);
+        }catch(err){ alert('delete failed: '+err.message); }
+      }
+    });
+
+    // (Nothing else below)
+  </script>
+</body>
+</html>
