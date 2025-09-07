@@ -481,11 +481,14 @@
       cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
       cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
       cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
-
-      buildFilterOptions();
-      renderAll();
-    }
-
+    
+    buildFilterOptions();
+    renderAll();
+  }catch(err){
+    console.error('Firestore load failed:', err);
+    alert('Loading failed: ' + (err?.message || err));
+  }
+}
     async function saveAll(){
       if(!CAN_EDIT){ alert('no edit rights'); return; }
       const tasks=[]; const notes=[];
