@@ -6,7 +6,7 @@
   <title>GRIPlog – Honey Value Chain</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444; --ok:#10b981; }
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
@@ -58,17 +58,15 @@
     .row-actions{display:flex;gap:6px}
     .col-stars{white-space:nowrap}
 
-    /* Suggestions: ID smaller, Description wider, Comments will be button */
-    #tblSuggestions th:nth-child(1),
-    #tblSuggestions td:nth-child(1){width:60px}
+    /* Suggestions: keep Description & Comments flexible */
+    #tblSuggestions td:nth-child(2),
     #tblSuggestions th:nth-child(2),
-    #tblSuggestions td:nth-child(2){width:auto}
-    #tblSuggestions th:nth-child(9),
-    #tblSuggestions td:nth-child(9){width:120px}
+    #tblSuggestions td:nth-child(9),
+    #tblSuggestions th:nth-child(9){width:auto}
 
-    /* Notifications: ID smaller, Description wider */
+    /* Notifications: make ID narrow, Description wide */
     #tblNotifications th:nth-child(1),
-    #tblNotifications td:nth-child(1){width:60px}
+    #tblNotifications td:nth-child(1){width:70px}
     #tblNotifications th:nth-child(2),
     #tblNotifications td:nth-child(2){width:auto}
 
@@ -279,7 +277,7 @@
       <table id="tblSuggestions">
         <thead>
           <tr class="labels">
-            <th>ID</th>
+            <th style="width:70px">ID</th>
             <th>Description</th>
             <th style="width:150px">Subject</th>
             <th style="width:160px">Owner</th>
@@ -289,7 +287,7 @@
             <th style="width:130px">Reviewed</th>
             <th>Comments</th>
             <th class="col-stars" style="width:120px">Stars</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:120px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -327,7 +325,7 @@
             <th style="width:160px">Role</th>
             <th style="width:140px">Date</th>
             <th>Comments</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th><input type="text" id="nId" class="input" placeholder="G1/R2/..."/></th>
@@ -550,7 +548,6 @@
     // Helpers
     function num(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
-    function attrEscape(s){ return (s||'').replaceAll('&','&amp;').replaceAll('"','&quot;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
     function actionsCell(coll){ if(!CAN_EDIT) return '—'; return `<div class="row-actions">
       <button class="btn" data-edit="${coll}">Edit</button>
@@ -632,7 +629,42 @@
         <td>${actionsCell('plans')}</td>`;
     }
 
-    // Suggestions (read-only cells; add via dialog); starring allowed for any signed-in user
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
+    }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+    }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
+    }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
+    }
+
+    // Suggestions (read-only cells; add via dialog); starring allowed for any signed-in user (rules must allow star update)
     function rowSuggestion(r){
       const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
       const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
@@ -643,8 +675,7 @@
       const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
       const starBtn = `<button class="btn ghost" data-star-sug ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
       const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
-      const commentsBtn = `<button class="btn" data-show-comments data-kind="suggestions" data-cmt="${attrEscape(r.comments||'')}">View</button>`;
-      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn" data-edit="suggestions">Edit</button><button class="btn danger" data-del="suggestions">Del</button></div>` : '—';
+      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn danger" data-del="suggestions">Del</button></div>` : '—';
       return `
         <td>${escapeHtml(r.id||'')}</td>
         <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
@@ -654,7 +685,7 @@
         <td>${statusSel}</td>
         <td>${revRoleSel}</td>
         <td>${revDate}</td>
-        <td>${commentsBtn}</td>
+        <td><div class="cell-text">${escapeHtml(r.comments||'')}</div></td>
         <td class="col-stars">${starBtn} ${starCnt}</td>
         <td>${actions}</td>`;
     }
@@ -689,8 +720,7 @@
       list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
       list.forEach(r=>{
         const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
-        const commentsBtn = `<button class=\"btn\" data-show-comments data-kind=\"notifications\" data-cmt=\"${attrEscape(r.comments||'')}\">View</button>`;
-        const adminActions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn" data-edit="notifications">Edit</button><button class="btn danger" data-del-note>Del</button></div>` : '—';
+        const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
         tr.innerHTML = `
           <td>${escapeHtml(r.id||'')}</td>
           <td>${escapeHtml(r.description||'')}</td>
@@ -698,12 +728,11 @@
           <td>${escapeHtml(r.status||'')}</td>
           <td>${escapeHtml(r.role||'')}</td>
           <td>${escapeHtml(r.date||'')}</td>
-          <td>${commentsBtn}</td>
-          <td>${adminActions}</td>`;
+          <td>${escapeHtml(r.comments||'')}</td>
+          <td>${actions}</td>`;
         tbody.appendChild(tr);
       });
     }
-
 // === PLAATS DIT BLOK ONDER JE "// Helpers" FUNCTIES (na escapeHtml) ===
 
 // Id-helper voor nieuwe rijen
@@ -753,14 +782,6 @@ $('#addPlanBtn').onclick = ()=>{
     
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      // show comments pop-up
-      const cBtn = e.target.closest('[data-show-comments]');
-      if(cBtn){
-        const text = cBtn.getAttribute('data-cmt') || '';
-        alert(text || '(no comments)');
-        return;
-      }
-
       // star suggestion
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
@@ -774,49 +795,6 @@ $('#addPlanBtn').onclick = ()=>{
           await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
           cntEl.textContent = String(current+1);
         }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
-        return;
-      }
-
-      // edit entity row (Suggestions via prompts; Notifications admin-only)
-      const edBtn = e.target.closest('button[data-edit]');
-      if(edBtn){
-        const table = edBtn.dataset.edit;
-        if(table==='suggestions' && !CAN_EDIT){ alert('no edit rights'); return; }
-        if(table==='notifications' && CURRENT_ROLE!=='Admin'){ alert('Only Admin can edit notifications.'); return; }
-        const tr = edBtn.closest('tr');
-        if(!tr) return;
-        if(table==='suggestions'){
-          const id = tr.querySelector('td:first-child')?.innerText.trim();
-          const oldDesc = tr.querySelector('td:nth-child(2) .cell-text')?.innerText || '';
-          const oldCmtBtn = tr.querySelector('[data-show-comments]');
-          const oldCmt = oldCmtBtn?.getAttribute('data-cmt') || '';
-          const desc = prompt('Edit description:', oldDesc) ?? oldDesc;
-          const comments = prompt('Edit comments:', oldCmt) ?? oldCmt;
-          try{
-            await updateDoc(doc(db,'suggestions', id), { description: desc, comments });
-            await addDoc(collection(db,'notifications'), makeNote({subject:'Suggestion', status:'Edited', relatedId:id, description:desc, comments}));
-            // update cache + UI
-            const it = cache.suggestions.find(x=>x.id===id); if(it){ it.description=desc; it.comments=comments; }
-            renderSuggestions();
-          }catch(err){ alert('edit failed: '+err.message); }
-          return;
-        }
-        if(table==='notifications'){
-          const id = tr.dataset.docid;
-          // find existing doc
-          const snap = await getDoc(doc(db,'notifications', id));
-          if(!snap.exists()){ alert('doc missing'); return; }
-          const data = snap.data();
-          const desc = prompt('Edit description:', data.description||'') ?? data.description||'';
-          const comments = prompt('Edit comments:', data.comments||'') ?? data.comments||'';
-          try{
-            await updateDoc(doc(db,'notifications', id), { description: desc, comments });
-            const list = await getDocs(collection(db,'notifications'));
-            cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
-            renderNotifications(cache.notifications);
-          }catch(err){ alert('edit failed: '+err.message); }
-          return;
-        }
       }
 
       // delete entity row
@@ -829,7 +807,6 @@ $('#addPlanBtn').onclick = ()=>{
         try{ await deleteDoc(doc(db, coll, id)); tr.remove(); await addDoc(collection(db,'notifications'), makeNote({subject: table==='suggestions'?'Suggestion': table.slice(0,1).toUpperCase()+table.slice(1,-1), status:'Deleted', relatedId:id, description:''}));
           const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
-        return;
       }
 
       // delete notification (admin only)
@@ -842,7 +819,6 @@ $('#addPlanBtn').onclick = ()=>{
         const list = await getDocs(collection(db,'notifications'));
         cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
         renderNotifications(cache.notifications);
-        return;
       }
     });
 
