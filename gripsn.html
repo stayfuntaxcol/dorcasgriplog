@@ -371,7 +371,29 @@
 
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
+async function toggleStar(db, sugId, uid) {
+  const ref = doc(db, "suggestions", sugId);
 
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    const data = snap.exists() ? snap.data() : {};
+
+    const prevStars   = Number(data.stars || 0);
+    const prevStarred = !!(data.starredBy && data.starredBy[uid] === true);
+
+    const nextStarred = !prevStarred;
+    const nextStars   = prevStars + (nextStarred ? 1 : -1);
+    if (nextStars < 0) return; // guard
+
+    tx.set(ref, {
+      stars: nextStars,
+      [`starredBy.${uid}`]: nextStarred,
+      updatedAt: serverTimestamp()
+    }, { merge: true });
+  });
+}
+
+    
     // Auth
     $('#btnSignup').onclick=async ()=>{
       const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
