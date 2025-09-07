@@ -10,8 +10,6 @@
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
-
-    /* Header: title left, user info right in same white bar */
     header{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
     header img{height:34px;width:auto}
     header .title{font-weight:800;font-size:18px}
@@ -32,7 +30,7 @@
     .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
     .ok{background:var(--ok)}
-    .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
+    .user-info{font-size:12px;color:var(--ink);margin-left:8px;text-transform:lowercase}
 
     nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
@@ -58,15 +56,15 @@
     .row-actions{display:flex;gap:6px}
     .col-stars{white-space:nowrap}
 
-    /* Suggestions: keep Description & Comments flexible */
+    /* Suggestions description/comments widths like GRIP tables */
     #tblSuggestions td:nth-child(2),
     #tblSuggestions th:nth-child(2),
     #tblSuggestions td:nth-child(9),
-    #tblSuggestions th:nth-child(9){width:auto}
+    #tblSuggestions th:nth-child(9){width: auto;}
 
     /* Notifications: make ID narrow, Description wide */
     #tblNotifications th:nth-child(1),
-    #tblNotifications td:nth-child(1){width:70px}
+    #tblNotifications td:nth-child(1){width:56px}
     #tblNotifications th:nth-child(2),
     #tblNotifications td:nth-child(2){width:auto}
 
@@ -83,12 +81,13 @@
       <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
       <div>
         <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
+        <div class="sub">Get a GRIP on your project: Goals • Risks • Issues • Plans</div>
       </div>
     </div>
     <div class="header-right">
       <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
+      <div id="userNameTitle" class="title"></div>
+      <div id="userRoleSub" class="sub"></div>
     </div>
   </header>
 
@@ -108,11 +107,15 @@
         <option>Projectmanager</option>
         <option>Strategic Program Advisor</option>
         <option>Thematic Expert</option>
+        <option>Sponsor</option>
+        <option>Partner</option>
       </select>
       <input id="password" class="input" type="password" placeholder="password *" />
       <button id="btnSignup" class="btn">register</button>
       <button id="btnSignin" class="btn primary">login</button>
       <button id="btnSignout" class="btn" style="display:none">logout</button>
+      <span class="chip"><span id="authDot2" class="dot" style="display:none"></span><span id="authTxt2" style="display:none"></span></span>
+      <span id="userInfo" class="user-info" style="display:none"></span>
     </div>
   </div>
 
@@ -242,7 +245,7 @@
             <th style="width:70px">ID</th>
             <th>Description</th>
             <th style="width:160px">Owner</th>
-            <th>Goal Link</th>
+            <th style="width:140px">Goal Link</th>
             <th style="width:130px">Start</th>
             <th style="width:130px">End</th>
             <th style="width:140px">Status</th>
@@ -271,7 +274,7 @@
         <div class="left"><h2>Suggestions</h2></div>
         <div class="right">
           <span id="suggestionsUser" class="user-info"></span>
-          <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
+          <button class="btn" id="addSuggestionBtn" disabled>+ New Suggestion</button>
         </div>
       </div>
       <table id="tblSuggestions">
@@ -318,7 +321,7 @@
       <table id="tblNotifications">
         <thead>
           <tr class="labels">
-            <th>ID</th>
+            <th style="width:80px">ID</th>
             <th>Description</th>
             <th style="width:160px">Subject</th>
             <th style="width:140px">Status</th>
@@ -368,8 +371,11 @@
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
+    // Rights model
+    const EDIT_ROLES = new Set(['Projectmanager','Strategic Program Advisor','Thematic Expert']); // can add/edit GRIP items
+    const PARTNER_ROLES = new Set(['Sponsor','Partner']); // can add Suggestions (and star)
+
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Sponsor','Partner'];
     const owners=["","Coop Board","Finance Lead","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","Dorcas","PM","Procurement","FFS Coordinator"];
     const statuses={ goals:["","Open","In progress","Closed"], risks:["","Open","In progress","Closed"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
@@ -380,7 +386,7 @@
 
     const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","New Goal","New Risk","New Issue","New Plan"]; // for filters
     const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
-    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Sponsor","Partner","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
 
@@ -417,8 +423,14 @@
     $('#btnSignout').onclick=()=>signOut(auth);
 
     onAuthStateChanged(auth, async (user)=>{
-      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      const authDot=$('#authDot'), authTxt=$('#authTxt');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in';
+        $('#userNameTitle').textContent='';
+        $('#userRoleSub').textContent='';
+        $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
+        // Suggestion button disabled when signed-out
+        const sugBtn=$('#addSuggestionBtn'); if(sugBtn) sugBtn.disabled=true;
+        return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
       let role='Viewer', full=user.displayName||user.email||'';
@@ -430,10 +442,16 @@
 
       CURRENT_ROLE=role; CURRENT_NAME=full;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
-      authTxt.textContent = isEditor? 'editor' : 'viewer';
-      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      const rights = isEditor ? 'edit rights' : (PARTNER_ROLES.has(role) ? 'partner rights' : 'viewer rights');
+      authTxt.textContent = isEditor? 'editor' : (PARTNER_ROLES.has(role)? 'partner' : 'viewer');
+      $('#userNameTitle').textContent = full || '';
+      $('#userRoleSub').textContent  = `${role} – ${rights}`;
       syncSectionUserLabels();
       setEditMode(isEditor);
+
+      // Enable Suggestion button for editors or partner-roles
+      const sugBtn=$('#addSuggestionBtn'); if(sugBtn) sugBtn.disabled = !(isEditor || PARTNER_ROLES.has(role));
+
       await loadAll();
     });
 
@@ -629,45 +647,10 @@
         <td>${actionsCell('plans')}</td>`;
     }
 
-    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
-      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
-      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
-      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
-      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
-      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
-      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
-    }
-    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
-      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
-      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
-      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
-      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
-      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
-    }
-    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
-      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
-      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
-      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
-      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
-    }
-    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
-      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
-      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
-      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
-      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
-    }
-
     // Suggestions (read-only cells; add via dialog); starring allowed for any signed-in user (rules must allow star update)
     function rowSuggestion(r){
       const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Sponsor','Partner']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
       const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
       const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
       const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
@@ -733,56 +716,10 @@
         tbody.appendChild(tr);
       });
     }
-// === PLAATS DIT BLOK ONDER JE "// Helpers" FUNCTIES (na escapeHtml) ===
 
-// Id-helper voor nieuwe rijen
-function nextId(arr, prefix){
-  let m=0; arr.forEach(x=>{
-    const n=parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10); if(n>m) m=n;
-  });
-  return prefix + (m+1);
-}
-
-// Add‑handlers (vereisen CAN_EDIT=true)
-$('#addGoalBtn').onclick = ()=>{
-  if(!CAN_EDIT) return;
-  const arr = rowsFromTable('goals');
-  const id = nextId(arr.length?arr:cache.goals, 'G');
-  const tr=document.createElement('tr');
-  tr.innerHTML = rowGoal({id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''});
-  $('#tblGoals tbody').appendChild(tr);
-};
-
-$('#addRiskBtn').onclick = ()=>{
-  if(!CAN_EDIT) return;
-  const arr = rowsFromTable('risks');
-  const id = nextId(arr.length?arr:cache.risks, 'R');
-  const tr=document.createElement('tr');
-  tr.innerHTML = rowRisk({id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''});
-  $('#tblRisks tbody').appendChild(tr);
-};
-
-$('#addIssueBtn').onclick = ()=>{
-  if(!CAN_EDIT) return;
-  const arr = rowsFromTable('issues');
-  const id = nextId(arr.length?arr:cache.issues, 'I');
-  const tr=document.createElement('tr');
-  tr.innerHTML = rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''});
-  $('#tblIssues tbody').appendChild(tr);
-};
-
-$('#addPlanBtn').onclick = ()=>{
-  if(!CAN_EDIT) return;
-  const arr = rowsFromTable('plans');
-  const id = nextId(arr.length?arr:cache.plans, 'P');
-  const tr=document.createElement('tr');
-  tr.innerHTML = rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'});
-  $('#tblPlans tbody').appendChild(tr);
-};
-    
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      // star suggestion
+      // star suggestion (allowed for any signed-in user)
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -821,6 +758,7 @@ $('#addPlanBtn').onclick = ()=>{
         renderNotifications(cache.notifications);
       }
     });
+
 
     // Add suggestion via prompt (so table stays read-only)
     $('#addSuggestionBtn').onclick = async ()=>{
