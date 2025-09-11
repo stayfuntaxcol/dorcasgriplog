@@ -639,34 +639,6 @@ $('#btnSaveAll').onclick = saveAll;
 function num(id){ const n=parseInt(String(id).replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
 function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-    // Forceer compacte ID-kolommen, ongeacht inline widths / volgorde
-const IDW = '90px';
-function enforceIdWidths(){
-  const targets = [
-    ['#tblRisks',  3],             // Goal ID
-    ['#tblIssues', 3],             // Goal ID
-    ['#tblIssues', 4],             // Risk ID
-    ['#tblPlans',  3],             // Goal ID
-    ['#tblPlans',  4],             // Risk ID
-    ['#tblPlans',  5],             // Issue ID
-  ];
-  targets.forEach(([sel, idx])=>{
-    const th = document.querySelector(`${sel} thead th:nth-child(${idx})`);
-    if(th) th.style.setProperty('width', IDW, 'important');
-    document.querySelectorAll(`${sel} tbody td:nth-child(${idx})`).forEach(td=>{
-      td.style.setProperty('width', IDW, 'important');
-      const inp = td.querySelector('input');
-      if(inp){
-        inp.style.setProperty('width', '100%', 'important');
-        inp.style.setProperty('text-align', 'center', 'important');
-        inp.style.setProperty('padding', '6px 4px', 'important');
-        inp.style.setProperty('font-family', 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace', 'important');
-        inp.style.setProperty('box-sizing', 'border-box', 'important');
-      }
-    });
-  });
-}
-    
 // Actions cel (met optionele Add-knop)
 function actionsCell(coll, withAdd=false){
   if(!CAN_EDIT) return '—';
@@ -766,7 +738,7 @@ function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; le
   const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
   const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
   rows.sort((a,b)=>num(a.id)-num(b.id));
-  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
 }
 function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
   const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
@@ -776,7 +748,7 @@ function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; le
   const fG=$('#rGoalId').value?.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
   const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
   rows.sort((a,b)=>num(a.id)-num(b.id));
-  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); enforceIdWidths();               
+  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
 }
 function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
   const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
@@ -786,7 +758,7 @@ function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; 
   const fR=$('#iRiskId').value?.trim().toLowerCase(); if(fR) rows=rows.filter(r=> (r.riskId||'').toLowerCase().includes(fR));
   const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
   rows.sort((a,b)=>num(a.id)-num(b.id));
-  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); enforceIdWidths(); 
+  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
 }
 function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
   const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
@@ -796,7 +768,7 @@ function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; le
   const fI=$('#pIssueId').value?.trim().toLowerCase(); if(fI) rows=rows.filter(r=> (r.issueId||'').toLowerCase().includes(fI));
   const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
   rows.sort((a,b)=>num(a.id)-num(b.id));
-  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); enforceIdWidths();
+  rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
 }
 
 // Suggestions (Admins/Editors mogen Status + Comments)
