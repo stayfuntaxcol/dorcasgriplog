@@ -74,6 +74,31 @@
     #tblPlans th:nth-child(3),#tblPlans td:nth-child(3),
     #tblPlans th:nth-child(4),#tblPlans td:nth-child(4),
     #tblPlans th:nth-child(5),#tblPlans td:nth-child(5){width:120px}
+/* --- Compacte ID-kolommen voor GRIP tabs --- */
+:root { --idw: 90px; }
+
+#tblRisks th:nth-child(3), #tblRisks td:nth-child(3),
+#tblIssues th:nth-child(3), #tblIssues td:nth-child(3),
+#tblIssues th:nth-child(4), #tblIssues td:nth-child(4),
+#tblPlans  th:nth-child(3), #tblPlans  td:nth-child(3),
+#tblPlans  th:nth-child(4), #tblPlans  td:nth-child(4),
+#tblPlans  th:nth-child(5), #tblPlans  td:nth-child(5) {
+  width: var(--idw) !important;
+  text-align: center;
+  white-space: nowrap;
+}
+
+#tblRisks  td:nth-child(3) input,
+#tblIssues td:nth-child(3) input,
+#tblIssues td:nth-child(4) input,
+#tblPlans  td:nth-child(3) input,
+#tblPlans  td:nth-child(4) input,
+#tblPlans  td:nth-child(5) input {
+  width: 100%;
+  text-align: center;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  padding: 6px 4px;
+}   
   </style>
 </head>
 <body>
@@ -867,35 +892,113 @@ $('#addPlanBtn').onclick = ()=>{
   $('#tblPlans tbody').appendChild(tr);
 };
 
-// --- Simple modal voor Add-actie met automatische verwijzingen ---
+// --- Moderne "Add Item" modal met kaarten en pastelkleuren ---
 function openAddModal(ctx){ // ctx = {from:'goals'|'risks'|'issues', refIds:{goalId?, riskId?, issueId?}}
   if(!CAN_EDIT){ alert('no edit rights'); return; }
+
+  const allowed = {
+    goals: ['risk','issue','plan'],
+    risks: ['issue','plan'],
+    issues:['plan']
+  }[ctx.from] || ['risk','issue','plan'];
+
+  const defaults = {
+    goalId:  ctx.refIds.goalId  || '',
+    riskId:  ctx.refIds.riskId  || '',
+    issueId: ctx.refIds.issueId || ''
+  };
+
   const el = document.createElement('div');
   el.innerHTML = `
-    <div id="modal" style="position:fixed;inset:0;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;z-index:9999">
-      <div style="background:#fff;border:1px solid var(--line);border-radius:12px;min-width:360px;padding:12px">
-        <h3 style="margin:0 0 8px 0">Add linked item</h3>
-        <label><input type="radio" name="kind" value="risk" ${ctx.from==='goals'?'checked':''} ${ctx.from==='issues'?'disabled':''}/> New Risk</label><br/>
-        <label><input type="radio" name="kind" value="issue" ${ctx.from==='risks'?'checked':''} ${ctx.from==='goals'?'':' '}/> New Issue</label><br/>
-        <label><input type="radio" name="kind" value="plan" ${ctx.from==='issues'?'checked':''}/> New Plan</label>
-        <hr/>
-        <div><small>Description</small><br/><textarea id="m_desc" style="width:100%;min-height:90px"></textarea></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:6px">
-          <input id="m_goal" placeholder="Goal ID (G#)" value="${ctx.refIds.goalId||''}"/>
-          <input id="m_risk" placeholder="Risk ID (R#)" value="${ctx.refIds.riskId||''}"/>
-          <input id="m_issue" placeholder="Issue ID (I#)" value="${ctx.refIds.issueId||''}"/>
+  <div id="modal" style="position:fixed;inset:0;background:rgba(17,24,39,.45);display:flex;align-items:center;justify-content:center;z-index:9999">
+    <div style="background:#fff;border:1px solid var(--line);border-radius:16px;min-width:680px;max-width:800px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.15)">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px">
+        <h3 style="margin:0;font-size:18px;font-weight:800">Add Item</h3>
+      </div>
+
+      <style>
+        .add-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px}
+        .add-card{border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer;transition:transform .08s ease, box-shadow .08s ease, border-color .08s ease}
+        .add-card h4{margin:0 0 6px 0;font-size:14px}
+        .add-card p{margin:0;color:var(--muted);font-size:12px;line-height:1.35}
+        .add-card:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.06)}
+        .add-card[aria-selected="true"]{outline:2px solid var(--brand); box-shadow:0 0 0 2px rgba(14,165,163,.15) inset}
+        .add-card[aria-disabled="true"]{opacity:.45;cursor:not-allowed;filter:saturate(.7)}
+        /* Pastel tinten */
+        .risk{background:#fff7ed}   /* orange-50 */
+        .issue{background:#eef2ff}  /* indigo-50 */
+        .plan{background:#ecfeff}   /* cyan-50 */
+        /* Beschrijving */
+        .desc-wrap{margin:8px 0 12px 0}
+        .desc-wrap textarea{width:100%;min-height:110px;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:14px}
+        /* Footer met ID velden en knoppen */
+        .add-footer{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+        .id-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+        .id-row input{width:92px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;text-align:center;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
+        .btn-row{display:flex;gap:8px}
+      </style>
+
+      <div class="add-grid" role="tablist" aria-label="Add item type">
+        <div class="add-card risk"  data-kind="risk"  ${allowed.includes('risk') ? '' : 'aria-disabled="true"'}  tabindex="0">
+          <h4>New Risk</h4>
+          <p>Voeg een risico toe. Koppel optioneel aan een Goal ID.</p>
         </div>
-        <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
-          <button id="m_cancel" class="btn">Cancel</button>
-          <button id="m_ok" class="btn primary">Add to table</button>
+        <div class="add-card issue" data-kind="issue" ${allowed.includes('issue')? '' : 'aria-disabled="true"'} tabindex="0">
+          <h4>New Issue</h4>
+          <p>Leg een issue vast. Koppel aan Goal en/of Risk.</p>
+        </div>
+        <div class="add-card plan"  data-kind="plan"  ${allowed.includes('plan') ? '' : 'aria-disabled="true"'}  tabindex="0">
+          <h4>New Plan</h4>
+          <p>Plan een actie. Koppel aan Goal / Risk / Issue.</p>
         </div>
       </div>
-    </div>`;
+
+      <div class="desc-wrap">
+        <small style="display:block;color:var(--muted);margin-bottom:6px">Description</small>
+        <textarea id="m_desc" placeholder="Beschrijf het item…"></textarea>
+      </div>
+
+      <div class="add-footer">
+        <div class="id-row">
+          <input id="m_goal"  placeholder="G#" value="${defaults.goalId}"/>
+          <input id="m_risk"  placeholder="R#" value="${defaults.riskId}"/>
+          <input id="m_issue" placeholder="I#" value="${defaults.issueId}"/>
+        </div>
+        <div class="btn-row">
+          <button id="m_cancel" class="btn">Cancel</button>
+          <button id="m_ok" class="btn primary">Save Item</button>
+        </div>
+      </div>
+    </div>
+  </div>`;
+
   document.body.appendChild(el.firstElementChild);
   const modal = document.getElementById('modal');
+
+  const cards = Array.from(modal.querySelectorAll('.add-card'));
+  // default selectie: eerste toegestane kaart
+  let selected = cards.find(c => !c.hasAttribute('aria-disabled'));
+  if(selected) selected.setAttribute('aria-selected','true');
+
+  // kaart-selectie
+  cards.forEach(card=>{
+    card.addEventListener('click', ()=>{
+      if(card.hasAttribute('aria-disabled')) return;
+      cards.forEach(c=>c.removeAttribute('aria-selected'));
+      card.setAttribute('aria-selected','true');
+      selected = card;
+    });
+    card.addEventListener('keydown', (ev)=>{
+      if(ev.key==='Enter' || ev.key===' '){ ev.preventDefault(); card.click(); }
+    });
+  });
+
+  // knoppen
   modal.querySelector('#m_cancel').onclick = ()=> modal.remove();
+
   modal.querySelector('#m_ok').onclick = ()=>{
-    const kind = Array.from(modal.querySelectorAll('input[name="kind"]')).find(r=>r.checked)?.value;
+    if(!selected){ alert('Kies Risk, Issue of Plan'); return; }
+    const kind = selected.dataset.kind;
     const desc = modal.querySelector('#m_desc').value.trim();
     const goalId = modal.querySelector('#m_goal').value.trim();
     const riskId = modal.querySelector('#m_risk').value.trim();
