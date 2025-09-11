@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -391,7 +390,7 @@
     const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager","Partner/Sponsor"];
 
     const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","New Goal","New Risk","New Issue","New Plan","New Suggestion"];
-    const noteStatus   = ["","Added","Deleted","Approved","Pending","Dismissed"];
+    const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
     const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Partner/Sponsor","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
@@ -523,13 +522,13 @@
 async function saveAll(){
   if(!CAN_EDIT){ alert('no edit rights'); return; }
 
-  // 1) Lees tabelstatus (staging)
+  // 1) Lees *actuele* staat uit de tabellen
   const newGoals  = rowsFromTable('goals');
   const newRisks  = rowsFromTable('risks');
   const newIssues = rowsFromTable('issues');
   const newPlans  = rowsFromTable('plans');
 
-  // 2) Link-validatie tegen de *nieuwe* staat
+  // 2) Valideer referenties (links) tegen de *nieuwe* staat
   const ids = {
     goals:  new Set(newGoals.map(g=>g.id)),
     risks:  new Set(newRisks.map(r=>r.id)),
@@ -556,29 +555,35 @@ async function saveAll(){
     return;
   }
 
-  // 3) Upserts + notifications (géén Edited events)
+  // 3) Upserts + notifications (GRIP only; Suggestions hebben eigen flow)
   const tasks=[]; const notes=[];
   const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
+  const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
 
   function upserts(prevArr, nextArr, coll, label){
     const prevMap = byId(prevArr);
 
-    // Upsert alle rows
+    // upsert + Added/Edited notes
     nextArr.forEach(row=>{
       tasks.push(setDoc(doc(db,coll,row.id), row));
       if(!prevMap[row.id]){
-        // Alleen Added loggen
         notes.push(makeNote({
           subject:`New ${label}`,
           status:'Added',
           relatedId: row.id,
           description: pickDesc(label,row)
         }));
+      } else if(changed(prevMap[row.id], row)){
+        notes.push(makeNote({
+          subject: label,
+          status:'Edited',
+          relatedId: row.id,
+          description: pickDesc(label,row)
+        }));
       }
-      // OPZET: wijzigingen (edited) NIET meer loggen
     });
 
-    // Deletions + Deleted note
+    // deletions + Deleted notes
     prevArr.forEach(prev=>{
       if(!nextArr.find(x=>x.id===prev.id)){
         tasks.push(deleteDoc(doc(db,coll,prev.id)));
@@ -597,7 +602,7 @@ async function saveAll(){
   upserts(prevCache.issues, newIssues, 'issues', 'Issue');
   upserts(prevCache.plans,  newPlans,  'plans',  'Plan');
 
-  // 4) Persist + notificaties met timestamp
+  // 4) Schrijf wijzigingen + maak notificaties met timestamp (ts)
   await Promise.all(tasks);
   if(notes.length){
     await Promise.all(notes.map(n=> addDoc(collection(db,'notifications'), n)));
@@ -607,7 +612,6 @@ async function saveAll(){
   // 5) Refresh cache & UI
   await loadAll();
 }
-
 $('#btnLoad').onclick = loadAll;
 $('#btnSaveAll').onclick = saveAll;
 
