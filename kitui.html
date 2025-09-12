@@ -91,17 +91,12 @@
 body { top:0 !important; }
 .goog-logo-link, .goog-te-gadget { display:none !important; }
 
-/* userinfo + globe op één regel */
+/* rij met username + globe */
 .user-line{display:flex;align-items:center;gap:8px}
 
 /* compacte icon button */
-.btn.icon{
-  width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
-  padding:0;border-radius:10px;font-size:18px;line-height:1
-}
-
-/* voorkom afbreken van userinfo zodat de globe niet eronder schiet */
-.user-info{white-space:nowrap}
+.btn.icon{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+  padding:0;border-radius:10px;font-size:18px;line-height:1}
 
   </style>
 </head>
@@ -114,9 +109,15 @@ body { top:0 !important; }
         <div class="sub">Get a GRIP on: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
       </div>
     </div>
+    <div class="header-right">
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+      <div class="user-line">
+        
+  <!-- Laat jouw bestaande gebruikersnaam/rol/rechten hier staan -->
+  <span class="user-info" id="userLine"><!-- username – role – rights --></span>
 
-   <div class="header-right">
-  <!-- Wereldbol (dropdown) boven -->
+  <!-- Vertaalknop (alleen wereldbol) -->
   <div class="dropdown" id="translateDropdown">
     <button class="btn ghost icon" id="translateBtn" aria-label="Translate" title="Translate">🌐</button>
     <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
@@ -129,9 +130,6 @@ body { top:0 !important; }
       <button class="menu-item" data-lang="reset">Original</button>
     </div>
   </div>
-
-  <!-- User info eronder -->
-  <span class="user-info" id="userLine"><!-- username – role – rights --></span>
 </div>
 
     </div>
