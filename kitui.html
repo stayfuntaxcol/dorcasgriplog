@@ -93,10 +93,17 @@ body { top:0 !important; }
 
 /* rij met username + globe */
 .user-line{display:flex;align-items:center;gap:8px}
+    
+/* globe rechts-boven in header-right, user-info eronder en zichtbaar */
+.header-right{position:relative;align-items:flex-end;padding-top:44px}
 
-/* compacte icon button */
+/* positie van de globe */
+.translate-top-right{position:absolute;top:6px;right:0;z-index:20}
+
+/* compacte icon button + user-info niet afbreken */
 .btn.icon{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
   padding:0;border-radius:10px;font-size:18px;line-height:1}
+.user-info{white-space:nowrap}
 
   </style>
 </head>
@@ -109,16 +116,10 @@ body { top:0 !important; }
         <div class="sub">Get a GRIP on: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
       </div>
     </div>
-    <div class="header-right">
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
-      <div class="user-line">
-        
-  <!-- Laat jouw bestaande gebruikersnaam/rol/rechten hier staan -->
-  <span class="user-info" id="userLine"><!-- username – role – rights --></span>
-
-  <!-- Vertaalknop (alleen wereldbol) -->
-  <div class="dropdown" id="translateDropdown">
+    
+<div class="header-right">
+  <!-- Globe rechts-boven -->
+  <div class="translate-top-right dropdown" id="translateDropdown">
     <button class="btn ghost icon" id="translateBtn" aria-label="Translate" title="Translate">🌐</button>
     <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
       <button class="menu-item" data-lang="en">English</button>
@@ -130,6 +131,9 @@ body { top:0 !important; }
       <button class="menu-item" data-lang="reset">Original</button>
     </div>
   </div>
+
+  <!-- User info volledig zichtbaar eronder -->
+  <span class="user-info" id="userLine"><!-- username – role – rights --></span>
 </div>
 
     </div>
