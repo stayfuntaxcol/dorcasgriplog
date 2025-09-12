@@ -94,14 +94,8 @@ body { top:0 !important; }
 /* userinfo + globe op één regel */
 .user-line{display:flex;align-items:center;gap:8px}
 
-/* compacte icon button */
-.btn.icon{
-  width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;
-  padding:0;border-radius:10px;font-size:18px;line-height:1
-}
-
-/* voorkom afbreken van userinfo zodat de globe niet eronder schiet */
-.user-info{white-space:nowrap}
+/* Vertaalknop rechts onder het tabel */
+.translate-bottom{display:flex;justify-content:flex-end;margin:10px 0 0;}
 
   </style>
 </head>
@@ -122,22 +116,6 @@ body { top:0 !important; }
         <div class="header-right">
   <div class="user-line">
     <span class="user-info" id="userLine"><!-- username – role – rights --></span>
-
-    <!-- VERTAALDROPDOWN (alleen wereldbol) -->
-    <div class="dropdown" id="translateDropdown">
-      <button class="btn ghost icon" id="translateBtn" aria-label="Translate" title="Translate">🌐</button>
-      <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
-        <button class="menu-item" data-lang="en">English</button>
-        <button class="menu-item" data-lang="nl">Nederlands</button>
-        <button class="menu-item" data-lang="de">Deutsch</button>
-        <button class="menu-item" data-lang="fr">Français</button>
-        <button class="menu-item" data-lang="sw">Kiswahili</button>
-        <hr style="border:none;border-top:1px solid var(--line);margin:6px 0">
-        <button class="menu-item" data-lang="reset">Original</button>
-      </div>
-    </div>
-  </div>
-</div>
 
     </div>
   </header>
@@ -358,6 +336,20 @@ body { top:0 !important; }
         <tbody></tbody>
       </table>
     </div>
+<div class="translate-bottom">
+  <div class="dropdown" id="translateDropdown">
+    <button class="btn" id="translateBtn" title="Translate">🌐 Translate</button>
+    <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
+      <button class="menu-item" data-lang="en">English</button>
+      <button class="menu-item" data-lang="nl">Nederlands</button>
+      <button class="menu-item" data-lang="de">Deutsch</button>
+      <button class="menu-item" data-lang="fr">Français</button>
+      <button class="menu-item" data-lang="sw">Kiswahili</button>
+      <hr style="border:none;border-top:1px solid var(--line);margin:6px 0">
+      <button class="menu-item" data-lang="reset">Original</button>
+    </div>
+  </div>
+</div>
   </section>
 
   <!-- Notifications -->
