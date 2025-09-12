@@ -98,7 +98,7 @@ body { top:0 !important; }
       <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
       <div>
         <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
+        <div class="sub">Get a GRIP on: Goals • Risks • Issues • Plans • Suggestions • Notifications</div>
       </div>
     </div>
     <div class="header-right">
@@ -129,8 +129,15 @@ body { top:0 !important; }
       <button id="btnSignin" class="btn primary">login</button>
       <button id="btnSignout" class="btn" style="display:none">logout</button>
     </div>
-    <div class="dropdown" id="translateDropdown">
-  <button class="btn ghost" id="translateBtn" title="Translate">🌐 Translate</button>
+</div>
+
+  </div>
+
+  <!-- Tabs -->
+  <!-- ▼ VERTAALDROPDOWN IN TABS-BALK ▼ -->
+<div class="dropdown" id="translateDropdown">
+  <!-- button krijgt automatisch tab-styling via 'nav.tabs button' -->
+  <button id="translateBtn" title="Translate">🌐 Translate</button>
   <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
     <button class="menu-item" data-lang="en">English</button>
     <button class="menu-item" data-lang="nl">Nederlands</button>
@@ -141,10 +148,8 @@ body { top:0 !important; }
     <button class="menu-item" data-lang="reset">Original</button>
   </div>
 </div>
+<!-- ▲ VÓÓR je <button>G – Goals</button> -->
 
-  </div>
-
-  <!-- Tabs -->
   <nav class="tabs" role="tablist">
     <button class="active" data-tab="goals">G – Goals</button>
     <button data-tab="risks">R – Risks</button>
