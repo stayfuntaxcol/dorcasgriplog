@@ -291,7 +291,7 @@ const firebaseConfig = {
       return `<select>${m[kind].map(s=>`<option${s===val?' selected':''}>${s}</option>`).join('')}</select>`;
     }
     function chanceSelect(val='Middel'){
-      return `<select><option>Laag</option><option${val==='Middel'?' selected':''}>Middel</option><option${val==='Hoog'?' selected':''}>Hoog</option></select>`;
+      return `<select><option>Low</option><option${val==='Middel'?' selected':''}>Medium</option><option${val==='Hoog'?' selected':''}>High</option></select>`;
     }
     function impactSelect(val='Middel'){
       return chanceSelect(val);
