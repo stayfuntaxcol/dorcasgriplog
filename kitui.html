@@ -75,6 +75,21 @@
     #tblPlans td:nth-child(4){width:100px}
 
     .cell-text{white-space:pre-wrap}
+    
+    /* — Translate dropdown — */
+.dropdown{position:relative;display:inline-block}
+.dropdown-menu{position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);
+  border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.08);padding:6px;min-width:180px;display:none;z-index:20}
+.dropdown.open .dropdown-menu{display:block}
+.dropdown-menu .menu-item{display:block;width:100%;text-align:left;border:none;background:#fff;
+  padding:8px 10px;border-radius:8px;margin:4px 0;cursor:pointer;font-size:14px;border:1px solid var(--line)}
+.dropdown-menu .menu-item:hover{background:#f3f7f7}
+
+/* Verberg de standaard Google balk/UI */
+#google_translate_container{display:none}
+.goog-te-banner-frame, #goog-gt-tt { display:none !important; }
+body { top:0 !important; }
+.goog-logo-link, .goog-te-gadget { display:none !important; }
   </style>
 </head>
 <body>
@@ -114,6 +129,19 @@
       <button id="btnSignin" class="btn primary">login</button>
       <button id="btnSignout" class="btn" style="display:none">logout</button>
     </div>
+    <div class="dropdown" id="translateDropdown">
+  <button class="btn ghost" id="translateBtn" title="Translate">🌐 Translate</button>
+  <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
+    <button class="menu-item" data-lang="en">English</button>
+    <button class="menu-item" data-lang="nl">Nederlands</button>
+    <button class="menu-item" data-lang="de">Deutsch</button>
+    <button class="menu-item" data-lang="fr">Français</button>
+    <button class="menu-item" data-lang="sw">Kiswahili</button>
+    <hr style="border:none;border-top:1px solid var(--line);margin:6px 0">
+    <button class="menu-item" data-lang="reset">Original</button>
+  </div>
+</div>
+
   </div>
 
   <!-- Tabs -->
@@ -873,5 +901,60 @@ $('#addPlanBtn').onclick = ()=>{
     // Initial
     renderAll();
   </script>
+  
+  <!-- Hidden container voor Google Translate -->
+<div id="google_translate_container"></div>
+
+<script>
+  // Laad Google Translate (verborgen)
+  function googleTranslateElementInit(){
+    new google.translate.TranslateElement({
+      pageLanguage: 'en',                 // zet desnoods op 'nl'
+      includedLanguages: 'en,nl,de,fr,sw',// voeg/haal talen weg naar wens
+      autoDisplay: false
+    }, 'google_translate_container');
+  }
+  (function(){
+    const s=document.createElement('script');
+    s.src='https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    s.defer=true; document.head.appendChild(s);
+  })();
+
+  // UI gedrag
+  const dd = document.getElementById('translateDropdown');
+  const btn = document.getElementById('translateBtn');
+  const menu = document.getElementById('translateMenu');
+
+  btn.addEventListener('click', (e)=>{ e.stopPropagation(); dd.classList.toggle('open'); });
+  document.addEventListener('click', ()=> dd.classList.remove('open'));
+
+  menu.addEventListener('click', (e)=>{
+    const t = e.target.closest('.menu-item'); if(!t) return;
+    const lang = t.dataset.lang;
+    if(lang === 'reset'){ resetTranslation(); return; }
+    setLanguage(lang); dd.classList.remove('open');
+  });
+
+  function setLanguage(lang){
+    // Wacht tot de Google UI geladen is en trigger de taalkeuze
+    const combo = document.querySelector('.goog-te-combo');
+    if(combo){
+      combo.value = lang;
+      combo.dispatchEvent(new Event('change'));
+    }else{
+      setTimeout(()=>setLanguage(lang), 250);
+    }
+  }
+
+  function resetTranslation(){
+    // Verwijder googtrans-cookie en herlaad
+    const host = location.hostname.split('.');
+    const base = host.length > 2 ? '.'+host.slice(-2).join('.') : location.hostname;
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain='+base+';';
+    location.reload();
+  }
+</script>
+
 </body>
 </html>
