@@ -115,28 +115,23 @@ body { top:0 !important; }
       </div>
     </div>
 
-    <div class="header-right">
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
-      <div class="user-line">
-        <div class="header-right">
-  <div class="user-line">
-    <span class="user-info" id="userLine"><!-- username – role – rights --></span>
-
-    <!-- VERTAALDROPDOWN (alleen wereldbol) -->
-    <div class="dropdown" id="translateDropdown">
-      <button class="btn ghost icon" id="translateBtn" aria-label="Translate" title="Translate">🌐</button>
-      <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
-        <button class="menu-item" data-lang="en">English</button>
-        <button class="menu-item" data-lang="nl">Nederlands</button>
-        <button class="menu-item" data-lang="de">Deutsch</button>
-        <button class="menu-item" data-lang="fr">Français</button>
-        <button class="menu-item" data-lang="sw">Kiswahili</button>
-        <hr style="border:none;border-top:1px solid var(--line);margin:6px 0">
-        <button class="menu-item" data-lang="reset">Original</button>
-      </div>
+   <div class="header-right">
+  <!-- Wereldbol (dropdown) boven -->
+  <div class="dropdown" id="translateDropdown">
+    <button class="btn ghost icon" id="translateBtn" aria-label="Translate" title="Translate">🌐</button>
+    <div class="dropdown-menu" id="translateMenu" role="menu" aria-hidden="true">
+      <button class="menu-item" data-lang="en">English</button>
+      <button class="menu-item" data-lang="nl">Nederlands</button>
+      <button class="menu-item" data-lang="de">Deutsch</button>
+      <button class="menu-item" data-lang="fr">Français</button>
+      <button class="menu-item" data-lang="sw">Kiswahili</button>
+      <hr style="border:none;border-top:1px solid var(--line);margin:6px 0">
+      <button class="menu-item" data-lang="reset">Original</button>
     </div>
   </div>
+
+  <!-- User info eronder -->
+  <span class="user-info" id="userLine"><!-- username – role – rights --></span>
 </div>
 
     </div>
