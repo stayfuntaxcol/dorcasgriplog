@@ -1,10 +1,4 @@
-# Create the updated HTML file with requested features:
-# - S3: crediting period (years) input; default 5; only stoves within this window earn credits
-# - S1: reduction options for pellets and stoves with % from calendar year
-# - Import/Export JSON and Save buttons (with localStorage persistence)
-# - Timeline remains with pellets S1/S2/S1+S2 and HH S1/S2/S1+S2 columns
-
-html = r"""<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
 <meta charset="utf-8" />
@@ -1036,11 +1030,3 @@ html = r"""<!DOCTYPE html>
 </script>
 </body>
 </html>
-"""
-
-# Write the file
-path = "/mnt/data/Dorcas_Clean_Cooking_All_in_One_credit_period_reduction_json.html"
-with open(path, "w", encoding="utf-8") as f:
-    f.write(html)
-
-path
