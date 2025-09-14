@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Dorcas Clean Cooking – Business Case (All-in-One • Meerdere Grafieken)</title>
+<title>Dorcas Clean Cooking – Business Case (All-in-One • Baseline S3)</title>
 <link rel="icon" href="data:," />
 <style>
   :root{
@@ -70,7 +70,7 @@
 </header>
 
 <main class="wrap">
-  <!-- FLOW -->
+  <!-- FLOW (unchanged) -->
   <section class="card active" data-panel id="flow">
   <h2 style="margin-top:0">Situatieschets (Dual-Track met Carbon-ondersteuning)</h2>
   <div class="legend">
@@ -234,7 +234,6 @@
           <div><label>Groei pellets (%/jaar)</label><input type="number" id="s1_grow_pellets" value="0" step="0.1" /></div>
           <div><label>Groei toestellen (%/jaar)</label><input type="number" id="s1_grow_stoves" value="0" step="0.1" /></div>
         </div>
-        <!-- Reducties -->
         <div class="grid two">
           <div><label>Vermindering pellets vanaf kalenderjaar</label><input type="number" id="s1_reduce_pellets_year" value="2025" step="1" /></div>
           <div><label>Vermindering pellets (%)</label><input type="number" id="s1_reduce_pellets_pct" value="0" step="0.1" /></div>
@@ -323,7 +322,9 @@
         <div class="row"><input type="checkbox" id="tl_s3_link" checked /><label for="tl_s3_link">S3 gekoppeld aan S1+S2 (installaties)</label></div>
         <div class="grid two">
           <div><label>Crediteringsperiode cook stove (jaren)</label><input type="number" id="s3_credit_years" value="5" min="1" step="1" /></div>
+          <div><label><strong>Nulmeting S3: beginwaarde cookstoves (stuks)</strong></label><input type="number" id="s3_baseline_stoves" value="0" min="0" step="1" /></div>
         </div>
+        <div class="small">Nulmeting telt mee vanaf het <em>Startjaar S3</em> en blijft meetellen gedurende de <em>Crediteringsperiode</em>.</div>
         <div class="small">Kostprijs per tCO₂e komt uit “Kostprijs Carbon Credit”.</div>
         <hr />
         <div class="row"><div class="small">Bruto carbon-opbrengst</div><div class="mono right" id="s3_gross">—</div></div>
@@ -431,7 +432,7 @@
       </table>
       <div style="margin-top:8px"><button class="btn" id="tl_recalc">Herbereken tijdlijn</button></div>
     </section>
-    <p class="small">Definities: net = (opbrengsten – variabele & vaste kosten – afschrijving opstart). Ramp = % van jaarcapaciteit in het startjaar. Crediteringsperiode S3 = jaren waarin een stove credits mag leveren.</p>
+    <p class="small">Definities: net = (opbrengsten – variabele & vaste kosten – afschrijving opstart). Ramp = % van jaarcapaciteit in het startjaar. Crediteringsperiode S3 = jaren waarin een stove credits mag leveren. Nulmeting S3 telt mee vanaf S3-start.</p>
   </section>
 
   <!-- GRAFIEKEN -->
@@ -467,7 +468,7 @@
       <div class="legend">
         <div class="item"><span class="chip s1"></span><span>S1 Huidig</span></div>
         <div class="item"><span class="chip s2"></span><span>S2 Social</span></div>
-        <div class="item"><span class="chip s3"></span><span>S3 (eligible voor credits)</span></div>
+        <div class="item"><span class="chip s3"></span><span>S3 (eligible voor credits, incl. nulmeting)</span></div>
         <div class="item"><span class="chip dash"></span><span>S1 baseline</span></div>
       </div>
     </div>
@@ -672,7 +673,8 @@
   function recalcScenarios(){
     var r1=scenario1();
     var r2=scenario2();
-    var eligibleApprox = r1.stvPerYear + r2.stvPerYear;
+    var baseline = Math.max(0, Math.floor(v('#s3_baseline_stoves')));
+    var eligibleApprox = r1.stvPerYear + r2.stvPerYear + baseline;
     scenario3(eligibleApprox);
     var ccy=($('#currency') && $('#currency').value) || 'EUR';
     $('#ccyHint') && ($('#ccyHint').textContent='Valuta: '+ccy);
@@ -689,7 +691,7 @@
     return Math.max(0, val);
   }
 
-  // Series (incl. creditperiode S3 en reducties S1)
+  // Series (incl. creditperiode S3, reducties S1, én nulmeting S3)
   function computeSeries(){
     var endY = Math.max(2018, Math.floor(($('#tl_end_year') && $('#tl_end_year').value) || 2030));
     var s1Start = 2018;
@@ -727,6 +729,7 @@
     var s3Annual        = v('#s3_annual_dorcas');
     var s3StartCost     = v('#s3_start_dorcas');
     var s3CreditYears   = Math.max(1, Math.floor(($('#s3_credit_years') && $('#s3_credit_years').value) || 5));
+    var s3Baseline      = Math.max(0, Math.floor(($('#s3_baseline_stoves') && $('#s3_baseline_stoves').value) || 0));
 
     var yearsArr=[], s1Arr=[], s2Arr=[], s3Arr=[];
     var c1Arr=[], c2Arr=[], c3Arr=[];
@@ -734,7 +737,7 @@
 
     var cum1=0, cum2=0, cum3=0;
     var win1=0, win2=0, q1=[], q2=[];
-    var cwin1=0, cwin2=0, cq1=[], cq2=[];
+    var cwin0=0, cwin1=0, cwin2=0, cq0=[], cq1=[], cq2=[];
 
     for(var y=2018; y<=endY; y++){
       yearsArr.push(y);
@@ -772,10 +775,12 @@
       var activeS1 = win1;
       var activeS2 = win2;
 
-      // S3-eligible (credit years)
+      // S3-eligible (credit years) incl. nulmeting
+      var bAdd = (y===s3Start) ? Math.round(s3Baseline) : 0;
+      cwin0 += bAdd; cq0.push(bAdd); if(cq0.length > s3CreditYears){ cwin0 -= cq0.shift(); }
       cwin1 += add1; cq1.push(add1); if(cq1.length > s3CreditYears){ cwin1 -= cq1.shift(); }
       cwin2 += add2; cq2.push(add2); if(cq2.length > s3CreditYears){ cwin2 -= cq2.shift(); }
-      var eligibleS3 = cwin1 + cwin2;
+      var eligibleS3 = cwin0 + cwin1 + cwin2;
 
       // S3 (carbon)
       var s3Net=0; var usedCount = linkS3 ? eligibleS3 : 0;
@@ -837,13 +842,14 @@
     var s3Annual        = v('#s3_annual_dorcas');
     var s3StartCost     = v('#s3_start_dorcas');
     var s3CreditYears   = Math.max(1, Math.floor(($('#s3_credit_years') && $('#s3_credit_years').value) || 5));
+    var s3Baseline      = Math.max(0, Math.floor(($('#s3_baseline_stoves') && $('#s3_baseline_stoves').value) || 0));
 
     var tbody = $('#timelineTable tbody'); if(!tbody) return; tbody.innerHTML='';
 
     var sumS1=0,sumS2=0,sumS3=0,sumAll=0;
 
     var win1=0, win2=0, q1=[], q2=[];
-    var cwin1=0, cwin2=0, cq1=[], cq2=[];
+    var cwin0=0, cwin1=0, cwin2=0, cq0=[], cq1=[], cq2=[];
 
     for(var y=2018; y<=endY; y++){
       var n1 = y - s1Start;
@@ -875,9 +881,11 @@
       var activeS2 = win2;
       var activeTot = activeS1 + activeS2;
 
+      var bAdd = (y===s3Start) ? Math.round(s3Baseline) : 0;
+      cwin0 += bAdd; cq0.push(bAdd); if(cq0.length > s3CreditYears){ cwin0 -= cq0.shift(); }
       cwin1 += add1; cq1.push(add1); if(cq1.length > s3CreditYears){ cwin1 -= cq1.shift(); }
       cwin2 += add2; cq2.push(add2); if(cq2.length > s3CreditYears){ cwin2 -= cq2.shift(); }
-      var eligibleS3 = cwin1 + cwin2;
+      var eligibleS3 = cwin0 + cwin1 + cwin2;
 
       var s3Net=0;
       if(enable3 && y>=s3Start){
@@ -973,7 +981,7 @@
     // S2
     $('#s2_start_dorcas').value = 100000; $('#s2_annual_dorcas').value = 150000; $('#s2_pellet_kg').value = 360000; $('#s2_margin_perkg').value = 0.18; $('#s2_grow_pellets').value = 0; $('#s2_grow_stoves').value = 0; $('#s2_stoves').value = 1500; $('#s2_per_stove_margin').value = 10; $('#s2_profit_share').value = 20; $('#tl_s2_start').value = 2026; $('#tl_s2_ramp').value = 70; $('#tl_enable_s2').checked = true; $('#s2_stove_age').value = 5;
     // S3
-    $('#s3_start_dorcas').value = 30000; $('#s3_annual_dorcas').value = 5000; $('#s3_credits_per_stove').value = 2; $('#s3_price').value = 15; $('#s3_compliance').value = 85; $('#tl_s3_start').value = 2026; $('#tl_s3_ramp').value = 60; $('#tl_enable_s3').checked = true; $('#tl_s3_link').checked = true; $('#s3_credit_years').value = 5;
+    $('#s3_start_dorcas').value = 30000; $('#s3_annual_dorcas').value = 5000; $('#s3_credits_per_stove').value = 2; $('#s3_price').value = 15; $('#s3_compliance').value = 85; $('#tl_s3_start').value = 2026; $('#tl_s3_ramp').value = 60; $('#tl_enable_s3').checked = true; $('#tl_s3_link').checked = true; $('#s3_credit_years').value = 5; $('#s3_baseline_stoves').value = 0;
     // Globals
     $('#amortYears').value = 3; $('#currency').value = 'EUR'; $('#currency2').value = 'EUR';
     renderStoveRows(stoveDefaults); renderCarbonRows(carbonDefaults); recalcAll();
