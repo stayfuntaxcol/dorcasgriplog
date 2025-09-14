@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dorcas Clean Cooking – Business Case (Flow + Scenarios)</title>
+<link rel="icon" href="data:," />
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e5e7eb;
+    --brand:#0ea5a3; --brand-ink:#064e4a; --danger:#ef4444; --ok:#10b981; --amber:#f59e0b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+  header{position:sticky;top:0;z-index:10;background:linear-gradient(180deg,#fff,rgba(255,255,255,.9));border-bottom:1px solid var(--line);backdrop-filter:saturate(180%) blur(8px)}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer;font-size:14px}
+  .tab[aria-selected="true"]{background:var(--brand);color:white;border-color:var(--brand)}
+  main{padding:16px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:16px}
+  .grid{display:grid;gap:16px}
+  .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:900px){ .grid.two,.grid.three{grid-template-columns:1fr} }
+
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="number"], input[type="text"]{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button{ -webkit-appearance: none; margin: 0; }
+  .row{display:flex;gap:10px;align-items:center}
+  .row > *{flex:1}
+  .hint{font-size:12px;color:var(--muted)}
+  .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#eef8f8;color:var(--brand-ink);font-size:12px;border:1px solid #bfe8e6}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--brand-ink);border:1px solid var(--brand)}
+  .btn.danger{background:var(--danger)}
+  table{width:100%;border-collapse:collapse}
+  th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;font-size:14px}
+  th{font-weight:600;background:#fafafa}
+  tfoot td{font-weight:700}
+  .mono{font-variant-numeric:tabular-nums}
+  .right{text-align:right}
+  .small{font-size:12px;color:var(--muted)}
+  .badge{display:inline-block;background:#f1f5f9;color:#334155;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #e2e8f0}
+
+  /* Flowchart */
+  .flow-wrap{overflow:auto}
+  .node{fill:#ffffff;stroke:#cbd5e1;stroke-width:1}
+  .node-title{font-size:13px;font-weight:700;fill:#0f172a}
+  .node-sub{font-size:12px;fill:#64748b}
+  .arrow{stroke:#94a3b8;stroke-width:1.6;marker-end:url(#arrowHead)}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .legend .item{display:flex;align-items:center;gap:8px}
+  .chip{width:12px;height:12px;border-radius:3px}
+  .c-uge{background:#e0f7f6;border:1px solid #bfe8e6}
+  .c-dit{background:#f1f5f9;border:1px solid #e2e8f0}
+  .c-carbon{background:#fef3c7;border:1px solid #fde68a}
+
+  /* Comparison bars */
+  .bar{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden}
+  .bar > i{display:block;height:100%;background:var(--brand)}
+
+  .sticky-actions{position:sticky;bottom:8px;display:flex;gap:8px;padding:8px 0}
+</style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Dorcas Clean Cooking – Business Case</h1>
+      <div class="sub">Vergelijk 3 scenario’s • Flowchart + rekenblad • Kostprijs per stove & per carbon credit</div>
+      <nav class="tabs" role="tablist" aria-label="Navigatie">
+        <button class="tab" role="tab" aria-selected="true" data-tab="flow">Flowchart</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="scenarios">Scenario’s</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="stove">Kostprijs Cook Stove</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="carbon">Kostprijs Carbon Credit</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <!-- FLOWCHART -->
+    <section class="card" data-panel="flow">
+      <h2 style="margin-top:0">Situatieschets (Dual-Track met Carbon-ondersteuning)</h2>
+      <div class="legend">
+        <div class="item"><span class="chip c-uge"></span><span>Urban Growth Engine (commerciële partner)</span></div>
+        <div class="item"><span class="chip c-dit"></span><span>Dorcas Impact Track (kwetsbare HH’s)</span></div>
+        <div class="item"><span class="chip c-carbon"></span><span>Carbon ondersteuning (GS + FCF)</span></div>
+      </div>
+      <div class="flow-wrap">
+        <svg viewBox="0 0 1200 600" width="100%" height="420" aria-label="Business flowchart">
+          <defs>
+            <marker id="arrowHead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+              <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"></polygon>
+            </marker>
+          </defs>
+
+          <!-- UGE: partner blokken (links) -->
+          <rect class="node" x="80" y="60" width="280" height="78" rx="10" ry="10" fill="#e0f7f6" stroke="#bfe8e6"/>
+          <text x="92" y="86" class="node-title">Urban Growth Engine (Partner)</text>
+          <text x="92" y="106" class="node-sub">Pellets + Toestellen + Service (franchise/agency)</text>
+
+          <rect class="node" x="80" y="168" width="280" height="70" rx="10" ry="10" fill="#e0f7f6" stroke="#bfe8e6"/>
+          <text x="92" y="194" class="node-title">B2B & Stads-huishoudens</text>
+          <text x="92" y="214" class="node-sub">Volume, cash-flow, lagere cost-to-serve</text>
+
+          <!-- Dorcas Impact Track (rechtsboven) -->
+          <rect class="node" x="840" y="60" width="280" height="78" rx="10" ry="10" fill="#f1f5f9" stroke="#e2e8f0"/>
+          <text x="852" y="86" class="node-title">Dorcas Impact Track</text>
+          <text x="852" y="106" class="node-sub">Kwetsbare HH’s • Bundels + service</text>
+
+          <rect class="node" x="840" y="168" width="280" height="70" rx="10" ry="10" fill="#f1f5f9" stroke="#e2e8f0"/>
+          <text x="852" y="194" class="node-title">Community & Rural Hubs</text>
+          <text x="852" y="214" class="node-sub">Bereikbaarheid • Betaalbaarheid • Onderhoud</text>
+
+          <!-- Social Impact Fund (midden) -->
+          <rect class="node" x="460" y="120" width="280" height="90" rx="10" ry="10" fill="#ffffff" />
+          <text x="472" y="146" class="node-title">Social Impact Fund</text>
+          <text x="472" y="166" class="node-sub">Winstafdracht partner + (netto) carbon</text>
+          <text x="472" y="186" class="node-sub">Financiering Impact Track & innovatie</text>
+
+          <!-- Carbon (onder) -->
+          <rect class="node" x="460" y="340" width="280" height="90" rx="10" ry="10" fill="#fef3c7" stroke="#fde68a"/>
+          <text x="472" y="366" class="node-title">Carbon Financing</text>
+          <text x="472" y="386" class="node-sub">GS certificering • Verkoop via FCF</text>
+          <text x="472" y="406" class="node-sub">Strikte MRV → voorspelbare cashflows</text>
+
+          <!-- Arrows -->
+          <line class="arrow" x1="360" y1="97" x2="460" y2="150"></line>
+          <line class="arrow" x1="360" y1="203" x2="460" y2="170"></line>
+          <line class="arrow" x1="740" y1="150" x2="840" y2="97"></line>
+          <line class="arrow" x1="740" y1="170" x2="840" y2="203"></line>
+
+          <line class="arrow" x1="600" y1="210" x2="600" y2="340"></line>
+          <line class="arrow" x1="600" y1="430" x2="600" y2="330" style="marker-end:none"></line>
+
+          <!-- Legend labels on arrows -->
+          <text x="390" y="140" class="node-sub">Winstafdracht (%)</text>
+          <text x="645" y="230" class="node-sub">Netto carbon → Fund</text>
+          <text x="795" y="150" class="node-sub">Financiering Impact</text>
+        </svg>
+      </div>
+      <p class="small">Visual: partner bouwt schaal en draagt winst af; Dorcas bekostigt Impact Track. Carbon (na kosten/fees) versterkt het Social Impact Fund.</p>
+    </section>
+
+    <!-- SCENARIOS -->
+    <section class="card" data-panel="scenarios" hidden>
+      <h2 style="margin-top:0">Scenario’s & vergelijking</h2>
+
+      <details open>
+        <summary><strong>Algemene instellingen</strong> <span class="badge">optie: afschrijving opstartkosten</span></summary>
+        <div class="grid three" style="margin-top:12px">
+          <div>
+            <label>Afschrijving opstartkosten (jaren)</label>
+            <input type="number" id="amortYears" min="1" step="1" value="3" />
+          </div>
+          <div>
+            <label>Valuta (label, rekenkundig neutraal)</label>
+            <input type="text" id="currency" value="EUR" />
+          </div>
+          <div>
+            <label>Compliance/Usage (Scenario 3 – default %)</label>
+            <input type="number" id="defaultCompliance" min="0" max="100" step="1" value="85" />
+          </div>
+        </div>
+      </details>
+
+      <div class="grid three">
+        <!-- SCENARIO 1 -->
+        <section class="card">
+          <h3 style="margin-top:0">1) Huidige situatie (Dorcas)</h3>
+          <div class="grid">
+            <div class="grid two">
+              <div>
+                <label>Opstartkosten (totaal)</label>
+                <input type="number" id="s1_start_total" value="0" step="0.01" />
+              </div>
+              <div>
+                <label>Opstartkosten voor Dorcas</label>
+                <input type="number" id="s1_start_dorcas" value="0" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Jaarlijkse kosten (totaal)</label>
+                <input type="number" id="s1_annual_total" value="120000" step="0.01" />
+              </div>
+              <div>
+                <label>Jaarlijkse kosten voor Dorcas</label>
+                <input type="number" id="s1_annual_dorcas" value="120000" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Pelletvolume/jaar (kg)</label>
+                <input type="number" id="s1_pellet_kg" value="120000" step="1" />
+              </div>
+              <div>
+                <label>Bruto marge pellets (per kg)</label>
+                <input type="number" id="s1_margin_perkg" value="0.15" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Toestellen/jaar</label>
+                <input type="number" id="s1_stoves" value="400" step="1" />
+              </div>
+              <div>
+                <label>Dorcas-bijdrage per toestel (negatief inkomen)</label>
+                <input type="number" id="s1_per_stove_support" value="35" step="0.01" />
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div>
+            <div class="row">
+              <div><span class="small">Jaarlijkse pellet-marge</span></div>
+              <div class="mono right"><span id="s1_pellet_income">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Toestellen netto (−bijdrage)</span></div>
+              <div class="mono right"><span id="s1_stove_income">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Afschrijving opstart (Dorcas)</span></div>
+              <div class="mono right"><span id="s1_amort">—</span></div>
+            </div>
+            <div class="row">
+              <div><strong>Besteedbaar voor projecten (Dorcas)</strong></div>
+              <div class="mono right"><strong id="s1_net">—</strong></div>
+            </div>
+            <div class="bar" aria-hidden="true"><i id="s1_bar" style="width:0%"></i></div>
+          </div>
+        </section>
+
+        <!-- SCENARIO 2 -->
+        <section class="card">
+          <h3 style="margin-top:0">2) Social Enterprise met commerciële partner</h3>
+          <div class="grid">
+            <div class="grid two">
+              <div>
+                <label>Opstartkosten (totaal)</label>
+                <input type="number" id="s2_start_total" value="200000" step="0.01" />
+              </div>
+              <div>
+                <label>Opstartkosten voor Dorcas</label>
+                <input type="number" id="s2_start_dorcas" value="100000" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Jaarlijkse kosten Dorcas (Impact Track)</label>
+                <input type="number" id="s2_annual_dorcas" value="150000" step="0.01" />
+              </div>
+              <div>
+                <label>Winstafdracht naar Social Impact Fund (%)</label>
+                <input type="number" id="s2_profit_share" value="20" step="1" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Pelletvolume/jaar (kg) – partner</label>
+                <input type="number" id="s2_pellet_kg" value="360000" step="1" />
+              </div>
+              <div>
+                <label>Bruto marge pellets (per kg) – partner</label>
+                <input type="number" id="s2_margin_perkg" value="0.18" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Toestellen/jaar – partner</label>
+                <input type="number" id="s2_stoves" value="1500" step="1" />
+              </div>
+              <div>
+                <label>Netto marge per toestel – partner</label>
+                <input type="number" id="s2_per_stove_margin" value="10" step="0.01" />
+              </div>
+            </div>
+          </div>
+          <hr />
+          <div>
+            <div class="row">
+              <div><span class="small">Partner winst (pellets + toestellen)</span></div>
+              <div class="mono right"><span id="s2_partner_profit">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Aandeel Dorcas (winstafdracht %)</span></div>
+              <div class="mono right"><span id="s2_dorcas_share">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Afschrijving opstart (Dorcas)</span></div>
+              <div class="mono right"><span id="s2_amort">—</span></div>
+            </div>
+            <div class="row">
+              <div><strong>Besteedbaar voor projecten (Dorcas)</strong></div>
+              <div class="mono right"><strong id="s2_net">—</strong></div>
+            </div>
+            <div class="bar" aria-hidden="true"><i id="s2_bar" style="width:0%"></i></div>
+          </div>
+        </section>
+
+        <!-- SCENARIO 3 -->
+        <section class="card">
+          <h3 style="margin-top:0">3) Carbon Financing (GS + FCF)</h3>
+          <div class="grid">
+            <div class="grid two">
+              <div>
+                <label>Opstartkosten (certificering, systemen)</label>
+                <input type="number" id="s3_start_dorcas" value="30000" step="0.01" />
+              </div>
+              <div>
+                <label>Jaarlijkse kosten Dorcas (MRV, beheer)</label>
+                <input type="number" id="s3_annual_dorcas" value="5000" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Actieve stoves (eligible)</label>
+                <input type="number" id="s3_active_stoves" value="6000" step="1" />
+              </div>
+              <div>
+                <label>Credits per stove per jaar</label>
+                <input type="number" id="s3_credits_per_stove" value="2" step="0.01" />
+              </div>
+            </div>
+            <div class="grid two">
+              <div>
+                <label>Carbon prijs (EUR / tCO₂e)</label>
+                <input type="number" id="s3_price" value="15" step="0.01" />
+              </div>
+              <div>
+                <label>Compliance / Usage (%)</label>
+                <input type="number" id="s3_compliance" value="85" step="1" />
+              </div>
+            </div>
+            <div>
+              <span class="hint">De **kostprijs per credit** (fees) komt uit het tabblad “Kostprijs Carbon Credit”.</span>
+            </div>
+          </div>
+          <hr />
+          <div>
+            <div class="row">
+              <div><span class="small">Bruto carbon-opbrengst</span></div>
+              <div class="mono right"><span id="s3_gross">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Totale kosten per credit × volume</span></div>
+              <div class="mono right"><span id="s3_costs">—</span></div>
+            </div>
+            <div class="row">
+              <div><span class="small">Afschrijving opstart (Dorcas)</span></div>
+              <div class="mono right"><span id="s3_amort">—</span></div>
+            </div>
+            <div class="row">
+              <div><strong>Besteedbaar voor projecten (Dorcas)</strong></div>
+              <div class="mono right"><strong id="s3_net">—</strong></div>
+            </div>
+            <div class="bar" aria-hidden="true"><i id="s3_bar" style="width:0%"></i></div>
+          </div>
+        </section>
+      </div>
+
+      <!-- Comparison table -->
+      <section class="card">
+        <h3 style="margin-top:0">Vergelijking 3 scenario’s (jaarbasis)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th class="right">Afschr. opstart (Dorcas)</th>
+              <th class="right">Jaarlijkse kosten (Dorcas)</th>
+              <th class="right">Jaarlijkse opbrengsten</th>
+              <th class="right">Besteedbaar voor projecten (Dorcas)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1) Huidige situatie</td>
+              <td class="mono right" id="cmp_s1_amort">—</td>
+              <td class="mono right" id="cmp_s1_costs">—</td>
+              <td class="mono right" id="cmp_s1_income">—</td>
+              <td class="mono right" id="cmp_s1_net"><strong>—</strong></td>
+            </tr>
+            <tr>
+              <td>2) Met commerciële partner</td>
+              <td class="mono right" id="cmp_s2_amort">—</td>
+              <td class="mono right" id="cmp_s2_costs">—</td>
+              <td class="mono right" id="cmp_s2_income">—</td>
+              <td class="mono right" id="cmp_s2_net"><strong>—</strong></td>
+            </tr>
+            <tr>
+              <td>3) Carbon Financing</td>
+              <td class="mono right" id="cmp_s3_amort">—</td>
+              <td class="mono right" id="cmp_s3_costs">—</td>
+              <td class="mono right" id="cmp_s3_income">—</td>
+              <td class="mono right" id="cmp_s3_net"><strong>—</strong></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div class="sticky-actions">
+          <button class="btn" id="recalcBtn">Herbereken</button>
+          <button class="btn ghost" id="resetBtn">Reset naar defaults</button>
+          <span class="hint">Alle bedragen in <span id="ccyHint">EUR</span>.</span>
+        </div>
+      </section>
+    </section>
+
+    <!-- STOVE COST BUILD-UP -->
+    <section class="card" data-panel="stove" hidden>
+      <h2 style="margin-top:0">Kostprijs 1 Cook Stove (Urban vs Rural)</h2>
+      <p class="small">Voeg componenten toe of wijzig bedragen. De totalen worden onderaan getoond.</p>
+      <table id="stoveTable">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th class="right">Urban (EUR/stove)</th>
+            <th class="right">Rural (EUR/stove)</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody><!-- rows injected --></tbody>
+        <tfoot>
+          <tr>
+            <td><strong>Totaal</strong></td>
+            <td class="mono right" id="stoveTotalUrban">—</td>
+            <td class="mono right" id="stoveTotalRural">—</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn" id="addStoveRow">+ Component</button>
+        <button class="btn ghost" id="resetStove">Reset default</button>
+      </div>
+    </section>
+
+    <!-- CARBON COST BUILD-UP -->
+    <section class="card" data-panel="carbon" hidden>
+      <h2 style="margin-top:0">Kostprijs 1 Carbon Credit (EUR/tCO₂e)</h2>
+      <p class="small">Voeg fees/kosten toe of wijzig bedragen. De som wordt gebruikt in Scenario 3.</p>
+      <table id="carbonTable">
+        <thead>
+          <tr>
+            <th>Component</th>
+            <th class="right">EUR / tCO₂e</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody><!-- rows injected --></tbody>
+        <tfoot>
+          <tr>
+            <td><strong>Totaal kosten per tCO₂e</strong></td>
+            <td class="mono right" id="carbonTotal">—</td>
+            <td></td>
+          </tr>
+        </tfoot>
+      </table>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn" id="addCarbonRow">+ Component</button>
+        <button class="btn ghost" id="resetCarbon">Reset default</button>
+      </div>
+    </section>
+  </main>
+
+<script>
+(function(){
+  const $$ = (sel,root=document)=>Array.from(root.querySelectorAll(sel));
+  const $  = (sel,root=document)=>root.querySelector(sel);
+  const fmt = (n)=> isFinite(n) ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—';
+
+  /* ===== Tabs ===== */
+  $$('.tab').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      $$('.tab').forEach(b=>b.setAttribute('aria-selected','false'));
+      btn.setAttribute('aria-selected','true');
+      const tab = btn.dataset.tab;
+      $$('section.card[data-panel]').forEach(sec=>sec.hidden = sec.dataset.panel !== tab);
+    });
+  });
+
+  /* ===== Stove cost table ===== */
+  const stoveDefaults = [
+    {name:'Toestel basis (ex-works)', urban:60, rural:60},
+    {name:'Import/duty + shipping',   urban:12, rural:14},
+    {name:'Assemblage/QA',            urban:4,  rural:5},
+    {name:'Distributie & logistiek',  urban:6,  rural:12},
+    {name:'Training & onboarding',    urban:3,  rural:5},
+    {name:'Marketing & demo',         urban:3,  rural:4},
+    {name:'Service/onderdelen (jaar 1, toerekening)', urban:5, rural:7},
+    {name:'Garantie/retourprovisie',  urban:2,  rural:3}
+  ];
+
+  const stoveTbody = $('#stoveTable tbody');
+  function renderStoveRows(rows){
+    stoveTbody.innerHTML = '';
+    rows.forEach((r,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${r.name}" data-sv="name" /></td>
+        <td class="right"><input type="number" step="0.01" value="${r.urban}" data-sv="urban" /></td>
+        <td class="right"><input type="number" step="0.01" value="${r.rural}" data-sv="rural" /></td>
+        <td class="right"><button class="btn danger" data-del="${i}">Del</button></td>
+      `;
+      stoveTbody.appendChild(tr);
+    });
+    updateStoveTotals();
+  }
+  function stoveRows(){ // read values
+    return $$('#stoveTable tbody tr').map(tr=>{
+      return {
+        name: $('input[data-sv="name"]',tr).value.trim() || 'Component',
+        urban: Number($('input[data-sv="urban"]',tr).value)||0,
+        rural: Number($('input[data-sv="rural"]',tr).value)||0
+      };
+    });
+  }
+  function updateStoveTotals(){
+    const rows = stoveRows();
+    const tu = rows.reduce((s,r)=>s + r.urban,0);
+    const tr = rows.reduce((s,r)=>s + r.rural,0);
+    $('#stoveTotalUrban').textContent = fmt(tu);
+    $('#stoveTotalRural').textContent = fmt(tr);
+  }
+  stoveTbody.addEventListener('input', updateStoveTotals);
+  stoveTbody.addEventListener('click', (e)=>{
+    const del = e.target.closest('[data-del]');
+    if(del){
+      const idx = Number(del.dataset.del);
+      const rows = stoveRows(); rows.splice(idx,1); renderStoveRows(rows);
+    }
+  });
+  $('#addStoveRow').addEventListener('click', ()=>{
+    const rows = stoveRows(); rows.push({name:'Nieuw onderdeel',urban:0,rural:0}); renderStoveRows(rows);
+  });
+  $('#resetStove').addEventListener('click', ()=>renderStoveRows(stoveDefaults));
+  renderStoveRows(stoveDefaults);
+
+  /* ===== Carbon cost table ===== */
+  const carbonDefaults = [
+    {name:'GS registratie & jaarlijkse fee', val:1.20},
+    {name:'Fairtrade licentie',              val:0.30},
+    {name:'Fairtrade premium (community)',   val:1.00},
+    {name:'FairClimateFund margin',          val:3.00},
+    {name:'MRV & databeheer',                val:1.00},
+    {name:'Verificatie & audit (toegerekend)',val:1.00},
+    {name:'Sales/broker & buffer',           val:0.50}
+  ];
+  const carbonTbody = $('#carbonTable tbody');
+  function renderCarbonRows(rows){
+    carbonTbody.innerHTML = '';
+    rows.forEach((r,i)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><input type="text" value="${r.name}" data-cb="name" /></td>
+        <td class="right"><input type="number" step="0.01" value="${r.val}" data-cb="val" /></td>
+        <td class="right"><button class="btn danger" data-delc="${i}">Del</button></td>
+      `;
+      carbonTbody.appendChild(tr);
+    });
+    updateCarbonTotal();
+  }
+  function carbonRows(){
+    return $$('#carbonTable tbody tr').map(tr=>{
+      return {
+        name: $('input[data-cb="name"]',tr).value.trim() || 'Component',
+        val: Number($('input[data-cb="val"]',tr).value)||0
+      };
+    });
+  }
+  function updateCarbonTotal(){
+    const rows = carbonRows();
+    const total = rows.reduce((s,r)=>s + r.val,0);
+    $('#carbonTotal').textContent = fmt(total);
+  }
+  carbonTbody.addEventListener('input', updateCarbonTotal);
+  carbonTbody.addEventListener('click', (e)=>{
+    const del = e.target.closest('[data-delc]');
+    if(del){
+      const idx = Number(del.dataset.delc);
+      const rows = carbonRows(); rows.splice(idx,1); renderCarbonRows(rows);
+    }
+  });
+  $('#addCarbonRow').addEventListener('click', ()=>{
+    const rows = carbonRows(); rows.push({name:'Nieuw onderdeel',val:0}); renderCarbonRows(rows);
+  });
+  $('#resetCarbon').addEventListener('click', ()=>renderCarbonRows(carbonDefaults));
+  renderCarbonRows(carbonDefaults);
+
+  /* ===== Scenarios calc ===== */
+  function val(id){ return Number($(id).value)||0; }
+  function years(){ return Math.max(1, Math.floor(val('#amortYears'))); }
+
+  function scenario1(){
+    const kg   = val('#s1_pellet_kg');
+    const mkg  = val('#s1_margin_perkg');
+    const stv  = Math.max(0, Math.floor(val('#s1_stoves')));
+    const sup  = val('#s1_per_stove_support'); // cost per stove for Dorcas
+    const annualDorcas = val('#s1_annual_dorcas');
+    const startDorcas  = val('#s1_start_dorcas');
+
+    const pelletIncome = kg * mkg;
+    const stoveIncome  = - sup * stv; // negative
+    const amort        = startDorcas / years();
+    const income       = pelletIncome + stoveIncome;
+    const netDorcas    = income - annualDorcas - amort;
+
+    // UI
+    $('#s1_pellet_income').textContent = fmt(pelletIncome);
+    $('#s1_stove_income').textContent  = fmt(stoveIncome);
+    $('#s1_amort').textContent         = fmt(amort);
+    $('#s1_net').textContent           = fmt(netDorcas);
+    $('#s1_bar').style.width = Math.min(100, Math.max(0, (income>0? income : 0)/(annualDorcas+amort+1e-6)*100 )) + '%';
+
+    // Comparison row
+    $('#cmp_s1_amort').textContent = fmt(amort);
+    $('#cmp_s1_costs').textContent = fmt(annualDorcas);
+    $('#cmp_s1_income').textContent = fmt(income);
+    $('#cmp_s1_net').textContent = fmt(netDorcas);
+    return {income, amort, annual: annualDorcas, net: netDorcas};
+  }
+
+  function scenario2(){
+    const kg   = val('#s2_pellet_kg');
+    const mkg  = val('#s2_margin_perkg');
+    const stv  = Math.max(0, Math.floor(val('#s2_stoves')));
+    const msv  = val('#s2_per_stove_margin');
+    const share= Math.max(0, Math.min(100, val('#s2_profit_share'))) / 100;
+    const annualDorcas = val('#s2_annual_dorcas');
+    const startDorcas  = val('#s2_start_dorcas');
+
+    const partnerProfit = (kg * mkg) + (stv * msv);
+    const dorcasShare   = partnerProfit * share;
+    const amort         = startDorcas / years();
+    const netDorcas     = dorcasShare - annualDorcas - amort;
+
+    // UI
+    $('#s2_partner_profit').textContent = fmt(partnerProfit);
+    $('#s2_dorcas_share').textContent   = fmt(dorcasShare);
+    $('#s2_amort').textContent          = fmt(amort);
+    $('#s2_net').textContent            = fmt(netDorcas);
+    $('#s2_bar').style.width = Math.min(100, Math.max(0, (dorcasShare>0? dorcasShare : 0)/(annualDorcas+amort+1e-6)*100 )) + '%';
+
+    // Comparison
+    $('#cmp_s2_amort').textContent = fmt(amort);
+    $('#cmp_s2_costs').textContent = fmt(annualDorcas);
+    $('#cmp_s2_income').textContent = fmt(dorcasShare);
+    $('#cmp_s2_net').textContent = fmt(netDorcas);
+    return {income: dorcasShare, amort, annual: annualDorcas, net: netDorcas};
+  }
+
+  function scenario3(){
+    const active  = Math.max(0, Math.floor(val('#s3_active_stoves')));
+    const cps     = val('#s3_credits_per_stove');
+    const price   = val('#s3_price');
+    const compl   = Math.max(0, Math.min(100, val('#s3_compliance') || val('#defaultCompliance'))) / 100;
+
+    const carbonCostPerT = Number($('#carbonTotal').textContent.replace(/[^0-9.,-]/g,'')) || 0;
+    const annualDorcas   = val('#s3_annual_dorcas');
+    const startDorcas    = val('#s3_start_dorcas');
+
+    const volumeT       = active * cps; // tCO2e/yr
+    const gross         = volumeT * price * compl;
+    const costs         = volumeT * carbonCostPerT * compl;
+    const amort         = startDorcas / years();
+    const netDorcas     = (gross - costs) - annualDorcas - amort;
+
+    // UI
+    $('#s3_gross').textContent = fmt(gross);
+    $('#s3_costs').textContent = fmt(costs);
+    $('#s3_amort').textContent = fmt(amort);
+    $('#s3_net').textContent   = fmt(netDorcas);
+    $('#s3_bar').style.width = Math.min(100, Math.max(0, (gross-costs>0? (gross-costs) : 0)/(annualDorcas+amort+1e-6)*100 )) + '%';
+
+    // Comparison
+    $('#cmp_s3_amort').textContent = fmt(amort);
+    $('#cmp_s3_costs').textContent = fmt(annualDorcas);
+    $('#cmp_s3_income').textContent = fmt(gross - costs);
+    $('#cmp_s3_net').textContent = fmt(netDorcas);
+
+    return {income: gross - costs, amort, annual: annualDorcas, net: netDorcas};
+  }
+
+  function recalc(){
+    $('#ccyHint').textContent = ($('#currency').value || 'EUR');
+    const r1 = scenario1();
+    const r2 = scenario2();
+    const r3 = scenario3();
+  }
+
+  $('#recalcBtn').addEventListener('click', recalc);
+  $$('input').forEach(i=> i.addEventListener('input', ()=>{ /* debounce-light */ clearTimeout(i._t); i._t=setTimeout(recalc,150); }));
+  recalc();
+
+  /* Reset defaults */
+  $('#resetBtn').addEventListener('click', ()=>{
+    // Scenario 1
+    $('#s1_start_total').value = 0;
+    $('#s1_start_dorcas').value = 0;
+    $('#s1_annual_total').value = 120000;
+    $('#s1_annual_dorcas').value = 120000;
+    $('#s1_pellet_kg').value = 120000;
+    $('#s1_margin_perkg').value = 0.15;
+    $('#s1_stoves').value = 400;
+    $('#s1_per_stove_support').value = 35;
+
+    // Scenario 2
+    $('#s2_start_total').value = 200000;
+    $('#s2_start_dorcas').value = 100000;
+    $('#s2_annual_dorcas').value = 150000;
+    $('#s2_profit_share').value = 20;
+    $('#s2_pellet_kg').value = 360000;
+    $('#s2_margin_perkg').value = 0.18;
+    $('#s2_stoves').value = 1500;
+    $('#s2_per_stove_margin').value = 10;
+
+    // Scenario 3
+    $('#s3_start_dorcas').value = 30000;
+    $('#s3_annual_dorcas').value = 5000;
+    $('#s3_active_stoves').value = 6000;
+    $('#s3_credits_per_stove').value = 2;
+    $('#s3_price').value = 15;
+    $('#s3_compliance').value = 85;
+
+    // Globals
+    $('#amortYears').value = 3;
+    $('#currency').value = 'EUR';
+    $('#defaultCompliance').value = 85;
+
+    renderStoveRows(stoveDefaults);
+    renderCarbonRows(carbonDefaults);
+    recalc();
+  });
+
+})();
+</script>
+</body>
+</html>
