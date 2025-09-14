@@ -9,18 +9,13 @@
   :root{
     --bg:#f6f7fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e5e7eb;
     --brand:#0ea5a3; --brand-ink:#064e4a; --danger:#ef4444;
-    /* Scenario kleuren */
-    --s1:#334155; /* slate */
-    --s2:#0EA5A3; /* teal */
-    --s3:#F59E0B; /* amber */
-    --axis:#374151; /* donkergrijs voor labels */
+    --s1:#334155; --s2:#0EA5A3; --s3:#F59E0B; --axis:#374151;
   }
   *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
   header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
   .wrap{max-width:1200px;margin:0 auto;padding:16px}
   h1{font-size:20px;margin:0}
   .sub{color:var(--muted);font-size:13px;margin-top:4px}
-  /* Tabs as links */
   .tabs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
   .tabs a{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer;font-size:14px;text-decoration:none;color:inherit}
   .tabs a[aria-current="true"]{background:var(--brand);color:white;border-color:var(--brand)}
@@ -48,15 +43,10 @@
   .chip.dash{background:repeating-linear-gradient(90deg, var(--s1) 0 6px, transparent 6px 12px);border:1px solid var(--s1)}
   .bar{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin-top:6px}
   .bar > i{display:block;height:100%;background:var(--brand)}
-
-  /* Hash-tab fallback: show only :target; default show #flow if no hash */
   [data-panel]{display:none}
   #flow:target, #scenarios:target, #stove:target, #carbon:target, #timeline:target, #graph:target{display:block}
-  body:not(:target) #flow{display:block} /* initial */
-  /* When JS adds .active */
+  body:not(:target) #flow{display:block}
   [data-panel].active{display:block}
-
-  /* Chart styles */
   .chart-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
   .tooltip{position:absolute;pointer-events:none;background:#0f172a;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap}
   .chart{position:relative; width:100%; height:380px; border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden}
@@ -89,7 +79,6 @@
     <div class="item"><span class="chip c-carbon"></span><span>Carbon ondersteuning (GS + FCF)</span></div>
   </div>
 
-  <!-- Flowchart – 3 Scenarios -->
 <style>
   .flow-wrap{overflow:auto;padding:12px;border:0;border-radius:14px;background:linear-gradient(180deg,#f8fafc,#ffffff)}
   .node{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.25;filter:url(#shadow)}
@@ -97,21 +86,17 @@
   .node-sub{font-size:14px;fill:#475569}
   .arrow{stroke:#64748b;stroke-width:2.25;marker-end:url(#arrowHead);stroke-linecap:round}
   .edge-label{font-size:14px;font-weight:700;fill:#0f172a;paint-order:stroke;stroke:#fff;stroke-width:6px;stroke-linejoin:round}
-
   .lane-1{fill:#e7f7f2;opacity:.45}
   .lane-2{fill:#eaf6ff;opacity:.45}
   .lane-3{fill:#fff8e6;opacity:.45}
-
   .flow-controls{display:flex;gap:10px;align-items:center;margin:10px 0 12px}
   .flow-controls .label{color:#334155;font-weight:700}
   .chip-btn{appearance:none;border:1px solid #cbd5e1;background:#fff;border-radius:999px;padding:6px 12px;font:600 13px/1 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif;color:#0f172a;cursor:pointer}
   .chip-btn:hover{background:#f8fafc}
   .chip-btn.is-active{background:#0ea5a3;color:#fff;border-color:#0ea5a3}
-
   .flowchart[data-sel="1"] [data-scenario]:not([data-scenario="1"]){display:none}
   .flowchart[data-sel="2"] [data-scenario]:not([data-scenario="2"]){display:none}
   .flowchart[data-sel="3"] [data-scenario]:not([data-scenario="3"]){display:none}
-
   .lane-title{font-size:16px;font-weight:900;fill:#0f172a}
   .lane-sub{font-size:13px;fill:#64748b}
 </style>
@@ -139,72 +124,57 @@
     <rect x="530" y="24" width="440" height="552" rx="12" class="lane-2"/>
     <rect x="1030" y="24" width="440" height="552" rx="12" class="lane-3"/>
 
-    <!-- ===================== SCENARIO 1 ===================== -->
+    <!-- S1 -->
     <g data-scenario="1">
       <text x="50" y="54" class="lane-title">Scenario 1 – Huidige Situatie</text>
       <text x="50" y="74" class="lane-sub">Dorcas Clean Cook Stove Project</text>
-
       <rect class="node" x="60" y="100" width="400" height="110" rx="14"/>
       <text x="78" y="138" class="node-title">Dorcas Project Team</text>
       <text x="78" y="162" class="node-sub">Pelletproductie & Mimi Moto verkoop + Service</text>
-
       <rect class="node" x="60" y="250" width="400" height="110" rx="14"/>
       <text x="78" y="288" class="node-title">Huishoudens & Gemeenschap</text>
       <text x="78" y="312" class="node-sub">Urban & Rural gebruikers</text>
-
       <rect class="node" x="60" y="400" width="400" height="110" rx="14"/>
       <text x="78" y="438" class="node-title">Projectbudget</text>
       <text x="78" y="462" class="node-sub">Verkoopopbrengsten + Subsidies → Herinvesteren</text>
-
       <line class="arrow" x1="260" y1="210" x2="260" y2="250"></line>
       <text x="274" y="232" class="edge-label">Levering + service</text>
-
       <line class="arrow" x1="260" y1="360" x2="260" y2="400"></line>
       <text x="274" y="382" class="edge-label">Betalingen → budget</text>
     </g>
 
-    <!-- ===================== SCENARIO 2 ===================== -->
+    <!-- S2 -->
     <g data-scenario="2">
       <text x="550" y="54" class="lane-title">Scenario 2 – Social Enterprise</text>
       <text x="550" y="74" class="lane-sub">Dorcas + Business Partner</text>
-
       <rect class="node" x="560" y="100" width="400" height="110" rx="14" fill="#e0f7f6" stroke="#bfe8e6"/>
       <text x="578" y="138" class="node-title">Urban Growth Engine (Partner)</text>
       <text x="578" y="162" class="node-sub">Pellets • Toestellen • Service</text>
-
       <rect class="node" x="560" y="250" width="400" height="110" rx="14"/>
       <text x="578" y="288" class="node-title">Social Impact Fund</text>
       <text x="578" y="312" class="node-sub">Winstafdracht partner → Impact financiering</text>
-
       <rect class="node" x="560" y="400" width="400" height="110" rx="14" fill="#eef2f6" stroke="#e2e8f0"/>
       <text x="578" y="438" class="node-title">Dorcas Impact Track</text>
       <text x="578" y="462" class="node-sub">Kwetsbare HH’s • Bundels + service</text>
-
       <line class="arrow" x1="760" y1="210" x2="760" y2="250"></line>
       <text x="774" y="232" class="edge-label">Winstafdracht (%)</text>
-
       <line class="arrow" x1="760" y1="360" x2="760" y2="400"></line>
       <text x="774" y="382" class="edge-label">Financiering Impact</text>
     </g>
 
-    <!-- ===================== SCENARIO 3 ===================== -->
+    <!-- S3 -->
     <g data-scenario="3">
       <text x="1050" y="54" class="lane-title">Scenario 3 – Carbon Financing</text>
       <text x="1050" y="74" class="lane-sub">Carbon Credit Model (GS + FCF)</text>
-
       <rect class="node" x="1060" y="100" width="400" height="110" rx="14"/>
       <text x="1078" y="138" class="node-title">Cook Stoves in gebruik</text>
       <text x="1078" y="162" class="node-sub">Gebruik → emissiereducties (MRV)</text>
-
       <rect class="node" x="1060" y="250" width="400" height="110" rx="14" fill="#fef3c7" stroke="#fde68a"/>
       <text x="1078" y="288" class="node-title">Carbon Financing</text>
       <text x="1078" y="312" class="node-sub">Gold Standard certificering • Verkoop via FCF</text>
-
       <line class="arrow" x1="1260" y1="210" x2="1260" y2="250"></line>
       <text x="1274" y="232" class="edge-label">MRV</text>
-
       <line class="arrow" x1="1060" y1="305" x2="960" y2="305"></line>
-      
     </g>
   </svg>
 </div>
@@ -260,12 +230,11 @@
           <div><label>Pelletvolume/jaar (kg)</label><input type="number" id="s1_pellet_kg" value="120000" step="1" /></div>
           <div><label>Marge pellets (€/kg)</label><input type="number" id="s1_margin_perkg" value="0.15" step="0.01" /></div>
         </div>
-        <!-- Groei S1 -->
         <div class="grid two">
           <div><label>Groei pellets (%/jaar)</label><input type="number" id="s1_grow_pellets" value="0" step="0.1" /></div>
           <div><label>Groei toestellen (%/jaar)</label><input type="number" id="s1_grow_stoves" value="0" step="0.1" /></div>
         </div>
-        <!-- NIEUW: Verminderingen S1 -->
+        <!-- Reducties -->
         <div class="grid two">
           <div><label>Vermindering pellets vanaf kalenderjaar</label><input type="number" id="s1_reduce_pellets_year" value="2025" step="1" /></div>
           <div><label>Vermindering pellets (%)</label><input type="number" id="s1_reduce_pellets_pct" value="0" step="0.1" /></div>
@@ -278,7 +247,6 @@
           <div><label>Toestellen/jaar</label><input type="number" id="s1_stoves" value="400" step="1" /></div>
           <div><label>Dorcas-bijdrage per toestel (€/st)</label><input type="number" id="s1_per_stove_support" value="35" step="0.01" /></div>
         </div>
-        <!-- Leeftijd Cook Stove S1 -->
         <div class="grid two">
           <div>
             <label>Leeftijd Cook Stove (jaren)</label>
@@ -304,7 +272,6 @@
           <div><label>Pelletvolume/jaar (kg) partner</label><input type="number" id="s2_pellet_kg" value="360000" step="1" /></div>
           <div><label>Marge pellets (€/kg) partner</label><input type="number" id="s2_margin_perkg" value="0.18" step="0.01" /></div>
         </div>
-        <!-- Groei S2 -->
         <div class="grid two">
           <div><label>Groei pellets (%/jaar – partner)</label><input type="number" id="s2_grow_pellets" value="0" step="0.1" /></div>
           <div><label>Groei toestellen (%/jaar – partner)</label><input type="number" id="s2_grow_stoves" value="0" step="0.1" /></div>
@@ -313,7 +280,6 @@
           <div><label>Toestellen/jaar – partner</label><input type="number" id="s2_stoves" value="1500" step="1" /></div>
           <div><label>Netto marge per toestel – partner</label><input type="number" id="s2_per_stove_margin" value="10" step="0.01" /></div>
         </div>
-        <!-- Leeftijd Cook Stove S2 -->
         <div class="grid two">
           <div>
             <label>Leeftijd Cook Stove (jaren) – partner</label>
@@ -355,7 +321,6 @@
           <div class="row"><input type="checkbox" id="tl_enable_s3" checked /><label for="tl_enable_s3">Activeer S3 in tijdlijn</label></div>
         </div>
         <div class="row"><input type="checkbox" id="tl_s3_link" checked /><label for="tl_s3_link">S3 gekoppeld aan S1+S2 (installaties)</label></div>
-        <!-- NIEUW: Crediteringsperiode -->
         <div class="grid two">
           <div><label>Crediteringsperiode cook stove (jaren)</label><input type="number" id="s3_credit_years" value="5" min="1" step="1" /></div>
         </div>
@@ -389,7 +354,6 @@
       <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn" id="recalcBtn">Herbereken</button>
         <button class="btn ghost" id="resetBtn">Reset naar defaults</button>
-        <!-- NIEUW: JSON & Opslaan -->
         <input type="file" id="fileImport" accept="application/json" style="display:none" />
         <button class="btn ghost" id="btnImport">Importeer .json</button>
         <button class="btn ghost" id="btnExport">Exporteer .json</button>
@@ -470,7 +434,7 @@
     <p class="small">Definities: net = (opbrengsten – variabele & vaste kosten – afschrijving opstart). Ramp = % van jaarcapaciteit in het startjaar. Crediteringsperiode S3 = jaren waarin een stove credits mag leveren.</p>
   </section>
 
-  <!-- GRAFIEKEN (3 stuks) -->
+  <!-- GRAFIEKEN -->
   <section class="card" data-panel id="graph">
     <h2 style="margin:0 0 12px 0">Grafieken</h2>
 
@@ -517,7 +481,6 @@
   function $$(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
   function fmt(n){ return isFinite(n) ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; }
 
-  // ---- Tabs ----
   function markActiveTab(){
     var hash = location.hash || '#flow';
     ['flow','scenarios','stove','carbon','timeline','graph'].forEach(function(id){
@@ -533,7 +496,7 @@
   window.addEventListener('hashchange', markActiveTab);
   markActiveTab();
 
-  // ---- Stove table ----
+  // Stove table
   var stoveDefaults = [
     {name:'Toestel basis (ex-works)', urban:60, rural:60},
     {name:'Import/duty + shipping',   urban:12, rural:14},
@@ -550,7 +513,7 @@
   function updateStoveTotals(){ if(!stoveTbody) return; var rows = stoveRows(); var tu = rows.reduce(function(s,r){ return s + r.urban; },0); var tr = rows.reduce(function(s,r){ return s + r.rural; },0); $('#stoveTotalUrban').textContent = fmt(tu); $('#stoveTotalRural').textContent = fmt(tr); }
   if(stoveTbody){ stoveTbody.addEventListener('input', updateStoveTotals); stoveTbody.addEventListener('click', function(e){ var del = e.target.closest('[data-del]'); if(del){ var idx = Number(del.getAttribute('data-del')); var rows = stoveRows(); rows.splice(idx,1); renderStoveRows(rows); } }); $('#addStoveRow') && $('#addStoveRow').addEventListener('click', function(){ var rows = stoveRows(); rows.push({name:'Nieuw onderdeel',urban:0,rural:0}); renderStoveRows(rows); }); $('#resetStove') && $('#resetStove').addEventListener('click', function(){ renderStoveRows(stoveDefaults); }); renderStoveRows(stoveDefaults); }
 
-  // ---- Carbon table ----
+  // Carbon table
   var carbonDefaults = [
     {name:'GS registratie & jaarlijkse fee', val:1.20},
     {name:'Fairtrade licentie',              val:0.30},
@@ -566,10 +529,10 @@
   function updateCarbonTotal(){ if(!carbonTbody) return; var rows = carbonRows(); var total = rows.reduce(function(s,r){ return s + r.val; },0); $('#carbonTotal').textContent = fmt(total); }
   if(carbonTbody){ carbonTbody.addEventListener('input', updateCarbonTotal); carbonTbody.addEventListener('click', function(e){ var del = e.target.closest('[data-delc]'); if(del){ var idx = Number(del.getAttribute('data-delc')); var rows = carbonRows(); rows.splice(idx,1); renderCarbonRows(rows); } }); $('#addCarbonRow') && $('#addCarbonRow').addEventListener('click', function(){ var rows = carbonRows(); rows.push({name:'Nieuw onderdeel',val:0}); renderCarbonRows(rows); }); $('#resetCarbon') && $('#resetCarbon').addEventListener('click', function(){ renderCarbonRows(carbonDefaults); }); renderCarbonRows(carbonDefaults); }
 
-  // ---- JSON Import/Export/Bewaren ----
+  // JSON Import/Export/Bewaren
   function gatherInputs(){
     var data = {};
-    $$('input').forEach(function(el){
+    $$('#scenarios input, #timeline input, #graph input').forEach(function(el){
       if(!el.id) return;
       if(el.type==='checkbox') data[el.id] = !!el.checked;
       else data[el.id] = el.value;
@@ -609,7 +572,7 @@
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
   });
   $('#btnImport') && $('#btnImport').addEventListener('click', function(){
-    var fi = $('#fileImport'); if(!fi) return; fi.value=''; fi.click();
+    var fi = document.getElementById('fileImport'); if(!fi) return; fi.value=''; fi.click();
   });
   $('#fileImport') && $('#fileImport').addEventListener('change', function(){
     var file = this.files && this.files[0]; if(!file) return;
@@ -643,7 +606,7 @@
     }catch(e){ /* ignore */ }
   })();
 
-  // ---- Scenario snapshot (cards) ----
+  // Snapshot cards
   function v(id){ var el=$(id); return el? Number(el.value)||0 : 0; }
   function years(){ return Math.max(1, Math.floor(v('#amortYears')||3)); }
 
@@ -683,7 +646,7 @@
     $('#cmp_s2_net') && ($('#cmp_s2_net').textContent = fmt(net));
     return { income: dorcasShare, annual: annual, amort: amort, net: net, stvPerYear: stv };
   }
-  function s3_costPerT(){ var t = $('#carbonTotal'); var n = t? Number(t.textContent.replace(/[^0-9.,-]/g,''))||0 : 0; return n; }
+  function s3_costPerT(){ var t = $('#carbonTotal'); var raw = t? t.textContent : '0'; raw = (raw||'').replace(/[^\d\.\-]/g,''); var n = Number(raw); return isFinite(n)? n : 0; }
   function scenario3(activeStovesEligible){
     var cps = v('#s3_credits_per_stove');
     var price = v('#s3_price');
@@ -709,7 +672,6 @@
   function recalcScenarios(){
     var r1=scenario1();
     var r2=scenario2();
-    // Approx: eligible = stoves per jaar (S1+S2) * credit years? The detailed timeline handles eligibility; here use instantaneous installs as proxy
     var eligibleApprox = r1.stvPerYear + r2.stvPerYear;
     scenario3(eligibleApprox);
     var ccy=($('#currency') && $('#currency').value) || 'EUR';
@@ -717,12 +679,17 @@
     ['#graphCcy1','#graphCcy2'].forEach(function(id){ var el=$(id); if(el) el.textContent='Valuta: '+ccy; });
   }
 
-  // ---- Helpers groei & reductie ----
-  function pctClamp(p){ p = Number(p)||0; if(p < -100) p = -100; return p; } // geen negatieve volumes
+  // Helpers
+  function pctClamp(p){ p = Number(p)||0; if(p < -100) p = -100; return p; }
   function powGrowth(base, pct, n){ var g = pctClamp(pct)/100; return base * Math.pow(1+g, Math.max(0,n)); }
-  function applyReduction(val, year, startYear, pct){ pct = Math.max(0, Number(pct)||0; startYear = Number(startYear)||Infinity; if(year>=startYear){ val *= (1 - pct/100); } return Math.max(0, val); }
+  function applyReduction(val, year, startYear, pct){
+    pct = Math.max(0, Number(pct) || 0);
+    startYear = Number(startYear) || Infinity;
+    if(year >= startYear){ val *= (1 - pct/100); }
+    return Math.max(0, val);
+  }
 
-  // ---- Series met groei + leeftijdsvensters + S3-creditperiode ----
+  // Series (incl. creditperiode S3 en reducties S1)
   function computeSeries(){
     var endY = Math.max(2018, Math.floor(($('#tl_end_year') && $('#tl_end_year').value) || 2030));
     var s1Start = 2018;
@@ -736,7 +703,6 @@
 
     var amortY = years();
 
-    // Basis inputs
     var s1PelBase = v('#s1_pellet_kg'), s1PelMarg = v('#s1_margin_perkg');
     var s1StvBase = v('#s1_stoves'),   s1StvSup  = v('#s1_per_stove_support');
     var s1Annual  = v('#s1_annual_dorcas'), s1StartCost = v('#s1_start_dorcas');
@@ -763,29 +729,27 @@
     var s3CreditYears   = Math.max(1, Math.floor(($('#s3_credit_years') && $('#s3_credit_years').value) || 5));
 
     var yearsArr=[], s1Arr=[], s2Arr=[], s3Arr=[];
-    var c1Arr=[], c2Arr=[], c3Arr=[]; // cumulatief net
-    var h1Arr=[], h2Arr=[], h3Arr=[]; // h3 = S3-eligible stoves (window)
+    var c1Arr=[], c2Arr=[], c3Arr=[];
+    var h1Arr=[], h2Arr=[], h3Arr=[];
 
     var cum1=0, cum2=0, cum3=0;
-
-    // Actief (HH) vensters (leeftijd) en S3-eligible vensters (credit years)
-    var win1=0, win2=0, q1=[], q2=[];             // actieve HH (age1/age2)
-    var cwin1=0, cwin2=0, cq1=[], cq2=[];         // eligible voor S3 (s3CreditYears)
+    var win1=0, win2=0, q1=[], q2=[];
+    var cwin1=0, cwin2=0, cq1=[], cq2=[];
 
     for(var y=2018; y<=endY; y++){
       yearsArr.push(y);
 
-      // S1 per jaar met groei + reductie
+      // S1
       var n1 = y - s1Start;
       var s1PelY = (y>=s1Start) ? powGrowth(s1PelBase, s1GrowPel, n1) : 0;
       var s1StvY = (y>=s1Start) ? powGrowth(s1StvBase, s1GrowStv, n1) : 0;
-      if(y>=redPelYear) s1PelY = Math.max(0, s1PelY*(1 - redPelPct/100));
-      if(y>=redStvYear) s1StvY = Math.max(0, s1StvY*(1 - redStvPct/100));
+      s1PelY = applyReduction(s1PelY, y, redPelYear, redPelPct);
+      s1StvY = applyReduction(s1StvY, y, redStvYear, redStvPct);
       var s1Amort = (y>=s1Start && y<s1Start+amortY) ? (s1StartCost/amortY) : 0;
       var s1Net = (s1PelY*s1PelMarg) + (-s1StvSup*s1StvY) - s1Annual - s1Amort;
       s1Arr.push(s1Net); cum1 += s1Net; c1Arr.push(cum1);
 
-      // S2 per jaar met groei (+ ramp alleen in startjaar voor stoves)
+      // S2
       var s2Net=0, s2PelY=0, s2StvY=0;
       if(enable2 && y>=s2Start){
         var n2 = y - s2Start;
@@ -808,12 +772,12 @@
       var activeS1 = win1;
       var activeS2 = win2;
 
-      // S3-eligible venster (credit years over installaties)
+      // S3-eligible (credit years)
       cwin1 += add1; cq1.push(add1); if(cq1.length > s3CreditYears){ cwin1 -= cq1.shift(); }
       cwin2 += add2; cq2.push(add2); if(cq2.length > s3CreditYears){ cwin2 -= cq2.shift(); }
       var eligibleS3 = cwin1 + cwin2;
 
-      // S3 (carbon) op basis van eligibleS3 (optioneel gelinkt)
+      // S3 (carbon)
       var s3Net=0; var usedCount = linkS3 ? eligibleS3 : 0;
       if(enable3 && y>=s3Start){
         var ramp3 = (y===s3Start) ? (s3Ramp/100) : 1;
@@ -827,16 +791,15 @@
 
       h1Arr.push(activeS1);
       h2Arr.push(activeS2);
-      h3Arr.push(eligibleS3); // toon eligible count in grafiek 3
+      h3Arr.push(eligibleS3);
     }
 
-    // baseline wisselpunt
     var baselineSwitch = Infinity; if(enable2) baselineSwitch = Math.min(baselineSwitch, s2Start); if(enable3) baselineSwitch = Math.min(baselineSwitch, s3Start); if(baselineSwitch===Infinity) baselineSwitch=null;
 
     return { years:yearsArr, s1:s1Arr, s2:s2Arr, s3:s3Arr, c1:c1Arr, c2:c2Arr, c3:c3Arr, h1:h1Arr, h2:h2Arr, h3:h3Arr, baselineSwitch:baselineSwitch };
   }
 
-  // ---- Tabel Tijdlijn (met groei + leeftijd/credit vensters) ----
+  // Tabel Tijdlijn
   function timeline(){
     var endY = Math.max(2018, Math.floor(($('#tl_end_year') && $('#tl_end_year').value) || 2030));
     var s1Start = 2018;
@@ -879,20 +842,18 @@
 
     var sumS1=0,sumS2=0,sumS3=0,sumAll=0;
 
-    var win1=0, win2=0, q1=[], q2=[];   // actieve HH (age windows)
-    var cwin1=0, cwin2=0, cq1=[], cq2=[]; // eligible S3 (credit windows)
+    var win1=0, win2=0, q1=[], q2=[];
+    var cwin1=0, cwin2=0, cq1=[], cq2=[];
 
     for(var y=2018; y<=endY; y++){
-      // S1
       var n1 = y - s1Start;
       var s1PelY = (y>=s1Start) ? powGrowth(s1PelBase, s1GrowPel, n1) : 0;
       var s1StvY = (y>=s1Start) ? powGrowth(s1StvBase, s1GrowStv, n1) : 0;
-      if(y>=redPelYear) s1PelY = Math.max(0, s1PelY*(1 - redPelPct/100));
-      if(y>=redStvYear) s1StvY = Math.max(0, s1StvY*(1 - redStvPct/100));
+      s1PelY = applyReduction(s1PelY, y, redPelYear, redPelPct);
+      s1StvY = applyReduction(s1StvY, y, redStvYear, redStvPct);
       var s1Amort = (y>=s1Start && y<s1Start+amortY) ? (s1StartCost/amortY) : 0;
       var s1Net = (s1PelY*s1PelMarg) + (-s1StvSup*s1StvY) - s1Annual - s1Amort;
 
-      // S2
       var s2Net=0, s2PelY=0, s2StvY=0;
       if(enable2 && y>=s2Start){
         var n2 = y - s2Start;
@@ -904,7 +865,6 @@
         s2Net=dorcasShare - s2Annual - s2Amort;
       }
 
-      // Actieve HH (age windows)
       var add1 = Math.round(s1StvY);
       win1 += add1; q1.push(add1); if(q1.length > age1){ win1 -= q1.shift(); }
 
@@ -915,12 +875,10 @@
       var activeS2 = win2;
       var activeTot = activeS1 + activeS2;
 
-      // Eligible voor S3 (credit window over installaties)
       cwin1 += add1; cq1.push(add1); if(cq1.length > s3CreditYears){ cwin1 -= cq1.shift(); }
       cwin2 += add2; cq2.push(add2); if(cq2.length > s3CreditYears){ cwin2 -= cq2.shift(); }
       var eligibleS3 = cwin1 + cwin2;
 
-      // S3 op basis van eligibleS3
       var s3Net=0;
       if(enable3 && y>=s3Start){
         var ramp3=(y===s3Start)?(s3Ramp/100):1;
@@ -951,7 +909,7 @@
     $('#tl_sum_s1').textContent = fmt(sumS1); $('#tl_sum_s2').textContent = fmt(sumS2); $('#tl_sum_s3').textContent = fmt(sumS3); $('#tl_sum_all').textContent = fmt(sumAll);
   }
 
-  // ---- Grafieken ----
+  // Graphs
   function drawLineChart(svgId, tipId, series, y1, y2, y3, labelFmt){
     var svg = $(svgId); if(!svg) return; var tip=$(tipId);
     var box = svg.getBoundingClientRect(); var W = Math.max(320, Math.floor(box.width||svg.parentElement.clientWidth)); var H = Math.max(260, Math.floor(box.height||svg.parentElement.clientHeight));
@@ -999,31 +957,28 @@
 
   function drawAllGraphs(){
     var series = computeSeries();
-    drawLineChart('#chartSvg1','#chartTip1', series, series.s1, series.s2, series.s3, null); // per jaar net
-    drawLineChart('#chartSvg2','#chartTip2', series, series.c1, series.c2, series.c3, null); // cumulatief
+    drawLineChart('#chartSvg1','#chartTip1', series, series.s1, series.s2, series.s3, null);
+    drawLineChart('#chartSvg2','#chartTip2', series, series.c1, series.c2, series.c3, null);
     drawLineChart('#chartSvg3','#chartTip3', series, series.h1, series.h2, series.h3, function(v){ return Math.round(v).toLocaleString(); });
   }
 
-  // ---- Tijdlijn render ----
   function recalcAll(){ recalcScenarios(); timeline(); if(location.hash==='#graph'){ drawAllGraphs(); } }
   $('#recalcBtn') && $('#recalcBtn').addEventListener('click', recalcAll);
   $('#tl_recalc') && $('#tl_recalc').addEventListener('click', function(){ timeline(); if(location.hash==='#graph'){ drawAllGraphs(); } });
   $$('input').forEach(function(i){ i.addEventListener('input', function(){ clearTimeout(i._t); i._t=setTimeout(recalcAll,150); }); });
 
-  // Reset defaults
   $('#resetBtn') && $('#resetBtn').addEventListener('click', function(){
-    // Scenario 1
+    // S1
     $('#s1_start_dorcas').value = 0; $('#s1_annual_dorcas').value = 120000; $('#s1_pellet_kg').value = 120000; $('#s1_margin_perkg').value = 0.15; $('#s1_grow_pellets').value = 0; $('#s1_grow_stoves').value = 0; $('#s1_reduce_pellets_year').value = 2025; $('#s1_reduce_pellets_pct').value = 0; $('#s1_reduce_stoves_year').value = 2025; $('#s1_reduce_stoves_pct').value = 0; $('#s1_stoves').value = 400; $('#s1_per_stove_support').value = 35; $('#s1_stove_age').value = 5;
-    // Scenario 2
+    // S2
     $('#s2_start_dorcas').value = 100000; $('#s2_annual_dorcas').value = 150000; $('#s2_pellet_kg').value = 360000; $('#s2_margin_perkg').value = 0.18; $('#s2_grow_pellets').value = 0; $('#s2_grow_stoves').value = 0; $('#s2_stoves').value = 1500; $('#s2_per_stove_margin').value = 10; $('#s2_profit_share').value = 20; $('#tl_s2_start').value = 2026; $('#tl_s2_ramp').value = 70; $('#tl_enable_s2').checked = true; $('#s2_stove_age').value = 5;
-    // Scenario 3
+    // S3
     $('#s3_start_dorcas').value = 30000; $('#s3_annual_dorcas').value = 5000; $('#s3_credits_per_stove').value = 2; $('#s3_price').value = 15; $('#s3_compliance').value = 85; $('#tl_s3_start').value = 2026; $('#tl_s3_ramp').value = 60; $('#tl_enable_s3').checked = true; $('#tl_s3_link').checked = true; $('#s3_credit_years').value = 5;
     // Globals
     $('#amortYears').value = 3; $('#currency').value = 'EUR'; $('#currency2').value = 'EUR';
     renderStoveRows(stoveDefaults); renderCarbonRows(carbonDefaults); recalcAll();
   });
 
-  // Initial
   renderStoveRows(stoveDefaults); renderCarbonRows(carbonDefaults); recalcAll();
   window.addEventListener('resize', function(){ if(location.hash==='#graph'){ drawAllGraphs(); } });
 })();
