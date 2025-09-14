@@ -1,0 +1,658 @@
+
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dorcas Clean Cooking – Business Case (All-in-One • Meerdere Grafieken)</title>
+<link rel="icon" href="data:," />
+<style>
+  :root{
+    --bg:#f6f7fb; --card:#ffffff; --ink:#0f172a; --muted:#64748b; --line:#e5e7eb;
+    --brand:#0ea5a3; --brand-ink:#064e4a; --danger:#ef4444;
+    /* Scenario kleuren */
+    --s1:#334155; /* slate */
+    --s2:#0EA5A3; /* teal */
+    --s3:#F59E0B; /* amber */
+    --axis:#374151; /* donkergrijs voor labels */
+  }
+  *{box-sizing:border-box} html,body{height:100%} body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,"Noto Sans",sans-serif}
+  header{position:sticky;top:0;z-index:10;background:#fff;border-bottom:1px solid var(--line)}
+  .wrap{max-width:1200px;margin:0 auto;padding:16px}
+  h1{font-size:20px;margin:0}
+  .sub{color:var(--muted);font-size:13px;margin-top:4px}
+  /* Tabs as links */
+  .tabs{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+  .tabs a{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 12px;cursor:pointer;font-size:14px;text-decoration:none;color:inherit}
+  .tabs a[aria-current="true"]{background:var(--brand);color:white;border-color:var(--brand)}
+  main{padding:16px}
+  section.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin:16px 0}
+  .grid{display:grid;gap:16px}
+  .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:900px){ .grid.two,.grid.three{grid-template-columns:1fr} }
+  label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+  input[type="number"], input[type="text"], input[type="checkbox"]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  input[type="checkbox"]{width:auto;transform:translateY(2px)}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:none;border-radius:10px;padding:10px 12px;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--brand-ink);border:1px solid var(--brand)}
+  .btn.danger{background:var(--danger)}
+  table{width:100%;border-collapse:collapse} th,td{border-bottom:1px solid var(--line);padding:8px 6px;text-align:left;font-size:14px} th{background:#fafafa}
+  .mono{font-variant-numeric:tabular-nums} .right{text-align:right} .small{font-size:12px;color:var(--muted)}
+  .legend{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+  .legend .item{display:flex;align-items:center;gap:8px}
+  .chip{width:12px;height:12px;border-radius:3px}
+  .c-uge{background:#e0f7f6;border:1px solid #bfe8e6}
+  .c-dit{background:#f1f5f9;border:1px solid #e2e8f0}
+  .c-carbon{background:#fef3c7;border:1px solid #fde68a}
+  .chip.s1{background:var(--s1)} .chip.s2{background:var(--s2)} .chip.s3{background:var(--s3)}
+  .chip.dash{background:repeating-linear-gradient(90deg, var(--s1) 0 6px, transparent 6px 12px);border:1px solid var(--s1)}
+  .bar{height:8px;background:#e5e7eb;border-radius:6px;overflow:hidden;margin-top:6px}
+  .bar > i{display:block;height:100%;background:var(--brand)}
+
+  /* Hash-tab fallback: show only :target; default show #flow if no hash */
+  [data-panel]{display:none}
+  #flow:target, #scenarios:target, #stove:target, #carbon:target, #timeline:target, #graph:target{display:block}
+  body:not(:target) #flow{display:block} /* initial */
+  /* When JS adds .active */
+  [data-panel].active{display:block}
+
+  /* Chart styles */
+  .chart-title{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:8px}
+  .tooltip{position:absolute;pointer-events:none;background:#0f172a;color:#fff;padding:8px 10px;border-radius:8px;font-size:12px;transform:translate(-50%,-120%);white-space:nowrap}
+  .chart{position:relative; width:100%; height:380px; border:1px solid var(--line); border-radius:12px; background:#fff; overflow:hidden}
+  svg.chartsvg{width:100%;height:100%;display:block}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Dorcas Clean Cooking – Business Case (All-in-One)</h1>
+    <div class="sub">Flowchart • Scenario’s • Kostprijsschema’s • Tijdlijn • Meerdere Grafieken</div>
+    <nav class="tabs">
+      <a href="#flow" id="tab-flow" aria-current="true">Flowchart</a>
+      <a href="#scenarios" id="tab-scenarios">Scenario’s</a>
+      <a href="#stove" id="tab-stove">Kostprijs Cook Stove</a>
+      <a href="#carbon" id="tab-carbon">Kostprijs Carbon Credit</a>
+      <a href="#timeline" id="tab-timeline">Tijdlijn</a>
+      <a href="#graph" id="tab-graph">Grafieken</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- FLOW (alleen hier zichtbaar) -->
+  <section class="card active" data-panel id="flow">
+    <h2 style="margin-top:0">Situatieschets (Dual-Track met Carbon-ondersteuning)</h2>
+    <div class="legend">
+      <div class="item"><span class="chip c-uge"></span><span>Urban Growth Engine (commerciële partner)</span></div>
+      <div class="item"><span class="chip c-dit"></span><span>Dorcas Impact Track (kwetsbare HH’s)</span></div>
+      <div class="item"><span class="chip c-carbon"></span><span>Carbon ondersteuning (GS + FCF)</span></div>
+    </div>
+    <div class="flow-wrap">
+      <!-- Flowchart staat uitsluiten hier -->
+      <svg viewBox="0 0 1200 600" width="100%" height="420" aria-label="Business flowchart">
+        <defs>
+          <marker id="arrowHead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+            <polygon points="0 0, 10 3.5, 0 7" fill="#94a3b8"></polygon>
+          </marker>
+        </defs>
+        <rect x="80" y="60" width="280" height="78" rx="10" ry="10" fill="#e0f7f6" stroke="#bfe8e6"/>
+        <text x="92" y="86" style="font-weight:700;fill:#0f172a">Urban Growth Engine (Partner)</text>
+        <text x="92" y="106" style="fill:#64748b">Pellets + Toestellen + Service (franchise/agency)</text>
+
+        <rect x="80" y="168" width="280" height="70" rx="10" ry="10" fill="#e0f7f6" stroke="#bfe8e6"/>
+        <text x="92" y="194" style="font-weight:700;fill:#0f172a">B2B & Stads-huishoudens</text>
+        <text x="92" y="214" style="fill:#64748b">Volume, cash-flow, lagere cost-to-serve</text>
+
+        <rect x="840" y="60" width="280" height="78" rx="10" ry="10" fill="#f1f5f9" stroke="#e2e8f0"/>
+        <text x="852" y="86" style="font-weight:700;fill:#0f172a">Dorcas Impact Track</text>
+        <text x="852" y="106" style="fill:#64748b">Kwetsbare HH’s • Bundels + service</text>
+
+        <rect x="840" y="168" width="280" height="70" rx="10" ry="10" fill="#f1f5f9" stroke="#e2e8f0"/>
+        <text x="852" y="194" style="font-weight:700;fill:#0f172a">Community & Rural Hubs</text>
+        <text x="852" y="214" style="fill:#64748b">Bereikbaarheid • Betaalbaarheid • Onderhoud</text>
+
+        <rect x="460" y="120" width="280" height="90" rx="10" ry="10" fill="#ffffff" stroke="#cbd5e1"/>
+        <text x="472" y="146" style="font-weight:700;fill:#0f172a">Social Impact Fund</text>
+        <text x="472" y="166" style="fill:#64748b">Winstafdracht partner + (netto) carbon</text>
+        <text x="472" y="186" style="fill:#64748b">Financiering Impact Track & innovatie</text>
+
+        <rect x="460" y="340" width="280" height="90" rx="10" ry="10" fill="#fef3c7" stroke="#fde68a"/>
+        <text x="472" y="366" style="font-weight:700;fill:#0f172a">Carbon Financing</text>
+        <text x="472" y="386" style="fill:#64748b">GS certificering • Verkoop via FCF</text>
+        <text x="472" y="406" style="fill:#64748b">Strikte MRV → voorspelbare cashflows</text>
+
+        <line x1="360" y1="97" x2="460" y2="150" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrowHead)"></line>
+        <line x1="360" y1="203" x2="460" y2="170" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrowHead)"></line>
+        <line x1="740" y1="150" x2="840" y2="97" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrowHead)"></line>
+        <line x1="740" y1="170" x2="840" y2="203" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrowHead)"></line>
+        <line x1="600" y1="210" x2="600" y2="340" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrowHead)"></line>
+        <line x1="600" y1="430" x2="600" y2="330" stroke="#94a3b8" stroke-width="1.6"></line>
+      </svg>
+    </div>
+    <p class="small">Flowchart is alleen hier zichtbaar. Carbon (na kosten/fees) versterkt het Social Impact Fund.</p>
+  </section>
+
+  <!-- SCENARIOS -->
+  <section class="card" data-panel id="scenarios">
+    <h2 style="margin-top:0">Scenario’s – naast elkaar</h2>
+    <details open>
+      <summary><strong>Algemene instellingen</strong></summary>
+      <div class="grid three" style="margin-top:12px">
+        <div><label>Afschrijving opstartkosten (jaren)</label><input type="number" id="amortYears" min="1" step="1" value="3" /></div>
+        <div><label>Valuta (label)</label><input type="text" id="currency" value="EUR" /></div>
+        <div><label>Compliance/Usage S3 (default %)</label><input type="number" id="defaultCompliance" min="0" max="100" step="1" value="85" /></div>
+      </div>
+    </details>
+
+    <div class="legend">
+      <div class="item"><span class="chip s1"></span><span>Scenario 1 – Huidige situatie</span></div>
+      <div class="item"><span class="chip s2"></span><span>Scenario 2 – Social Enterprise</span></div>
+      <div class="item"><span class="chip s3"></span><span>Scenario 3 – Carbon Financing</span></div>
+      <div class="item"><span class="chip dash"></span><span>S1 baseline (stippellijn na start S2/S3)</span></div>
+    </div>
+
+    <div class="grid three">
+      <section class="card">
+        <h3 style="margin-top:0">1) Huidige situatie (Dorcas)</h3>
+        <div class="grid two">
+          <div><label>Opstartkosten Dorcas (2018)</label><input type="number" id="s1_start_dorcas" value="0" step="0.01" /></div>
+          <div><label>Jaarlijkse kosten (Dorcas)</label><input type="number" id="s1_annual_dorcas" value="120000" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Pelletvolume/jaar (kg)</label><input type="number" id="s1_pellet_kg" value="120000" step="1" /></div>
+          <div><label>Marge pellets (€/kg)</label><input type="number" id="s1_margin_perkg" value="0.15" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Toestellen/jaar</label><input type="number" id="s1_stoves" value="400" step="1" /></div>
+          <div><label>Dorcas-bijdrage per toestel (€/st)</label><input type="number" id="s1_per_stove_support" value="35" step="0.01" /></div>
+        </div>
+        <hr />
+        <div class="row"><div class="small">Pellet-marge/jaar</div><div class="mono right" id="s1_pellet_income">—</div></div>
+        <div class="row"><div class="small">Toestellen netto (−bijdrage)</div><div class="mono right" id="s1_stove_income">—</div></div>
+        <div class="row"><div class="small">Afschr. opstart (Dorcas)</div><div class="mono right" id="s1_amort">—</div></div>
+        <div class="row"><div><strong>Besteedbaar (Dorcas)</strong></div><div class="mono right"><strong id="s1_net">—</strong></div></div>
+        <div class="bar" aria-hidden="true"><i id="s1_bar" style="width:0%"></i></div>
+        <div class="small">Startjaar: 2018</div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin-top:0">2) Social Enterprise (partner)</h3>
+        <div class="grid two">
+          <div><label>Opstartkosten Dorcas</label><input type="number" id="s2_start_dorcas" value="100000" step="0.01" /></div>
+          <div><label>Jaarlijkse kosten Dorcas</label><input type="number" id="s2_annual_dorcas" value="150000" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Pelletvolume/jaar (kg) partner</label><input type="number" id="s2_pellet_kg" value="360000" step="1" /></div>
+          <div><label>Marge pellets (€/kg) partner</label><input type="number" id="s2_margin_perkg" value="0.18" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Toestellen/jaar – partner</label><input type="number" id="s2_stoves" value="1500" step="1" /></div>
+          <div><label>Netto marge per toestel – partner</label><input type="number" id="s2_per_stove_margin" value="10" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Winstafdracht naar Social Impact Fund (%)</label><input type="number" id="s2_profit_share" value="20" step="1" /></div>
+          <div><label>Startjaar S2</label><input type="number" id="tl_s2_start" value="2026" step="1" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Ramp jaar 1 – S2 (%)</label><input type="number" id="tl_s2_ramp" value="70" step="1" /></div>
+          <div class="row"><input type="checkbox" id="tl_enable_s2" checked /><label for="tl_enable_s2">Activeer S2 in tijdlijn</label></div>
+        </div>
+        <hr />
+        <div class="row"><div class="small">Partner winst (pellets + toestellen)</div><div class="mono right" id="s2_partner_profit">—</div></div>
+        <div class="row"><div class="small">Aandeel Dorcas (winstafdracht)</div><div class="mono right" id="s2_dorcas_share">—</div></div>
+        <div class="row"><div class="small">Afschr. opstart (Dorcas)</div><div class="mono right" id="s2_amort">—</div></div>
+        <div class="row"><div><strong>Besteedbaar (Dorcas)</strong></div><div class="mono right"><strong id="s2_net">—</strong></div></div>
+        <div class="bar" aria-hidden="true"><i id="s2_bar" style="width:0%"></i></div>
+      </section>
+
+      <section class="card">
+        <h3 style="margin-top:0">3) Carbon Financing (GS + FCF)</h3>
+        <div class="grid two">
+          <div><label>Opstartkosten (certificering, systemen)</label><input type="number" id="s3_start_dorcas" value="30000" step="0.01" /></div>
+          <div><label>Jaarlijkse kosten Dorcas (MRV, beheer)</label><input type="number" id="s3_annual_dorcas" value="5000" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Credits per stove per jaar</label><input type="number" id="s3_credits_per_stove" value="2" step="0.01" /></div>
+          <div><label>Carbon prijs (€/tCO₂e)</label><input type="number" id="s3_price" value="15" step="0.01" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Compliance / Usage (%)</label><input type="number" id="s3_compliance" value="85" step="1" /></div>
+          <div><label>Startjaar S3</label><input type="number" id="tl_s3_start" value="2026" step="1" /></div>
+        </div>
+        <div class="grid two">
+          <div><label>Ramp jaar 1 – S3 (%)</label><input type="number" id="tl_s3_ramp" value="60" step="1" /></div>
+          <div class="row"><input type="checkbox" id="tl_enable_s3" checked /><label for="tl_enable_s3">Activeer S3 in tijdlijn</label></div>
+        </div>
+        <div class="row"><input type="checkbox" id="tl_s3_link" checked /><label for="tl_s3_link">S3: actieve stoves automatisch = cumulatief S1 + S2</label></div>
+        <div class="small">Kostprijs per tCO₂e komt uit “Kostprijs Carbon Credit”.</div>
+        <hr />
+        <div class="row"><div class="small">Bruto carbon-opbrengst</div><div class="mono right" id="s3_gross">—</div></div>
+        <div class="row"><div class="small">Totale kosten per credit × volume</div><div class="mono right" id="s3_costs">—</div></div>
+        <div class="row"><div class="small">Afschr. opstart (Dorcas)</div><div class="mono right" id="s3_amort">—</div></div>
+        <div class="row"><div><strong>Besteedbaar (Dorcas)</strong></div><div class="mono right"><strong id="s3_net">—</strong></div></div>
+        <div class="bar" aria-hidden="true"><i id="s3_bar" style="width:0%"></i></div>
+      </section>
+    </div>
+
+    <section class="card">
+      <h3 style="margin-top:0">Vergelijking 3 scenario’s (jaarbasis)</h3>
+      <table>
+        <thead><tr>
+          <th>Scenario</th>
+          <th class="right">Afschr. opstart (Dorcas)</th>
+          <th class="right">Jaarlijkse kosten (Dorcas)</th>
+          <th class="right">Jaarlijkse opbrengsten</th>
+          <th class="right">Besteedbaar (Dorcas)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>1) Huidige situatie</td><td class="mono right" id="cmp_s1_amort">—</td><td class="mono right" id="cmp_s1_costs">—</td><td class="mono right" id="cmp_s1_income">—</td><td class="mono right" id="cmp_s1_net"><strong>—</strong></td></tr>
+          <tr><td>2) Met partner</td><td class="mono right" id="cmp_s2_amort">—</td><td class="mono right" id="cmp_s2_costs">—</td><td class="mono right" id="cmp_s2_income">—</td><td class="mono right" id="cmp_s2_net"><strong>—</strong></td></tr>
+          <tr><td>3) Carbon Financing</td><td class="mono right" id="cmp_s3_amort">—</td><td class="mono right" id="cmp_s3_costs">—</td><td class="mono right" id="cmp_s3_income">—</td><td class="mono right" id="cmp_s3_net"><strong>—</strong></td></tr>
+        </tbody>
+      </table>
+      <div class="small" id="ccyHint">Valuta: EUR</div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        <button class="btn" id="recalcBtn">Herbereken</button>
+        <button class="btn ghost" id="resetBtn">Reset naar defaults</button>
+      </div>
+    </section>
+  </section>
+
+  <!-- STOVE COST -->
+  <section class="card" data-panel id="stove">
+    <h2 style="margin-top:0">Kostprijs 1 Cook Stove (Urban vs Rural)</h2>
+    <p class="small">Voeg componenten toe of wijzig bedragen. De totalen worden onderaan getoond.</p>
+    <table id="stoveTable">
+      <thead><tr><th>Component</th><th class="right">Urban (€/st)</th><th class="right">Rural (€/st)</th><th></th></tr></thead>
+      <tbody></tbody>
+      <tfoot><tr><td><strong>Totaal</strong></td><td class="mono right" id="stoveTotalUrban">—</td><td class="mono right" id="stoveTotalRural">—</td><td></td></tr></tfoot>
+    </table>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn" id="addStoveRow">+ Component</button>
+      <button class="btn ghost" id="resetStove">Reset default</button>
+    </div>
+  </section>
+
+  <!-- CARBON COST -->
+  <section class="card" data-panel id="carbon">
+    <h2 style="margin-top:0">Kostprijs 1 Carbon Credit (€/tCO₂e)</h2>
+    <p class="small">Voeg fees/kosten toe of wijzig bedragen. De som wordt gebruikt in Scenario 3.</p>
+    <table id="carbonTable">
+      <thead><tr><th>Component</th><th class="right">€/tCO₂e</th><th></th></tr></thead>
+      <tbody></tbody>
+      <tfoot><tr><td><strong>Totaal kosten per tCO₂e</strong></td><td class="mono right" id="carbonTotal">—</td><td></td></tr></tfoot>
+    </table>
+    <div style="margin-top:8px;display:flex;gap:8px">
+      <button class="btn" id="addCarbonRow">+ Component</button>
+      <button class="btn ghost" id="resetCarbon">Reset default</button>
+    </div>
+  </section>
+
+  <!-- TIMELINE -->
+  <section class="card" data-panel id="timeline">
+    <h2 style="margin-top:0">Tijdlijn (trapsgewijs implementeren)</h2>
+    <details open>
+      <summary><strong>Instellingen tijdlijn & extra opties</strong></summary>
+      <div class="grid three" style="margin-top:12px">
+        <div><label>Scenario 1 startjaar</label><input type="number" id="tl_s1_start" value="2018" step="1" disabled /></div>
+        <div><label>Eindjaar tijdlijn</label><input type="number" id="tl_end_year" value="2030" step="1" /></div>
+        <div><label>Valuta (label)</label><input type="text" id="currency2" value="EUR" /></div>
+      </div>
+    </details>
+    <section class="card" style="margin-top:12px">
+      <h3 style="margin-top:0">Overzicht per jaar</h3>
+      <table id="timelineTable">
+        <thead><tr>
+          <th>Jaar</th><th class="right">S1 net (EUR)</th><th class="right">S2 net (EUR)</th><th class="right">S3 net (EUR)</th><th class="right">Totaal net (EUR)</th><th class="right">Actieve stoves S3 (auto)</th>
+        </tr></thead>
+        <tbody></tbody>
+        <tfoot><tr>
+          <td><strong>Totaal</strong></td><td class="mono right" id="tl_sum_s1">—</td><td class="mono right" id="tl_sum_s2">—</td><td class="mono right" id="tl_sum_s3">—</td><td class="mono right" id="tl_sum_all">—</td><td></td>
+        </tr></tfoot>
+      </table>
+      <div style="margin-top:8px"><button class="btn" id="tl_recalc">Herbereken tijdlijn</button></div>
+    </section>
+    <p class="small">Definities: net = (opbrengsten – variabele & vaste kosten – afschrijving opstart). Ramp = % van jaarcapaciteit in het startjaar.</p>
+  </section>
+
+  <!-- GRAFIEKEN (3 stuks) -->
+  <section class="card" data-panel id="graph">
+    <h2 style="margin:0 0 12px 0">Grafieken</h2>
+
+    <div class="chart-title">
+      <h3 style="margin:0">1) Besteedbaar bedrag per jaar</h3>
+      <div class="legend">
+        <div class="item"><span class="chip s1"></span><span>S1 Huidig</span></div>
+        <div class="item"><span class="chip s2"></span><span>S2 Social</span></div>
+        <div class="item"><span class="chip s3"></span><span>S3 Carbon</span></div>
+        <div class="item"><span class="chip dash"></span><span>S1 baseline</span></div>
+      </div>
+    </div>
+    <div class="chart"><svg class="chartsvg" id="chartSvg1" role="img" aria-label="Besteedbaar per jaar"></svg><div id="chartTip1" class="tooltip" style="display:none"></div></div>
+    <div class="small" id="graphCcy1">Valuta: EUR</div>
+
+    <div class="chart-title" style="margin-top:18px">
+      <h3 style="margin:0">2) Totale winst/verlies (cumulatief sinds 2018)</h3>
+      <div class="legend">
+        <div class="item"><span class="chip s1"></span><span>S1 Huidig</span></div>
+        <div class="item"><span class="chip s2"></span><span>S2 Social</span></div>
+        <div class="item"><span class="chip s3"></span><span>S3 Carbon</span></div>
+        <div class="item"><span class="chip dash"></span><span>S1 baseline</span></div>
+      </div>
+    </div>
+    <div class="chart"><svg class="chartsvg" id="chartSvg2" role="img" aria-label="Cumulatief resultaat"></svg><div id="chartTip2" class="tooltip" style="display:none"></div></div>
+    <div class="small" id="graphCcy2">Valuta: EUR</div>
+
+    <div class="chart-title" style="margin-top:18px">
+      <h3 style="margin:0">3) Aantal huishoudens met een cook stove</h3>
+      <div class="legend">
+        <div class="item"><span class="chip s1"></span><span>S1 Huidig</span></div>
+        <div class="item"><span class="chip s2"></span><span>S2 Social</span></div>
+        <div class="item"><span class="chip s3"></span><span>S3 (gedekt door carbon)</span></div>
+        <div class="item"><span class="chip dash"></span><span>S1 baseline</span></div>
+      </div>
+    </div>
+    <div class="chart"><svg class="chartsvg" id="chartSvg3" role="img" aria-label="Huishoudens"></svg><div id="chartTip3" class="tooltip" style="display:none"></div></div>
+  </section>
+</main>
+
+<script>
+(function(){
+  function $(sel,root){ return (root||document).querySelector(sel); }
+  function $$(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
+  function fmt(n){ return isFinite(n) ? n.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}) : '—'; }
+
+  // ---- Tabs ----
+  function markActiveTab(){
+    var hash = location.hash || '#flow';
+    ['flow','scenarios','stove','carbon','timeline','graph'].forEach(function(id){
+      var tab = $('#tab-'+id);
+      var panel = $('#'+id);
+      if(!tab || !panel) return;
+      var active = ('#'+id) === hash;
+      tab.setAttribute('aria-current', active ? 'true' : 'false');
+      if(active) panel.classList.add('active'); else panel.classList.remove('active');
+    });
+    if(hash === '#graph') drawAllGraphs();
+  }
+  window.addEventListener('hashchange', markActiveTab);
+  markActiveTab();
+
+  // ---- Stove table ----
+  var stoveDefaults = [
+    {name:'Toestel basis (ex-works)', urban:60, rural:60},
+    {name:'Import/duty + shipping',   urban:12, rural:14},
+    {name:'Assemblage/QA',            urban:4,  rural:5},
+    {name:'Distributie & logistiek',  urban:6,  rural:12},
+    {name:'Training & onboarding',    urban:3,  rural:5},
+    {name:'Marketing & demo',         urban:3,  rural:4},
+    {name:'Service/onderdelen (jaar 1, toerekening)', urban:5, rural:7},
+    {name:'Garantie/retourprovisie',  urban:2,  rural:3}
+  ];
+  var stoveTbody = $('#stoveTable tbody');
+  function renderStoveRows(rows){ if(!stoveTbody) return; stoveTbody.innerHTML = ''; rows.forEach(function(r,i){ var tr=document.createElement('tr'); tr.innerHTML = '<td><input type="text" value="'+r.name+'" data-sv="name" /></td>'+ '<td class="right"><input type="number" step="0.01" value="'+r.urban+'" data-sv="urban" /></td>' + '<td class="right"><input type="number" step="0.01" value="'+r.rural+'" data-sv="rural" /></td>' + '<td class="right"><button class="btn danger" data-del="'+i+'">Del</button></td>'; stoveTbody.appendChild(tr); }); updateStoveTotals(); }
+  function stoveRows(){ if(!stoveTbody) return []; return $$('#stoveTable tbody tr').map(function(tr){ return { name: $('input[data-sv="name"]',tr).value.trim() || 'Component', urban: Number($('input[data-sv="urban"]',tr).value)||0, rural: Number($('input[data-sv="rural"]',tr).value)||0 }; }); }
+  function updateStoveTotals(){ if(!stoveTbody) return; var rows = stoveRows(); var tu = rows.reduce(function(s,r){ return s + r.urban; },0); var tr = rows.reduce(function(s,r){ return s + r.rural; },0); $('#stoveTotalUrban').textContent = fmt(tu); $('#stoveTotalRural').textContent = fmt(tr); }
+  if(stoveTbody){ stoveTbody.addEventListener('input', updateStoveTotals); stoveTbody.addEventListener('click', function(e){ var del = e.target.closest('[data-del]'); if(del){ var idx = Number(del.getAttribute('data-del')); var rows = stoveRows(); rows.splice(idx,1); renderStoveRows(rows); } }); $('#addStoveRow') && $('#addStoveRow').addEventListener('click', function(){ var rows = stoveRows(); rows.push({name:'Nieuw onderdeel',urban:0,rural:0}); renderStoveRows(rows); }); $('#resetStove') && $('#resetStove').addEventListener('click', function(){ renderStoveRows(stoveDefaults); }); renderStoveRows(stoveDefaults); }
+
+  // ---- Carbon table ----
+  var carbonDefaults = [
+    {name:'GS registratie & jaarlijkse fee', val:1.20},
+    {name:'Fairtrade licentie',              val:0.30},
+    {name:'Fairtrade premium (community)',   val:1.00},
+    {name:'FairClimateFund margin',          val:3.00},
+    {name:'MRV & databeheer',                val:1.00},
+    {name:'Verificatie & audit (toegerekend)',val:1.00},
+    {name:'Sales/broker & buffer',           val:0.50}
+  ];
+  var carbonTbody = $('#carbonTable tbody');
+  function renderCarbonRows(rows){ if(!carbonTbody) return; carbonTbody.innerHTML=''; rows.forEach(function(r,i){ var tr=document.createElement('tr'); tr.innerHTML = '<td><input type="text" value="'+r.name+'" data-cb="name" /></td>' + '<td class="right"><input type="number" step="0.01" value="'+r.val+'" data-cb="val" /></td>' + '<td class="right"><button class="btn danger" data-delc="'+i+'">Del</button></td>'; carbonTbody.appendChild(tr); }); updateCarbonTotal(); }
+  function carbonRows(){ if(!carbonTbody) return []; return $$('#carbonTable tbody tr').map(function(tr){ return { name: $('input[data-cb="name"]',tr).value.trim() || 'Component', val: Number($('input[data-cb="val"]',tr).value)||0 }; }); }
+  function updateCarbonTotal(){ if(!carbonTbody) return; var rows = carbonRows(); var total = rows.reduce(function(s,r){ return s + r.val; },0); $('#carbonTotal').textContent = fmt(total); }
+  if(carbonTbody){ carbonTbody.addEventListener('input', updateCarbonTotal); carbonTbody.addEventListener('click', function(e){ var del = e.target.closest('[data-delc]'); if(del){ var idx = Number(del.getAttribute('data-delc')); var rows = carbonRows(); rows.splice(idx,1); renderCarbonRows(rows); } }); $('#addCarbonRow') && $('#addCarbonRow').addEventListener('click', function(){ var rows = carbonRows(); rows.push({name:'Nieuw onderdeel',val:0}); renderCarbonRows(rows); }); $('#resetCarbon') && $('#resetCarbon').addEventListener('click', function(){ renderCarbonRows(carbonDefaults); }); renderCarbonRows(carbonDefaults); }
+
+  // ---- Scenario snapshot ----
+  function v(id){ var el=$(id); return el? Number(el.value)||0 : 0; }
+  function years(){ return Math.max(1, Math.floor(v('#amortYears')||3)); }
+
+  function scenario1(){
+    var kg=v('#s1_pellet_kg'), mkg=v('#s1_margin_perkg'), stv=Math.max(0,Math.floor(v('#s1_stoves')));
+    var sup=v('#s1_per_stove_support'), annual=v('#s1_annual_dorcas'), start=v('#s1_start_dorcas');
+    var pelletIncome = kg*mkg;
+    var stoveIncome = - sup*stv;
+    var income = pelletIncome + stoveIncome;
+    var amort = start/years();
+    var net = income - annual - amort;
+    $('#s1_pellet_income') && ($('#s1_pellet_income').textContent = fmt(pelletIncome));
+    $('#s1_stove_income') && ($('#s1_stove_income').textContent = fmt(stoveIncome));
+    $('#s1_amort') && ($('#s1_amort').textContent = fmt(amort));
+    $('#s1_net') && ($('#s1_net').textContent = fmt(net));
+    $('#cmp_s1_amort') && ($('#cmp_s1_amort').textContent = fmt(amort));
+    $('#cmp_s1_costs') && ($('#cmp_s1_costs').textContent = fmt(annual));
+    $('#cmp_s1_income') && ($('#cmp_s1_income').textContent = fmt(income));
+    $('#cmp_s1_net') && ($('#cmp_s1_net').textContent = fmt(net));
+    return { income: income, annual: annual, amort: amort, net: net, stvPerYear: stv };
+  }
+  function scenario2(){
+    var kg=v('#s2_pellet_kg'), mkg=v('#s2_margin_perkg'), stv=Math.max(0,Math.floor(v('#s2_stoves')));
+    var msv=v('#s2_per_stove_margin'), share=Math.max(0,Math.min(100,v('#s2_profit_share')))/100;
+    var annual=v('#s2_annual_dorcas'), start=v('#s2_start_dorcas');
+    var partnerProfit = kg*mkg + stv*msv;
+    var dorcasShare = partnerProfit*share;
+    var amort = start/years();
+    var net = dorcasShare - annual - amort;
+    $('#s2_partner_profit') && ($('#s2_partner_profit').textContent = fmt(partnerProfit));
+    $('#s2_dorcas_share') && ($('#s2_dorcas_share').textContent = fmt(dorcasShare));
+    $('#s2_amort') && ($('#s2_amort').textContent = fmt(amort));
+    $('#s2_net') && ($('#s2_net').textContent = fmt(net));
+    $('#cmp_s2_amort') && ($('#cmp_s2_amort').textContent = fmt(amort));
+    $('#cmp_s2_costs') && ($('#cmp_s2_costs').textContent = fmt(annual));
+    $('#cmp_s2_income') && ($('#cmp_s2_income').textContent = fmt(dorcasShare));
+    $('#cmp_s2_net') && ($('#cmp_s2_net').textContent = fmt(net));
+    return { income: dorcasShare, annual: annual, amort: amort, net: net, stvPerYear: stv };
+  }
+  function s3_costPerT(){ var t = $('#carbonTotal'); var n = t? Number(t.textContent.replace(/[^0-9.,-]/g,''))||0 : 0; return n; }
+  function scenario3(activeStoves){
+    var cps = v('#s3_credits_per_stove');
+    var price = v('#s3_price');
+    var compl = (v('#s3_compliance') || v('#defaultCompliance'))/100;
+    var annual = v('#s3_annual_dorcas');
+    var start = v('#s3_start_dorcas');
+    var carbonCostPerT = s3_costPerT();
+    var volumeT = Math.max(0, Math.floor(activeStoves||0)) * cps * compl;
+    var gross = volumeT * price;
+    var costs = volumeT * carbonCostPerT;
+    var amort = start/years();
+    var net = (gross - costs) - annual - amort;
+    $('#s3_gross') && ($('#s3_gross').textContent = fmt(gross));
+    $('#s3_costs') && ($('#s3_costs').textContent = fmt(costs));
+    $('#s3_amort') && ($('#s3_amort').textContent = fmt(amort));
+    $('#s3_net') && ($('#s3_net').textContent = fmt(net));
+    $('#cmp_s3_amort') && ($('#cmp_s3_amort').textContent = fmt(amort));
+    $('#cmp_s3_costs') && ($('#cmp_s3_costs').textContent = fmt(annual));
+    $('#cmp_s3_income') && ($('#cmp_s3_income').textContent = fmt(gross - costs));
+    $('#cmp_s3_net') && ($('#cmp_s3_net').textContent = fmt(net));
+    return { income: (gross - costs), annual: annual, amort: amort, net: net };
+  }
+  function recalcScenarios(){ var r1=scenario1(); var r2=scenario2(); var activeApprox=r1.stvPerYear + r2.stvPerYear; scenario3(activeApprox); var ccy=($('#currency') && $('#currency').value) || 'EUR'; $('#ccyHint') && ($('#ccyHint').textContent='Valuta: '+ccy); ['#graphCcy1','#graphCcy2'].forEach(function(id){ var el=$(id); if(el) el.textContent='Valuta: '+ccy; }); }
+
+  // ---- Helpers voor tijdlijn en series ----
+  function cumulativeS1Stoves(y){ var perYear = Math.max(0, Math.floor(v('#s1_stoves'))); if(y < 2018) return 0; return perYear * (y - 2018 + 1); }
+  function cumulativeS2Stoves(y, startYear, rampPct){ var perYear = Math.max(0, Math.floor(v('#s2_stoves'))); if(y < startYear) return 0; if(y === startYear) return perYear * (rampPct/100); return (perYear * (rampPct/100)) + (perYear * (y - startYear)); }
+
+  function computeSeries(){
+    var endY = Math.max(2018, Math.floor(($('#tl_end_year') && $('#tl_end_year').value) || 2030));
+    var s2Start = Math.floor(($('#tl_s2_start') && $('#tl_s2_start').value) || 2026);
+    var s3Start = Math.floor(($('#tl_s3_start') && $('#tl_s3_start').value) || 2026);
+    var s2Ramp = Math.max(0, Math.min(100, Number(($('#tl_s2_ramp') && $('#tl_s2_ramp').value) || 70)));
+    var s3Ramp = Math.max(0, Math.min(100, Number(($('#tl_s3_ramp') && $('#tl_s3_ramp').value) || 60)));
+    var enable2 = $('#tl_enable_s2') ? $('#tl_enable_s2').checked : true;
+    var enable3 = $('#tl_enable_s3') ? $('#tl_enable_s3').checked : true;
+    var linkS3 = $('#tl_s3_link') ? $('#tl_s3_link').checked : true;
+
+    var amortY = years();
+    var s1Start = 2018;
+
+    var s1Snap = scenario1();
+    var s2Snap = scenario2();
+    var creditsPerStove = v('#s3_credits_per_stove');
+    var carbonPrice = v('#s3_price');
+    var compliance = (v('#s3_compliance') || v('#defaultCompliance'))/100;
+    var carbonCostT = s3_costPerT();
+    var s3Annual = v('#s3_annual_dorcas');
+    var s3StartCost = v('#s3_start_dorcas');
+
+    var yearsArr=[], s1Arr=[], s2Arr=[], s3Arr=[], activeStovesAutoArr=[];
+    var c1Arr=[], c2Arr=[], c3Arr=[]; // cumulative net
+    var h1Arr=[], h2Arr=[], h3Arr=[]; // households (stoves)
+
+    var cum1=0, cum2=0, cum3=0;
+
+    for(var y=2018; y<=endY; y++){
+      yearsArr.push(y);
+      var s1Amort = (y>=s1Start && y<s1Start+amortY) ? (v('#s1_start_dorcas')/amortY) : 0;
+      var s1Net = s1Snap.income - s1Snap.annual - s1Amort; s1Arr.push(s1Net); cum1 += s1Net; c1Arr.push(cum1);
+
+      var s2Net=0;
+      if(enable2 && y>=s2Start){
+        var ramp = (y===s2Start) ? (s2Ramp/100) : 1;
+        var partnerProfit = (v('#s2_pellet_kg')*v('#s2_margin_perkg')) + (v('#s2_stoves')*v('#s2_per_stove_margin')*ramp);
+        var dorcasShare = partnerProfit * (Math.max(0,Math.min(100,v('#s2_profit_share')))/100);
+        var s2Amort = (y>=s2Start && y<s2Start+amortY) ? (v('#s2_start_dorcas')/amortY) : 0;
+        var s2AnnualCost = v('#s2_annual_dorcas');
+        s2Net = dorcasShare - s2AnnualCost - s2Amort;
+      }
+      s2Arr.push(s2Net); cum2 += s2Net; c2Arr.push(cum2);
+
+      var s3Net=0, activeStovesAuto=0;
+      if(enable3 && y>=s3Start){
+        if(linkS3){ activeStovesAuto = cumulativeS1Stoves(y) + cumulativeS2Stoves(y, s2Start, s2Ramp); }
+        var ramp3 = (y===s3Start) ? (s3Ramp/100) : 1;
+        var volumeT = activeStovesAuto * creditsPerStove * compliance * ramp3;
+        var gross = volumeT * carbonPrice; var costs = volumeT * carbonCostT; var s3Amort = (y>=s3Start && y<s3Start+amortY) ? (s3StartCost/amortY) : 0; s3Net = (gross - costs) - s3Annual - s3Amort;
+      }
+      s3Arr.push(s3Net); cum3 += s3Net; c3Arr.push(cum3); activeStovesAutoArr.push(activeStovesAuto);
+
+      // households
+      var h1 = cumulativeS1Stoves(y);
+      var h2 = cumulativeS2Stoves(y, s2Start, s2Ramp);
+      var h3 = enable3 && linkS3 ? (h1 + h2) : 0; // gedekt door carbon
+      h1Arr.push(h1); h2Arr.push(h2); h3Arr.push(h3);
+    }
+
+    // earliest activated start (baseline switch)
+    var baselineSwitch = Infinity; if(enable2) baselineSwitch = Math.min(baselineSwitch, s2Start); if(enable3) baselineSwitch = Math.min(baselineSwitch, s3Start); if(baselineSwitch===Infinity) baselineSwitch=null;
+
+    return { years:yearsArr, s1:s1Arr, s2:s2Arr, s3:s3Arr, c1:c1Arr, c2:c2Arr, c3:c3Arr, h1:h1Arr, h2:h2Arr, h3:h3Arr, baselineSwitch:baselineSwitch };
+  }
+
+  // ---- Tabel Tijdlijn ----
+  function timeline(){
+    var endY = Math.max(2018, Math.floor(($('#tl_end_year') && $('#tl_end_year').value) || 2030));
+    var s2Start = Math.floor(($('#tl_s2_start') && $('#tl_s2_start').value) || 2026);
+    var s3Start = Math.floor(($('#tl_s3_start') && $('#tl_s3_start').value) || 2026);
+    var s2Ramp = Math.max(0, Math.min(100, Number(($('#tl_s2_ramp') && $('#tl_s2_ramp').value) || 70)));
+    var s3Ramp = Math.max(0, Math.min(100, Number(($('#tl_s3_ramp') && $('#tl_s3_ramp').value) || 60)));
+    var enable2 = $('#tl_enable_s2') ? $('#tl_enable_s2').checked : true;
+    var enable3 = $('#tl_enable_s3') ? $('#tl_enable_s3').checked : true;
+    var linkS3 = $('#tl_s3_link') ? $('#tl_s3_link').checked : true;
+
+    var amortY = years();
+    var s1Start = 2018;
+
+    var s1 = scenario1();
+    var s2 = scenario2();
+    var creditsPerStove = v('#s3_credits_per_stove');
+    var carbonPrice = v('#s3_price');
+    var compliance = (v('#s3_compliance') || v('#defaultCompliance'))/100;
+    var carbonCostT = s3_costPerT();
+    var s3Annual = v('#s3_annual_dorcas');
+    var s3StartCost = v('#s3_start_dorcas');
+
+    var tbody = $('#timelineTable tbody'); if(!tbody) return; tbody.innerHTML='';
+    var sumS1=0,sumS2=0,sumS3=0,sumAll=0;
+
+    for(var y=2018; y<=endY; y++){
+      var s1Amort = (y>=s1Start && y<s1Start+amortY) ? (v('#s1_start_dorcas')/amortY) : 0;
+      var s1Net = s1.income - s1.annual - s1Amort;
+
+      var s2Net=0; if(enable2 && y>=s2Start){ var ramp=(y===s2Start)?(s2Ramp/100):1; var partnerProfit=(v('#s2_pellet_kg')*v('#s2_margin_perkg')) + (v('#s2_stoves')*v('#s2_per_stove_margin')*ramp); var dorcasShare=partnerProfit*(Math.max(0,Math.min(100,v('#s2_profit_share')))/100); var s2Amort=(y>=s2Start && y<s2Start+amortY)?(v('#s2_start_dorcas')/amortY):0; var s2AnnualCost=v('#s2_annual_dorcas'); s2Net=dorcasShare - s2AnnualCost - s2Amort; }
+
+      var s3Net=0, activeStovesAuto=0; if(enable3 && y>=s3Start){ if(linkS3){ var base=cumulativeS1Stoves(y); var addS2=cumulativeS2Stoves(y, s2Start, s2Ramp); activeStovesAuto=base+addS2; } var ramp3=(y===s3Start)?(s3Ramp/100):1; var volumeT=activeStovesAuto*creditsPerStove*compliance*ramp3; var gross=volumeT*carbonPrice; var costs=volumeT*carbonCostT; var s3Amort=(y>=s3Start && y<s3Start+amortY)?(s3StartCost/amortY):0; s3Net=(gross-costs) - s3Annual - s3Amort; }
+
+      var totalNet = s1Net + s2Net + s3Net; sumS1+=s1Net; sumS2+=s2Net; sumS3+=s3Net; sumAll+=totalNet;
+
+      var tr=document.createElement('tr'); tr.innerHTML = '<td>'+y+'</td>' + '<td class="mono right">'+fmt(s1Net)+'</td>' + '<td class="mono right">'+fmt(s2Net)+'</td>' + '<td class="mono right">'+fmt(s3Net)+'</td>' + '<td class="mono right"><strong>'+fmt(totalNet)+'</strong></td>' + '<td class="mono right">'+(activeStovesAuto? activeStovesAuto.toLocaleString() : '—')+'</td>'; tbody.appendChild(tr);
+    }
+    $('#tl_sum_s1').textContent = fmt(sumS1); $('#tl_sum_s2').textContent = fmt(sumS2); $('#tl_sum_s3').textContent = fmt(sumS3); $('#tl_sum_all').textContent = fmt(sumAll);
+  }
+
+  // ---- Graphs ----
+  function drawLineChart(svgId, tipId, series, y1, y2, y3, labelFmt){
+    var svg = $(svgId); if(!svg) return; var tip=$(tipId);
+    var box = svg.getBoundingClientRect(); var W = Math.max(320, Math.floor(box.width||svg.parentElement.clientWidth)); var H = Math.max(260, Math.floor(box.height||svg.parentElement.clientHeight));
+    svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.innerHTML='';
+
+    var years = series.years; var minY = Math.min.apply(null, y1.concat(y2,y3)); var maxY = Math.max.apply(null, y1.concat(y2,y3)); if(!isFinite(minY)||!isFinite(maxY)){minY=0;maxY=1;} if(minY===maxY){maxY=minY+1;} var pad=(maxY-minY)*0.1; minY-=pad; maxY+=pad;
+
+    var left=60, right=20, top=20, bottom=40; var plotW=W-left-right, plotH=H-top-bottom; function x(i){ return left + (plotW * (i/Math.max(1,(years.length-1)))); } function yv(v){ return top + (plotH * (1 - ( (v - minY) / (maxY - minY) ))); }
+
+    // grid + axes
+    var g=document.createElementNS('http://www.w3.org/2000/svg','g'); g.setAttribute('stroke','#e5e7eb'); g.setAttribute('stroke-width','1');
+    var ticks=5; for(var t=0;t<=ticks;t++){ var yy=top+(plotH*t/ticks); var gl=document.createElementNS('http://www.w3.org/2000/svg','line'); gl.setAttribute('x1',left); gl.setAttribute('x2',left+plotW); gl.setAttribute('y1',yy); gl.setAttribute('y2',yy); gl.setAttribute('stroke','#e5e7eb'); g.appendChild(gl); var val=(maxY-(maxY-minY)*t/ticks); var lbl=document.createElementNS('http://www.w3.org/2000/svg','text'); lbl.setAttribute('x',left-8); lbl.setAttribute('y',yy+4); lbl.setAttribute('text-anchor','end'); lbl.setAttribute('font-size','11'); lbl.setAttribute('fill','var(--axis)'); lbl.textContent = (labelFmt? labelFmt(val): fmt(val)); g.appendChild(lbl); }
+    var base=document.createElementNS('http://www.w3.org/2000/svg','line'); base.setAttribute('x1',left); base.setAttribute('x2',left+plotW); base.setAttribute('y1',top+plotH); base.setAttribute('y2',top+plotH); base.setAttribute('stroke','#94a3b8'); base.setAttribute('stroke-width','1'); g.appendChild(base);
+    var xstep=Math.max(1, Math.floor(years.length/6)); for(var i=0;i<years.length;i+=xstep){ var tx=document.createElementNS('http://www.w3.org/2000/svg','text'); tx.setAttribute('x', x(i)); tx.setAttribute('y', top+plotH+18); tx.setAttribute('text-anchor','middle'); tx.setAttribute('font-size','11'); tx.setAttribute('fill','var(--axis)'); tx.textContent=years[i]; g.appendChild(tx);} if(years.length){ var tx2=document.createElementNS('http://www.w3.org/2000/svg','text'); tx2.setAttribute('x', x(years.length-1)); tx2.setAttribute('y', top+plotH+18); tx2.setAttribute('text-anchor','end'); tx2.setAttribute('font-size','11'); tx2.setAttribute('fill','var(--axis)'); tx2.textContent=years[years.length-1]; g.appendChild(tx2);} svg.appendChild(g);
+
+    function pathFrom(arr,i0,i1){ var d=''; for(var i=i0;i<=i1;i++){ var xi=x(i), yi=yv(arr[i]); d+=(i===i0?'M':'L')+xi+' '+yi+' '; } return d; }
+    function addPath(arr,color,dashed,i0,i1){ if(i1<i0) return; var p=document.createElementNS('http://www.w3.org/2000/svg','path'); p.setAttribute('d', pathFrom(arr,i0,i1)); p.setAttribute('fill','none'); p.setAttribute('stroke',color); p.setAttribute('stroke-width','2.5'); if(dashed) p.setAttribute('stroke-dasharray','6 6'); svg.appendChild(p); }
+
+    var s1Color=getComputedStyle(document.documentElement).getPropertyValue('--s1').trim()||'#334155'; var s2Color=getComputedStyle(document.documentElement).getPropertyValue('--s2').trim()||'#0EA5A3'; var s3Color=getComputedStyle(document.documentElement).getPropertyValue('--s3').trim()||'#F59E0B';
+
+    addPath(y2, s2Color, false, 0, years.length-1); addPath(y3, s3Color, false, 0, years.length-1);
+    var switchY = series.baselineSwitch; if(switchY && years.length){ var idx=years.indexOf(switchY); if(idx===-1) idx=Math.max(1, Math.floor(years.length/2)); addPath(y1, s1Color, false, 0, Math.max(0,idx-1)); addPath(y1, s1Color, true, Math.max(0,idx-1), years.length-1); } else { addPath(y1, s1Color, false, 0, years.length-1); }
+
+    // tooltip
+    var overlay=document.createElementNS('http://www.w3.org/2000/svg','rect'); overlay.setAttribute('x', left); overlay.setAttribute('y', top); overlay.setAttribute('width', plotW); overlay.setAttribute('height', plotH); overlay.setAttribute('fill','transparent'); svg.appendChild(overlay);
+    var vline=document.createElementNS('http://www.w3.org/2000/svg','line'); vline.setAttribute('y1', top); vline.setAttribute('y2', top+plotH); vline.setAttribute('stroke','#94a3b8'); vline.setAttribute('stroke-width','1'); vline.setAttribute('opacity','0'); svg.appendChild(vline);
+    function nearestIndex(px){ var t=(px-left)/plotW; var idx=Math.round(t*(years.length-1)); return Math.max(0, Math.min(years.length-1, idx)); }
+    overlay.addEventListener('mousemove', function(e){ var rect=svg.getBoundingClientRect(); var px=e.clientX-rect.left; var idx=nearestIndex(px); var cx=x(idx); vline.setAttribute('x1',cx); vline.setAttribute('x2',cx); vline.setAttribute('opacity','1'); var year=years[idx]; var a1=y1[idx], a2=y2[idx], a3=y3[idx]; var thtml='<strong>'+year+'</strong><br>'+'S1: '+fmt(a1)+'<br>'+'S2: '+fmt(a2)+'<br>'+'S3: '+fmt(a3); if(tip){ tip.innerHTML=thtml; tip.style.display='block'; var maxVal=Math.max(a1,a2,a3); function yvv(v){ return top + (plotH * (1 - ((v - minY)/(maxY-minY)))); } tip.style.left=(cx)+'px'; tip.style.top=(yvv(maxVal)-8)+'px'; }
+    });
+    overlay.addEventListener('mouseleave', function(){ vline.setAttribute('opacity','0'); if(tip) tip.style.display='none'; });
+  }
+
+  function drawAllGraphs(){
+    var series = computeSeries();
+    drawLineChart('#chartSvg1','#chartTip1', series, series.s1, series.s2, series.s3, null); // per jaar net
+    drawLineChart('#chartSvg2','#chartTip2', series, series.c1, series.c2, series.c3, null); // cumulatief
+    // households: we format as integer w/o decimals in tooltip - keep fmt but values are ints
+    drawLineChart('#chartSvg3','#chartTip3', series, series.h1, series.h2, series.h3, function(v){ return Math.round(v).toLocaleString(); });
+  }
+
+  // ---- Tijdlijn render ----
+  function recalcAll(){ recalcScenarios(); timeline(); if(location.hash==='#graph'){ drawAllGraphs(); } }
+  $('#recalcBtn') && $('#recalcBtn').addEventListener('click', recalcAll);
+  $('#tl_recalc') && $('#tl_recalc').addEventListener('click', function(){ timeline(); if(location.hash==='#graph'){ drawAllGraphs(); } });
+  $$('input').forEach(function(i){ i.addEventListener('input', function(){ clearTimeout(i._t); i._t=setTimeout(recalcAll,150); }); });
+
+  // Reset defaults
+  $('#resetBtn') && $('#resetBtn').addEventListener('click', function(){
+    // Scenario 1
+    $('#s1_start_dorcas').value = 0; $('#s1_annual_dorcas').value = 120000; $('#s1_pellet_kg').value = 120000; $('#s1_margin_perkg').value = 0.15; $('#s1_stoves').value = 400; $('#s1_per_stove_support').value = 35;
+    // Scenario 2
+    $('#s2_start_dorcas').value = 100000; $('#s2_annual_dorcas').value = 150000; $('#s2_pellet_kg').value = 360000; $('#s2_margin_perkg').value = 0.18; $('#s2_stoves').value = 1500; $('#s2_per_stove_margin').value = 10; $('#s2_profit_share').value = 20; $('#tl_s2_start').value = 2026; $('#tl_s2_ramp').value = 70; $('#tl_enable_s2').checked = true;
+    // Scenario 3
+    $('#s3_start_dorcas').value = 30000; $('#s3_annual_dorcas').value = 5000; $('#s3_credits_per_stove').value = 2; $('#s3_price').value = 15; $('#s3_compliance').value = 85; $('#tl_s3_start').value = 2026; $('#tl_s3_ramp').value = 60; $('#tl_enable_s3').checked = true; $('#tl_s3_link').checked = true;
+    // Globals
+    $('#amortYears').value = 3; $('#currency').value = 'EUR'; $('#currency2').value = 'EUR';
+    renderStoveRows(stoveDefaults); renderCarbonRows(carbonDefaults); recalcAll();
+  });
+
+  // Initial
+  renderStoveRows(stoveDefaults); renderCarbonRows(carbonDefaults); recalcAll();
+  window.addEventListener('resize', function(){ if(location.hash==='#graph'){ drawAllGraphs(); } });
+})();
+</script>
+</body>
+</html>
