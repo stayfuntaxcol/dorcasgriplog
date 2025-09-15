@@ -605,10 +605,10 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
 
       // Questions filters
-      fillSelect('#sSubject', questionSubjects, 'Subject');
+      fillSelect('#sSubject', questionsSubjects, 'Subject');
       fillSelect('#sOwner', [''].concat(ownerRoles), 'Owner');
-      fillSelect('#sStatus', questionStatus, 'Status');
-      fillSelect('#sReviewerRole', questionReviewer, 'Reviewer Role');
+      fillSelect('#sStatus', questionsStatus, 'Status');
+      fillSelect('#sReviewerRole', questionsReviewer, 'Reviewer Role');
 
       // Notifications filters
       fillSelect('#nSubject', noteSubjects, 'Subject');
@@ -864,7 +864,7 @@ $('#addPlanBtn').onclick = ()=>{
       }
     });
 
-    // Add question via prompt (so table stays read-only)
+    // Add Question via prompt (so table stays read-only)
     $('#addQuestionBtn').onclick = async ()=>{
       const idPrefix = 'Q';
       const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10)));
