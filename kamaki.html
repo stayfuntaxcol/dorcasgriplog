@@ -500,7 +500,7 @@ body { top:0 !important; }
     // Tabs
     $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      const tab=btn.dataset.tab||'').toLowerCase(); $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
       renderTab(tab);
     }));
 
@@ -901,7 +901,7 @@ $('#addPlanBtn').onclick = ()=>{
     }
 
     function renderAll(){
-      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals').toLowerCase();
       renderTab(active);
       $('#btnSaveAll').disabled = !CAN_EDIT;
     }
@@ -911,7 +911,7 @@ $('#addPlanBtn').onclick = ()=>{
       else if(kind==='issues') renderIssues();
       else if(kind==='plans') renderPlans();
       else if(kind==='questions') renderQuestions();
-      else renderNotifications(cache.notifications||[]);
+      else if(kind==='notifications') renderNotifications(cache.notifications||[]);
     }
 
     // Initial
@@ -937,20 +937,20 @@ $('#addPlanBtn').onclick = ()=>{
   })();
 
   // UI gedrag
-  const dd = document.getElementById('translateDropdown');
-  const btn = document.getElementById('translateBtn');
-  const menu = document.getElementById('translateMenu');
+const dd   = document.getElementById('translateDropdown');
+const btn  = document.getElementById('translateBtn');
+const menu = document.getElementById('translateMenu');
 
+if (dd && btn && menu) {
   btn.addEventListener('click', (e)=>{ e.stopPropagation(); dd.classList.toggle('open'); });
   document.addEventListener('click', ()=> dd.classList.remove('open'));
-
   menu.addEventListener('click', (e)=>{
     const t = e.target.closest('.menu-item'); if(!t) return;
     const lang = t.dataset.lang;
     if(lang === 'reset'){ resetTranslation(); return; }
     setLanguage(lang); dd.classList.remove('open');
   });
-
+}
   function setLanguage(lang){
     // Wacht tot de Google UI geladen is en trigger de taalkeuze
     const combo = document.querySelector('.goog-te-combo');
