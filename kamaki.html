@@ -109,15 +109,13 @@ body { top:0 !important; }
       </div>
     </div>
 
-    <div class="header-right">
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
-      <div class="user-line">
-        <div class="header-right">
+  <div class="header-right">
+  <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+  <span id="userInfo" class="user-info"></span>
   <div class="user-line">
-    <span class="user-info" id="userLine"><!-- username – role – rights --></span>
-
-    </div>
+    <span class="user-info" id="userLine"></span>
+  </div>
+</div>
   </header>
 
   <div class="toolbar">
@@ -142,17 +140,14 @@ body { top:0 !important; }
       <button id="btnSignin" class="btn primary">login</button>
       <button id="btnSignout" class="btn" style="display:none">logout</button>
     </div>
-</div>
-
-  </div>
-
+    
   <!-- Tabs -->
   <nav class="tabs" role="tablist">
     <button class="active" data-tab="goals">G – Goals</button>
     <button data-tab="risks">R – Risks</button>
     <button data-tab="issues">I – Issues</button>
     <button data-tab="plans">P – Plans</button>
-    <button class="push-right" data-tab="Questions">S – Questions</button>
+    <button class="push-right" data-tab="questions">Q – Questions</button>
     <button data-tab="notifications">N – Notifications</button>
   </nav>
 
@@ -309,7 +304,7 @@ body { top:0 !important; }
   </section>
 
   <!-- Questions -->
-  <section id="Questions" role="tabpanel">
+  <section id="questions" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
         <div class="left"><h2>Questions</h2></div>
@@ -497,12 +492,15 @@ body { top:0 !important; }
       renderAll();
     }
 
-    // Tabs
-    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
-      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
-      renderTab(tab);
-    }));
+   // Tabs
+$$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+  $$('.tabs button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const tab = (btn.dataset.tab || '').toLowerCase();
+  $$('section').forEach(s=>s.classList.remove('active'));
+  document.getElementById(tab)?.classList.add('active');
+  renderTab(tab);
+}));
 
     // Notification helpers
     function makeNote({subject,status,relatedId,description,comments=''}) {
@@ -868,7 +866,7 @@ $('#addPlanBtn').onclick = ()=>{
 
     // Add question via prompt (so table stays read-only)
     $('#addQuestionBtn').onclick = async ()=>{
-      const idPrefix = 'S';
+      const idPrefix = 'Q';
       const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10)));
       const id = idPrefix + next;
       const description = prompt('Describe your question (required):','');
@@ -901,7 +899,7 @@ $('#addPlanBtn').onclick = ()=>{
     }
 
     function renderAll(){
-      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      const active = (document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals').toLowerCase();
       renderTab(active);
       $('#btnSaveAll').disabled = !CAN_EDIT;
     }
@@ -911,7 +909,7 @@ $('#addPlanBtn').onclick = ()=>{
       else if(kind==='issues') renderIssues();
       else if(kind==='plans') renderPlans();
       else if(kind==='questions') renderQuestions();
-      else renderNotifications(cache.notifications||[]);
+      else if(kind==='notifications') renderNotifications(cache.notifications||[]);
     }
 
     // Initial
