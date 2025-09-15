@@ -6,7 +6,7 @@
   <title>GRIPlog – Honey Value Chain</title>
   <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; --warn:#f59e0b;}
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
@@ -21,9 +21,6 @@
     .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .leftbar{display:flex;gap:8px;align-items:center}
     .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
-
-    .msg{margin:0 16px 10px;background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:8px 12px;border-radius:10px;display:none}
-    .msg.show{display:block}
 
     .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
@@ -60,6 +57,7 @@
     .row-actions{display:flex;gap:6px}
     .col-stars{white-space:nowrap}
 
+    /* Suggestions/Questions wide columns */
     #tblSuggestions td:nth-child(2),
     #tblSuggestions th:nth-child(2),
     #tblSuggestions td:nth-child(9),
@@ -78,8 +76,6 @@
     #tblPlans td:nth-child(4){width:100px}
 
     .cell-text{white-space:pre-wrap}
-    .ro{display:inline-block;padding:3px 6px;border:1px dashed var(--line);border-radius:8px;background:#fafafa;color:var(--ink)}
-
     footer{padding:16px;color:var(--muted);font-size:12px}
   </style>
 </head>
@@ -122,8 +118,6 @@
     </div>
   </div>
 
-  <p id="msg" class="msg" role="alert"></p>
-
   <!-- Tabs -->
   <nav class="tabs" role="tablist">
     <button class="active" data-tab="goals">G – Goals</button>
@@ -152,7 +146,7 @@
             <th style="width:130px">End</th>
             <th style="width:140px">Status</th>
             <th>Notes</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -187,7 +181,7 @@
             <th style="width:120px">Impact</th>
             <th style="width:140px">Status</th>
             <th>Mitigation</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -221,7 +215,7 @@
             <th style="width:120px">Severity</th>
             <th style="width:140px">Status</th>
             <th>Resolution</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -255,7 +249,7 @@
             <th style="width:130px">Start</th>
             <th style="width:130px">End</th>
             <th style="width:140px">Status</th>
-            <th style="width:140px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -296,7 +290,7 @@
             <th style="width:130px">Reviewed</th>
             <th>Comments</th>
             <th class="col-stars" style="width:120px">Stars</th>
-            <th style="width:120px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -340,7 +334,7 @@
             <th style="width:130px">Reviewed</th>
             <th>Comments</th>
             <th class="col-stars" style="width:120px">Stars</th>
-            <th style="width:120px">Actions</th>
+            <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
@@ -404,13 +398,6 @@
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    const $ = (q,root=document)=>root.querySelector(q);
-    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
-    const msgEl = $('#msg');
-    function showMsg(text){ if(!text){ msgEl.classList.remove('show'); msgEl.textContent=''; return;} msgEl.textContent = text; msgEl.classList.add('show'); }
-    function appendMsg(text){ msgEl.textContent = (msgEl.textContent? msgEl.textContent+'  •  ' : '') + text; msgEl.classList.add('show'); }
-    $('#yr').textContent = new Date().getFullYear();
-
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
       authDomain: "griplog.firebaseapp.com",
@@ -419,9 +406,14 @@
       messagingSenderId: "1097061844582",
       appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
     };
+
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
 
     const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
@@ -445,9 +437,6 @@
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
 
-    // ---- Render helpers (rows NEVER use dropdowns); filters keep dropdowns ----
-    function ce(val){ return `<div class="cell-text" contenteditable="${CAN_EDIT}">${escapeHtml(val||'')}</div>`; }
-
     // Auth
     $('#btnSignup').onclick=async ()=>{
       const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
@@ -460,7 +449,7 @@
         await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() });
         alert('registered. please login.');
         await signOut(auth);
-      }catch(e){ alert(e.message); appendMsg('Sign-up failed: '+(e.code||'unknown')); }
+      }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'account exists. login.' : e.message); }
     };
     $('#btnSignin').onclick=async ()=>{
       const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value;
@@ -470,7 +459,7 @@
       try{
         const cred=await signInWithEmailAndPassword(auth, used, pass);
         if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
-      }catch(e){ alert('login failed: '+e.message); appendMsg('Login failed: '+(e.code||'unknown')); }
+      }catch(e){ alert('login failed: '+e.message); }
     };
     $('#btnSignout').onclick=()=>signOut(auth);
 
@@ -484,7 +473,7 @@
         const snap=await getDoc(doc(db,'users',user.uid));
         if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
         else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
-      }catch(err){ console.warn('role load failed', err); appendMsg('Role fetch failed'); }
+      }catch(err){ console.warn('role load failed', err); }
 
       CURRENT_ROLE=role; CURRENT_NAME=full;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
@@ -492,19 +481,14 @@
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
       syncSectionUserLabels();
       setEditMode(isEditor);
-      try{
-        await loadAll();
-      }catch(e){
-        appendMsg('Initial data load failed');
-      }
+      await loadAll();
     });
 
     function syncSectionUserLabels(){
       const label = CURRENT_NAME ? `${CURRENT_NAME.toLowerCase()} – ${CURRENT_ROLE.toLowerCase()}` : '';
-      const sug=$('#suggestionsUser'); const q=$('#questionsUser'); const n=$('#notificationsUser');
-      if(sug) sug.textContent = label;
-      if(q) q.textContent   = label;
-      if(n) n.textContent = label;
+      $('#suggestionsUser').textContent = label;
+      $('#questionsUser').textContent = label;
+      $('#notificationsUser').textContent = label;
     }
 
     function setEditMode(can){
@@ -545,42 +529,27 @@
       return '';
     }
 
-    // Safe reads
-    async function safeGet(coll){
-      try{
-        const s=await getDocs(collection(db,coll));
-        return s.docs.map(d=>({id:d.id,...d.data()}));
-      }catch(e){
-        appendMsg(`No access to "${coll}" (${e.code||'error'})`);
-        return [];
-      }
-    }
-    async function safeGetNotes(){
-      try{
-        const s=await getDocs(collection(db,'notifications'));
-        return s.docs.map(d=>({__id:d.id,...d.data()}));
-      }catch(e){
-        appendMsg('No access to "notifications"');
-        return [];
-      }
-    }
-
     // Load / Save
     async function loadAll(){
       const [g,r,i,p,s,q,n] = await Promise.all([
-        safeGet('goals'),
-        safeGet('risks'),
-        safeGet('issues'),
-        safeGet('plans'),
-        safeGet('suggestions'),
-        safeGet('questions'),
-        safeGetNotes(),
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+        getDocs(collection(db,'suggestions')),
+        getDocs(collection(db,'questions')),
+        getDocs(collection(db,'notifications')),
       ]);
 
       prevCache = JSON.parse(JSON.stringify(cache));
 
-      cache.goals = g; cache.risks=r; cache.issues=i; cache.plans=p;
-      cache.suggestions = s; cache.questions=q; cache.notifications = n;
+      cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+      cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+      cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+      cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+      cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+      cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
+      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
 
       buildFilterOptions();
       renderAll();
@@ -613,19 +582,15 @@
         }});
       }
 
-      try{
-        upserts(prevCache.goals, newGoals, 'goals', 'Goal');
-        upserts(prevCache.risks, newRisks, 'risks', 'Risk');
-        upserts(prevCache.issues,newIssues,'issues','Issue');
-        upserts(prevCache.plans, newPlans, 'plans', 'Plan');
-        await Promise.all(tasks);
-        if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
-        alert('saved to firestore');
-        await loadAll();
-      }catch(e){
-        alert('Save failed: '+e.message);
-        appendMsg('Save denied by rules?');
-      }
+      upserts(prevCache.goals, newGoals, 'goals', 'Goal');
+      upserts(prevCache.risks, newRisks, 'risks', 'Risk');
+      upserts(prevCache.issues,newIssues,'issues','Issue');
+      upserts(prevCache.plans, newPlans, 'plans', 'Plan');
+
+      await Promise.all(tasks);
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
+      alert('saved to firestore');
+      await loadAll();
     }
     $('#btnLoad').onclick=loadAll;
     $('#btnSaveAll').onclick=saveAll;
@@ -634,10 +599,12 @@
     function num(id){ const n=parseInt(String(id).replace(/\\D+/g,'')||'0',10); return isNaN(n)?0:n; }
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-    function actionsCell(coll){ if(!CAN_EDIT) return '—'; return `<div class="row-actions">
-      <button class="btn" data-edit="${coll}">Edit</button>
-      <button class="btn danger" data-del="${coll}">Del</button>
-    </div>`; }
+    function actionsCell(coll){ 
+      if(!CAN_EDIT) return '—'; 
+      return `<div class="row-actions">
+        <button class="btn danger" data-del="${coll}">Del</button>
+      </div>`; 
+    }
 
     // Filter selects
     function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
@@ -683,53 +650,104 @@
       $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
     }
 
-    // ---- Row renderers for GRIP: plain text cells, no dropdown/date picker in rows ----
+    // ---------- Row renderers: behave like Suggestions/Questions (disabled controls) ----------
     function rowGoal(r){
-      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
-        <td>${ce(r.owner)}</td>
-        <td>${ce(r.start)}</td>
-        <td>${ce(r.end)}</td>
-        <td>${ce(r.status)}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel = `<select disabled>${statuses.goals.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.goal||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.notes||'')}</div></td>
         <td>${actionsCell('goals')}</td>`;
     }
     function rowRisk(r){
-      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${ce(r.owner)}</td>
-        <td>${ce(r.likelihood)}</td>
-        <td>${ce(r.impact)}</td>
-        <td>${ce(r.status)}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const likeSel  = `<select disabled>${tri.map(v=>`<option ${v===(r.likelihood||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const impSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.impact||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.risks.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${likeSel}</td>
+        <td>${impSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.mitigation||'')}</div></td>
         <td>${actionsCell('risks')}</td>`;
     }
     function rowIssue(r){
-      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${ce(r.owner)}</td>
-        <td>${ce(r.severity)}</td>
-        <td>${ce(r.status)}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const sevSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.severity||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.issues.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${sevSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.resolution||'')}</div></td>
         <td>${actionsCell('issues')}</td>`;
     }
     function rowPlan(r){
-      return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
-        <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${ce(r.owner)}</td>
-        <td>${ce(r.goalId||'')}</td>
-        <td>${ce(r.start)}</td>
-        <td>${ce(r.end)}</td>
-        <td>${ce(r.status)}</td>
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.plans.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td><input type="text" value="${escapeHtml(r.goalId||'')}" disabled /></td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
         <td>${actionsCell('plans')}</td>`;
     }
 
-    // Suggestions / Questions renderers (unchanged; read-only controls ok)
+    // Renderers (with filters)
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
+    }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+    }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
+    }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
+    }
+
+    // Suggestions (read-only; star allowed)
     function rowSuggestion(r){
-      const subjectSel = `<select disabled>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-      const ownerSel   = `<select disabled>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
-      const statusSel  = `<select disabled>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
-      const revRoleSel = `<select disabled>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
       const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
       const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
       const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
@@ -765,11 +783,12 @@
       rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
     }
 
+    // Questions
     function rowQuestion(r){
-      const subjectSel = `<select disabled>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
-      const ownerSel   = `<select disabled>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
-      const statusSel  = `<select disabled>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
-      const revRoleSel = `<select disabled>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
       const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
       const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
       const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
@@ -805,6 +824,7 @@
       rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.qid=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
     }
 
+    // Notifications
     function renderNotifications(rows){
       const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
       let list=[...rows];
@@ -833,7 +853,7 @@
       });
     }
 
-    // Id-helper for new rows
+    // Add via prompt (like Suggestions/Questions)
     function nextId(arr, prefix){
       let m=0; arr.forEach(x=>{
         const n=parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10); if(n>m) m=n;
@@ -841,41 +861,48 @@
       return prefix + (m+1);
     }
 
-    // Add-handlers
-    $('#addGoalBtn').onclick = ()=>{
+    $('#addGoalBtn').onclick = async ()=>{
       if(!CAN_EDIT) return;
-      const arr = rowsFromTable('goals');
-      const id = nextId(arr.length?arr:cache.goals, 'G');
-      const tr=document.createElement('tr');
-      tr.innerHTML = rowGoal({id,goal:'',owner:'',start:'',end:'',status:'Open',notes:''});
-      $('#tblGoals tbody').appendChild(tr);
+      const id = nextId(cache.goals,'G');
+      const goal = prompt('Goal (SMART):','');
+      if(!goal) return;
+      const row = { id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
+      await setDoc(doc(db,'goals', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Goal', status:'Added', relatedId:id, description:goal}));
+      cache.goals.push(row); renderGoals();
     };
-    $('#addRiskBtn').onclick = ()=>{
+    $('#addRiskBtn').onclick = async ()=>{
       if(!CAN_EDIT) return;
-      const arr = rowsFromTable('risks');
-      const id = nextId(arr.length?arr:cache.risks, 'R');
-      const tr=document.createElement('tr');
-      tr.innerHTML = rowRisk({id,description:'',owner:'',likelihood:'Medium',impact:'Medium',status:'Open',mitigation:''});
-      $('#tblRisks tbody').appendChild(tr);
+      const id = nextId(cache.risks,'R');
+      const description = prompt('Risk description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
+      await setDoc(doc(db,'risks', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
+      cache.risks.push(row); renderRisks();
     };
-    $('#addIssueBtn').onclick = ()=>{
+    $('#addIssueBtn').onclick = async ()=>{
       if(!CAN_EDIT) return;
-      const arr = rowsFromTable('issues');
-      const id = nextId(arr.length?arr:cache.issues, 'I');
-      const tr=document.createElement('tr');
-      tr.innerHTML = rowIssue({id,description:'',owner:'',severity:'Medium',status:'Open',resolution:''});
-      $('#tblIssues tbody').appendChild(tr);
+      const id = nextId(cache.issues,'I');
+      const description = prompt('Issue description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
+      await setDoc(doc(db,'issues', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
+      cache.issues.push(row); renderIssues();
     };
-    $('#addPlanBtn').onclick = ()=>{
+    $('#addPlanBtn').onclick = async ()=>{
       if(!CAN_EDIT) return;
-      const arr = rowsFromTable('plans');
-      const id = nextId(arr.length?arr:cache.plans, 'P');
-      const tr=document.createElement('tr');
-      tr.innerHTML = rowPlan({id,description:'',owner:'',goalId:'',start:'',end:'',status:'Open'});
-      $('#tblPlans tbody').appendChild(tr);
+      const id = nextId(cache.plans,'P');
+      const description = prompt('Plan description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
+      await setDoc(doc(db,'plans', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
+      cache.plans.push(row); renderPlans();
     };
 
-    // Click handlers (stars, deletes, notes)
+    // Click handlers
     document.addEventListener('click', async (e)=>{
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
@@ -890,7 +917,6 @@
           cntEl.textContent = String(current+1);
         }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
       }
-
       const starQBtn = e.target.closest('[data-star-q]');
       if(starQBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -907,19 +933,18 @@
 
       const delBtn = e.target.closest('button[data-del]');
       if(delBtn){
-        const table = delBtn.dataset.del;
-        if(table!=='suggestions' && table!=='questions' && !CAN_EDIT){ alert('no edit rights'); return; }
+        const table = delBtn.dataset.del; 
+        if(!CAN_EDIT){ alert('no edit rights'); return; }
         const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
-        const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions', questions:'questions'};
+        const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions', questions:'questions'}; 
         const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
         if(!confirm(`Delete ${id} from ${coll}?`)) return;
-        try{
-          await deleteDoc(doc(db, coll, id));
-          tr.remove();
+        try{ 
+          await deleteDoc(doc(db, coll, id)); 
+          tr.remove(); 
           const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
           await addDoc(collection(db,'notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
-          cache.notifications = await safeGetNotes();
-          renderNotifications(cache.notifications);
+          const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
       }
 
@@ -928,15 +953,14 @@
         if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
         const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
         if(!confirm('Delete this notification?')) return;
-        try{
-          await deleteDoc(doc(db,'notifications',id));
-          cache.notifications = await safeGetNotes();
-          renderNotifications(cache.notifications);
-        }catch(err){ alert('Delete note failed: '+err.message); }
+        await deleteDoc(doc(db,'notifications',id));
+        const list = await getDocs(collection(db,'notifications'));
+        cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+        renderNotifications(cache.notifications);
       }
     });
 
-    // Add suggestion
+    // Add suggestion / question (via prompt)
     $('#addSuggestionBtn').onclick = async ()=>{
       const idPrefix = 'S';
       const next = 1 + Math.max(0, ...cache.suggestions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
@@ -954,8 +978,6 @@
         renderSuggestions();
       }catch(err){ alert('Could not add: '+err.message); }
     };
-
-    // Add question
     $('#addQuestionBtn').onclick = async ()=>{
       const idPrefix = 'Q';
       const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
@@ -974,16 +996,16 @@
       }catch(err){ alert('Could not add: '+err.message); }
     };
 
-    // Table extractors: read textual content from cells (works with plain text rows)
+    // Extractors (read disabled controls' values)
     function rowsFromTable(kind){
       if(kind!=='suggestions' && kind!=='questions'){
         const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'}[kind];
         return Array.from(document.querySelectorAll(`${map} tbody tr`)).map(tr=>{
           const tds = Array.from(tr.querySelectorAll('td'));
-          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), start:tds[3].innerText.trim(), end:tds[4].innerText.trim(), status:tds[5].innerText.trim(), notes:tds[6].innerText.trim() };
-          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), likelihood:tds[3].innerText.trim(), impact:tds[4].innerText.trim(), status:tds[5].innerText.trim(), mitigation:tds[6].innerText.trim() };
-          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), severity:tds[3].innerText.trim(), status:tds[4].innerText.trim(), resolution:tds[5].innerText.trim() };
-          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), goalId:tds[3].innerText.trim(), start:tds[4].innerText.trim(), end:tds[5].innerText.trim(), status:tds[6].innerText.trim() };
+          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', start:tds[3].querySelector('input')?.value||'', end:tds[4].querySelector('input')?.value||'', status:tds[5].querySelector('select')?.value||'', notes:tds[6].innerText.trim() };
+          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', likelihood:tds[3].querySelector('select')?.value||'', impact:tds[4].querySelector('select')?.value||'', status:tds[5].querySelector('select')?.value||'', mitigation:tds[6].innerText.trim() };
+          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', severity:tds[3].querySelector('select')?.value||'', status:tds[4].querySelector('select')?.value||'', resolution:tds[5].innerText.trim() };
+          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', goalId:tds[3].querySelector('input')?.value.trim()||'', start:tds[4].querySelector('input')?.value||'', end:tds[5].querySelector('input')?.value||'', status:tds[6].querySelector('select')?.value||'' };
         }).filter(x=>x && x.id);
       }
       return [];
@@ -1004,13 +1026,8 @@
       else renderNotifications(cache.notifications||[]);
     }
 
-    // Basic renders
-    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; [...cache.goals].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); }); }
-    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; [...cache.risks].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); }
-    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; [...cache.issues].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); }); }
-    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; [...cache.plans].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); }); }
-
     // Initial
+    buildFilterOptions();
     renderAll();
   </script>
 </body>
