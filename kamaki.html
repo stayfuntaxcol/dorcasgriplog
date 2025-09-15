@@ -78,8 +78,6 @@
     #tblPlans td:nth-child(4){width:100px}
 
     .cell-text{white-space:pre-wrap}
-
-    /* Read-only pill style for viewer mode fields */
     .ro{display:inline-block;padding:3px 6px;border:1px dashed var(--line);border-radius:8px;background:#fafafa;color:var(--ink)}
 
     footer{padding:16px;color:var(--muted);font-size:12px}
@@ -447,10 +445,8 @@
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
 
-    // Render helpers: select/input for editors; plain text for viewers
-    function selOrText(val, opts){ return CAN_EDIT ? `<select>${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
-    function dateOrText(val){ return CAN_EDIT ? `<input type="date" value="${val||''}"/>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
-    function textOrInput(val, placeholder=''){ return CAN_EDIT ? `<input type="text" value="${escapeHtml(val||'')}" placeholder="${placeholder}"/>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
+    // ---- Render helpers (rows NEVER use dropdowns); filters keep dropdowns ----
+    function ce(val){ return `<div class="cell-text" contenteditable="${CAN_EDIT}">${escapeHtml(val||'')}</div>`; }
 
     // Auth
     $('#btnSignup').onclick=async ()=>{
@@ -687,47 +683,48 @@
       $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
     }
 
-    // Row renderers (viewer shows plain text; editor sees inputs/selects)
+    // ---- Row renderers for GRIP: plain text cells, no dropdown/date picker in rows ----
     function rowGoal(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
-        <td>${selOrText(r.owner, owners)}</td>
-        <td>${dateOrText(r.start)}</td>
-        <td>${dateOrText(r.end)}</td>
-        <td>${selOrText(r.status, statuses.goals)}</td>
+        <td>${ce(r.owner)}</td>
+        <td>${ce(r.start)}</td>
+        <td>${ce(r.end)}</td>
+        <td>${ce(r.status)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
         <td>${actionsCell('goals')}</td>`;
     }
     function rowRisk(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${selOrText(r.owner, owners)}</td>
-        <td>${selOrText(r.likelihood, tri)}</td>
-        <td>${selOrText(r.impact, tri)}</td>
-        <td>${selOrText(r.status, statuses.risks)}</td>
+        <td>${ce(r.owner)}</td>
+        <td>${ce(r.likelihood)}</td>
+        <td>${ce(r.impact)}</td>
+        <td>${ce(r.status)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
         <td>${actionsCell('risks')}</td>`;
     }
     function rowIssue(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${selOrText(r.owner, owners)}</td>
-        <td>${selOrText(r.severity, tri)}</td>
-        <td>${selOrText(r.status, statuses.issues)}</td>
+        <td>${ce(r.owner)}</td>
+        <td>${ce(r.severity)}</td>
+        <td>${ce(r.status)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
         <td>${actionsCell('issues')}</td>`;
     }
     function rowPlan(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td>${selOrText(r.owner, owners)}</td>
-        <td>${textOrInput(r.goalId||'', 'G#')}</td>
-        <td>${dateOrText(r.start)}</td>
-        <td>${dateOrText(r.end)}</td>
-        <td>${selOrText(r.status, statuses.plans)}</td>
+        <td>${ce(r.owner)}</td>
+        <td>${ce(r.goalId||'')}</td>
+        <td>${ce(r.start)}</td>
+        <td>${ce(r.end)}</td>
+        <td>${ce(r.status)}</td>
         <td>${actionsCell('plans')}</td>`;
     }
 
+    // Suggestions / Questions renderers (unchanged; read-only controls ok)
     function rowSuggestion(r){
       const subjectSel = `<select disabled>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
       const ownerSel   = `<select disabled>${[''].concat(ownerRoles).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
@@ -977,7 +974,7 @@
       }catch(err){ alert('Could not add: '+err.message); }
     };
 
-    // Table extractors
+    // Table extractors: read textual content from cells (works with plain text rows)
     function rowsFromTable(kind){
       if(kind!=='suggestions' && kind!=='questions'){
         const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'}[kind];
