@@ -937,13 +937,13 @@ $('#addPlanBtn').onclick = ()=>{
   })();
 
   // UI gedrag
-const dd   = document.getElementById('translateDropdown');
-const btn  = document.getElementById('translateBtn');
-const menu = document.getElementById('translateMenu');
+  const dd = document.getElementById('translateDropdown');
+  const btn = document.getElementById('translateBtn');
+  const menu = document.getElementById('translateMenu');
 
-if (dd && btn && menu) {
   btn.addEventListener('click', (e)=>{ e.stopPropagation(); dd.classList.toggle('open'); });
   document.addEventListener('click', ()=> dd.classList.remove('open'));
+
   menu.addEventListener('click', (e)=>{
     const t = e.target.closest('.menu-item'); if(!t) return;
     const lang = t.dataset.lang;
