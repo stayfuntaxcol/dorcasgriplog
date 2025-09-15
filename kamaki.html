@@ -315,7 +315,7 @@ body { top:0 !important; }
         <div class="left"><h2>Questions</h2></div>
         <div class="right">
           <span id="questionsUser" class="user-info"></span>
-          <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
+          <button class="btn" id="addQuestionBtn">+ New Question</button>
         </div>
       </div>
       <table id="tblQuestions">
@@ -422,7 +422,7 @@ body { top:0 !important; }
     const questionStatus   = ["","Approved","Pending","Dismissed"]; // 'Considered' -> 'Pending'
     const questionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
 
-    const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","New Goal","New Risk","New Issue","New Plan"]; // for filters
+    const noteSubjects = ["","Goal","Risk","Issue","Plan","Question","New Goal","New Risk","New Issue","New Plan"]; // for filters
     const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
     const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
@@ -520,7 +520,7 @@ body { top:0 !important; }
       if(label==='Risk') return row.description||'';
       if(label==='Issue') return row.description||'';
       if(label==='Plan') return row.description||'';
-      if(label==='Suggestion') return row.description||'';
+      if(label==='Question') return row.description||'';
       return '';
     }
 
@@ -610,7 +610,7 @@ body { top:0 !important; }
       fillSelect('#sSubject', questionSubjects, 'Subject');
       fillSelect('#sOwner', [''].concat(ownerRoles), 'Owner');
       fillSelect('#sStatus', questionStatus, 'Status');
-      fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
+      fillSelect('#sReviewerRole', questionReviewer, 'Reviewer Role');
 
       // Notifications filters
       fillSelect('#nSubject', noteSubjects, 'Subject');
@@ -709,7 +709,7 @@ body { top:0 !important; }
     }
 
     // Questions (read-only cells; add via dialog); starring allowed for any signed-in user (rules must allow star update)
-    function rowSuggestion(r){
+    function rowQuestion(r){
       const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
       const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
       const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
@@ -746,7 +746,7 @@ body { top:0 !important; }
       if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
       if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
       rows.sort((a,b)=>num(a.id)-num(b.id));
-      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
+      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
     }
 
     // Notifications
@@ -826,7 +826,7 @@ $('#addPlanBtn').onclick = ()=>{
     
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      // star suggestion
+      // star question
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -848,7 +848,7 @@ $('#addPlanBtn').onclick = ()=>{
         const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
         const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', questions:'questions'}; const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
         if(!confirm(`Delete ${id} from ${coll}?`)) return;
-        try{ await deleteDoc(doc(db, coll, id)); tr.remove(); await addDoc(collection(db,'notifications'), makeNote({subject: table==='questions'?'Suggestion': table.slice(0,1).toUpperCase()+table.slice(1,-1), status:'Deleted', relatedId:id, description:''}));
+        try{ await deleteDoc(doc(db, coll, id)); tr.remove(); await addDoc(collection(db,'notifications'), makeNote({subject: table==='questions'?'Question': table.slice(0,1).toUpperCase()+table.slice(1,-1), status:'Deleted', relatedId:id, description:''}));
           const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
       }
@@ -866,21 +866,21 @@ $('#addPlanBtn').onclick = ()=>{
       }
     });
 
-    // Add suggestion via prompt (so table stays read-only)
-    $('#addSuggestionBtn').onclick = async ()=>{
+    // Add question via prompt (so table stays read-only)
+    $('#addQuestionBtn').onclick = async ()=>{
       const idPrefix = 'S';
       const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10)));
       const id = idPrefix + next;
-      const description = prompt('Describe your suggestion (required):','');
+      const description = prompt('Describe your question (required):','');
       if(!description) return;
       const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
       const owner = CURRENT_ROLE || 'Viewer';
       const today = new Date().toISOString().slice(0,10);
-      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      const question = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
-        await setDoc(doc(db,'questions', id), suggestion);
-        await addDoc(collection(db,'notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
-        cache.questions.push(suggestion);
+        await setDoc(doc(db,'questions', id), question);
+        await addDoc(collection(db,'notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
+        cache.questions.push(question);
         renderQuestions();
       }catch(err){ alert('Could not add: '+err.message); }
     };
