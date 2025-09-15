@@ -11,7 +11,6 @@
     html,body{height:100%}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
 
-    /* Header */
     header{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
     header img{height:34px;width:auto}
     header .title{font-weight:800;font-size:18px}
@@ -61,7 +60,6 @@
     .row-actions{display:flex;gap:6px}
     .col-stars{white-space:nowrap}
 
-    /* Suggestions + Questions width */
     #tblSuggestions td:nth-child(2),
     #tblSuggestions th:nth-child(2),
     #tblSuggestions td:nth-child(9),
@@ -71,17 +69,18 @@
     #tblQuestions td:nth-child(9),
     #tblQuestions th:nth-child(9){width:auto}
 
-    /* Notifications: make ID narrow, Description wide */
     #tblNotifications th:nth-child(1),
     #tblNotifications td:nth-child(1){width:70px}
     #tblNotifications th:nth-child(2),
     #tblNotifications td:nth-child(2){width:auto}
 
-    /* Plans: make Goal Link narrow */
     #tblPlans th:nth-child(4),
     #tblPlans td:nth-child(4){width:100px}
 
     .cell-text{white-space:pre-wrap}
+
+    /* Read-only pill style for viewer mode fields */
+    .ro{display:inline-block;padding:3px 6px;border:1px dashed var(--line);border-radius:8px;background:#fafafa;color:var(--ink)}
 
     footer{padding:16px;color:var(--muted);font-size:12px}
   </style>
@@ -407,7 +406,6 @@
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
     import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    // === Helpers (msgs) ===
     const $ = (q,root=document)=>root.querySelector(q);
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     const msgEl = $('#msg');
@@ -415,7 +413,6 @@
     function appendMsg(text){ msgEl.textContent = (msgEl.textContent? msgEl.textContent+'  •  ' : '') + text; msgEl.classList.add('show'); }
     $('#yr').textContent = new Date().getFullYear();
 
-    // === Firebase ===
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
       authDomain: "griplog.firebaseapp.com",
@@ -449,6 +446,11 @@
 
     function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
     async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
+
+    // Render helpers: select/input for editors; plain text for viewers
+    function selOrText(val, opts){ return CAN_EDIT ? `<select>${opts.map(o=>`<option ${o===val?'selected':''}>${o}</option>`).join('')}</select>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
+    function dateOrText(val){ return CAN_EDIT ? `<input type="date" value="${val||''}"/>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
+    function textOrInput(val, placeholder=''){ return CAN_EDIT ? `<input type="text" value="${escapeHtml(val||'')}" placeholder="${placeholder}"/>` : `<span class="ro">${escapeHtml(val||'')}</span>`; }
 
     // Auth
     $('#btnSignup').onclick=async ()=>{
@@ -547,7 +549,7 @@
       return '';
     }
 
-    // Safe reads (avoid app freeze on rule errors)
+    // Safe reads
     async function safeGet(coll){
       try{
         const s=await getDocs(collection(db,coll));
@@ -569,7 +571,6 @@
 
     // Load / Save
     async function loadAll(){
-      showMsg('Loading…');
       const [g,r,i,p,s,q,n] = await Promise.all([
         safeGet('goals'),
         safeGet('risks'),
@@ -587,8 +588,6 @@
 
       buildFilterOptions();
       renderAll();
-      showMsg('Loaded.');
-      setTimeout(()=>showMsg(''),1200);
     }
 
     async function saveAll(){
@@ -688,44 +687,44 @@
       $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
     }
 
-    // Row renderers
+    // Row renderers (viewer shows plain text; editor sees inputs/selects)
     function rowGoal(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.goal||'')}</td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
-        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.goals.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td>${selOrText(r.owner, owners)}</td>
+        <td>${dateOrText(r.start)}</td>
+        <td>${dateOrText(r.end)}</td>
+        <td>${selOrText(r.status, statuses.goals)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.notes||'')}</td>
         <td>${actionsCell('goals')}</td>`;
     }
     function rowRisk(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.likelihood?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.impact?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.risks.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td>${selOrText(r.owner, owners)}</td>
+        <td>${selOrText(r.likelihood, tri)}</td>
+        <td>${selOrText(r.impact, tri)}</td>
+        <td>${selOrText(r.status, statuses.risks)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.mitigation||'')}</td>
         <td>${actionsCell('risks')}</td>`;
     }
     function rowIssue(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${tri.map(o=>`<option ${o===r.severity?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.issues.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td>${selOrText(r.owner, owners)}</td>
+        <td>${selOrText(r.severity, tri)}</td>
+        <td>${selOrText(r.status, statuses.issues)}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.resolution||'')}</td>
         <td>${actionsCell('issues')}</td>`;
     }
     function rowPlan(r){
       return `<td contenteditable="${CAN_EDIT}">${escapeHtml(r.id||'')}</td>
         <td contenteditable="${CAN_EDIT}">${escapeHtml(r.description||'')}</td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select></td>
-        <td><input type="text" value="${r.goalId||''}" placeholder="G#" ${!CAN_EDIT?'disabled':''}/></td>
-        <td><input type="date" value="${r.start||''}" ${!CAN_EDIT?'disabled':''}/></td>
-        <td><input type="date" value="${r.end||''}" ${!CAN_EDIT?'disabled':''}/></td>
-        <td><select ${!CAN_EDIT?'disabled':''}>${statuses.plans.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></td>
+        <td>${selOrText(r.owner, owners)}</td>
+        <td>${textOrInput(r.goalId||'', 'G#')}</td>
+        <td>${dateOrText(r.start)}</td>
+        <td>${dateOrText(r.end)}</td>
+        <td>${selOrText(r.status, statuses.plans)}</td>
         <td>${actionsCell('plans')}</td>`;
     }
 
@@ -881,7 +880,6 @@
 
     // Click handlers (stars, deletes, notes)
     document.addEventListener('click', async (e)=>{
-      // star suggestion
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -896,7 +894,6 @@
         }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
       }
 
-      // star question
       const starQBtn = e.target.closest('[data-star-q]');
       if(starQBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -911,7 +908,6 @@
         }catch(err){ alert('Star failed: '+err.message); starQBtn.disabled=false; }
       }
 
-      // delete entity row
       const delBtn = e.target.closest('button[data-del]');
       if(delBtn){
         const table = delBtn.dataset.del;
@@ -930,7 +926,6 @@
         }catch(err){ alert('delete failed: '+err.message); }
       }
 
-      // delete notification (admin only)
       const delNoteBtn = e.target.closest('[data-del-note]');
       if(delNoteBtn){
         if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
@@ -944,7 +939,7 @@
       }
     });
 
-    // Add suggestion via prompt
+    // Add suggestion
     $('#addSuggestionBtn').onclick = async ()=>{
       const idPrefix = 'S';
       const next = 1 + Math.max(0, ...cache.suggestions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
@@ -988,10 +983,10 @@
         const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'}[kind];
         return Array.from(document.querySelectorAll(`${map} tbody tr`)).map(tr=>{
           const tds = Array.from(tr.querySelectorAll('td'));
-          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, start:tds[3].querySelector('input').value||'', end:tds[4].querySelector('input').value||'', status:tds[5].querySelector('select').value, notes:tds[6].innerText.trim() };
-          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, likelihood:tds[3].querySelector('select').value, impact:tds[4].querySelector('select').value, status:tds[5].querySelector('select').value, mitigation:tds[6].innerText.trim() };
-          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, severity:tds[3].querySelector('select').value, status:tds[4].querySelector('select').value, resolution:tds[5].innerText.trim() };
-          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select').value, goalId:tds[3].querySelector('input').value.trim(), start:tds[4].querySelector('input').value||'', end:tds[5].querySelector('input').value||'', status:tds[6].querySelector('select').value };
+          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), start:tds[3].innerText.trim(), end:tds[4].innerText.trim(), status:tds[5].innerText.trim(), notes:tds[6].innerText.trim() };
+          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), likelihood:tds[3].innerText.trim(), impact:tds[4].innerText.trim(), status:tds[5].innerText.trim(), mitigation:tds[6].innerText.trim() };
+          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), severity:tds[3].innerText.trim(), status:tds[4].innerText.trim(), resolution:tds[5].innerText.trim() };
+          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].innerText.trim(), goalId:tds[3].innerText.trim(), start:tds[4].innerText.trim(), end:tds[5].innerText.trim(), status:tds[6].innerText.trim() };
         }).filter(x=>x && x.id);
       }
       return [];
@@ -1012,7 +1007,7 @@
       else renderNotifications(cache.notifications||[]);
     }
 
-    // Minimal stubs for GRIP tab renders (so first view doesn't error)
+    // Basic renders
     function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; [...cache.goals].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); }); }
     function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; [...cache.risks].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); }); }
     function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; [...cache.issues].sort((a,b)=>num(a.id)-num(b.id)).forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); }); }
