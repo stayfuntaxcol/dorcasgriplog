@@ -408,18 +408,18 @@ body { top:0 !important; }
     $('#yr').textContent = new Date().getFullYear();
 
     const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Sponsor/Partner'];
     const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
     const questionsSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
-    const questionStatus   = ["","Approved","Pending","Dismissed"]; // 'Considered' -> 'Pending'
-    const questionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+    const questionsStatus   = ["","Approved","Pending","Dismissed"]; // 'Considered' -> 'Pending'
+    const questionsReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
 
-    const noteSubjects = ["","Goal","Risk","Issue","Plan","Question","New Goal","New Risk","New Issue","New Plan"]; // for filters
-    const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
-    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+    const notificationsSubjects = ["","Goal","Risk","Issue","Plan","Question","New Goal","New Risk","New Issue","New Plan","New Question"]; // for filters
+    const notificationsStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
+    const notificationsRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Sponsor/Partner","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
 
