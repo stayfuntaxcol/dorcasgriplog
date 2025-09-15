@@ -178,26 +178,6 @@
     </g>
   </svg>
 </div>
-
-<script>
-  (function(){
-    const wrap = document.currentScript.previousElementSibling;
-    const bar = wrap.previousElementSibling;
-    const btns = bar.querySelectorAll('.chip-btn');
-    const setSel = (mode)=>{
-      wrap.setAttribute('data-sel', mode);
-      btns.forEach(b=>b.classList.toggle('is-active', b.dataset.sel===mode));
-    };
-    bar.addEventListener('click', (e)=>{
-      const b = e.target.closest('.chip-btn'); if(!b) return;
-      const m = b.dataset.sel;
-      if(m==='all'){ wrap.removeAttribute('data-sel'); btns.forEach(x=>x.classList.remove('is-active')); b.classList.add('is-active'); return; }
-      setSel(m);
-    });
-  })();
-</script>
-
-  <p class="small">Flowchart is alleen hier zichtbaar. Carbon (na kosten/fees) versterkt het Social Impact Fund.</p>
 </section>
 
   <!-- SCENARIOS -->
