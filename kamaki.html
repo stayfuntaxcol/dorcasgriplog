@@ -152,7 +152,7 @@ body { top:0 !important; }
     <button data-tab="risks">R – Risks</button>
     <button data-tab="issues">I – Issues</button>
     <button data-tab="plans">P – Plans</button>
-    <button class="push-right" data-tab="Questions">S – Questions</button>
+    <button class="push-right" data-tab="Questions">Q – Questions</button>
     <button data-tab="notifications">N – Notifications</button>
   </nav>
 
@@ -309,7 +309,7 @@ body { top:0 !important; }
   </section>
 
   <!-- Questions -->
-  <section id="Questions" role="tabpanel">
+  <section id="questions" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
         <div class="left"><h2>Questions</h2></div>
@@ -868,7 +868,7 @@ $('#addPlanBtn').onclick = ()=>{
 
     // Add question via prompt (so table stays read-only)
     $('#addQuestionBtn').onclick = async ()=>{
-      const idPrefix = 'S';
+      const idPrefix = 'Q';
       const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\D+/g,'')||'0',10)));
       const id = idPrefix + next;
       const description = prompt('Describe your question (required):','');
