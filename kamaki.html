@@ -605,15 +605,15 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
 
       // Questions filters
-      fillSelect('#sSubject', questionsSubjects, 'Subject');
-      fillSelect('#sOwner', [''].concat(ownerRoles), 'Owner');
-      fillSelect('#sStatus', questionsStatus, 'Status');
-      fillSelect('#sReviewerRole', questionsReviewer, 'Reviewer Role');
+      fillSelect('#qSubject', questionsSubjects, 'Subject');
+      fillSelect('#qOwner', [''].concat(ownerRoles), 'Owner');
+      fillSelect('#qStatus', questionsStatus, 'Status');
+      fillSelect('#qReviewerRole', questionsReviewer, 'Reviewer Role');
 
       // Notifications filters
-      fillSelect('#nSubject', noteSubjects, 'Subject');
-      fillSelect('#nStatus', noteStatus, 'Status');
-      fillSelect('#nRole', noteRoles, 'Role');
+      fillSelect('#nSubject', notificaionsSubjects, 'Subject');
+      fillSelect('#nStatus', notificaionsStatus, 'Status');
+      fillSelect('#nRole', notificaionsRoles, 'Role');
 
       ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
       ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
@@ -626,7 +626,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
       $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
       $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pGoalId','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
-      $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
+      $('#qReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
       $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
     }
 
@@ -734,8 +734,8 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     function renderQuestions(){
       const tbody=$('#tblQuestions tbody'); tbody.innerHTML='';
       let rows=[...cache.questions];
-      const q=$('#sSearch').value?.toLowerCase()||'';
-      const fSub=$('#sSubject').value; const fOwner=$('#sOwner').value; const fSubm=$('#sSubmitted').value; const fStatus=$('#sStatus').value; const fRevRole=$('#sReviewerRole').value; const fRevDate=$('#sReviewed').value;
+      const q=$('#qSearch').value?.toLowerCase()||'';
+      const fSub=$('#qSubject').value; const fOwner=$('#qOwner').value; const fSubm=$('#qSubmitted').value; const fStatus=$('#qStatus').value; const fRevRole=$('#qReviewerRole').value; const fRevDate=$('#qReviewed').value;
       if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
       if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
       if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
