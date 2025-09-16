@@ -204,6 +204,11 @@ a[title*="Delete"], a[title*="Verwijder"],
     <div class="header-right">
       <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
       <span id="userInfo" class="user-info"></span>
+    
+      <span id="authStatus" class="pill" aria-live="polite">Guest</span>
+      <button id="btnLoginGoogle" class="btn">Login with Google</button>
+      <button id="btnLogout" class="btn" style="display:none">Logout</button>
+    
     </div>
   </header>
 
@@ -2059,6 +2064,68 @@ window.ItemFolder = (function(){
   const obs = new MutationObserver(()=>injectActions());
   obs.observe(document.body, {childList:true, subtree:true});
   window.addEventListener('load', injectActions);
+</script>
+
+
+<script type="module">
+  import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+
+  const app = window.app;
+  const auth = getAuth(app);
+  window.auth = auth;
+
+  const statusEl = document.getElementById('authStatus');
+  const btnLogin = document.getElementById('btnLoginGoogle');
+  const btnLogout = document.getElementById('btnLogout');
+  const roleSel = document.getElementById('roleSelect');
+
+  // Default role & edit-rights
+  window.CURRENT_ROLE = (roleSel && roleSel.value) || 'viewer';
+  window.CAN_EDIT = false;
+
+  function refreshRights(){
+    // edit if logged-in and role != viewer
+    const loggedIn = !!auth.currentUser;
+    const role = (roleSel && roleSel.value) || 'viewer';
+    window.CURRENT_ROLE = role;
+    window.CAN_EDIT = loggedIn && (role === 'editor' || role === 'admin');
+  }
+
+  if(roleSel){ roleSel.addEventListener('change', refreshRights); }
+
+  onAuthStateChanged(auth, (user) => {    
+    if (user) {
+      statusEl.textContent = user.displayName ? user.displayName : (user.email || 'Signed in');
+      btnLogin.style.display = 'none';
+      btnLogout.style.display = '';
+    } else {
+      statusEl.textContent = 'Guest';
+      btnLogin.style.display = '';
+      btnLogout.style.display = 'none';
+    }
+    refreshRights();
+  });
+
+  btnLogin?.addEventListener('click', async () => {
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      alert('Login failed: ' + (e.code || e.message));
+      console.warn(e);
+    }
+  });
+
+  btnLogout?.addEventListener('click', async () => {
+    try { await signOut(auth); } catch(e){ console.warn(e); }
+  });
+
+  // UX guard: warn if rules require auth
+  window.addEventListener('load', () => {
+    if (location.protocol !== 'https:' && location.hostname !== 'localhost') {
+      console.info('Auth tip: gebruik https of localhost voor popups.');
+    }
+  });
 </script>
 
 </body>
