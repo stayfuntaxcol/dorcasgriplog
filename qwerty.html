@@ -140,6 +140,50 @@ a[title*="Delete"], a[title*="Verwijder"],
 /* Sticky footer */
 .itemfolder-footer{ position:sticky; bottom:0; padding:10px 16px; border-top:1px solid var(--folder-line); background:#fff; display:flex; justify-content:flex-end; gap:10px; }
 </style>
+  <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+  import {
+    getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where
+  } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+    authDomain: "griplog.firebaseapp.com",
+    projectId: "griplog",
+    storageBucket: "griplog.firebasestorage.app",
+    messagingSenderId: "1097061844582",
+    appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7",
+    measurementId: "G-NPE08326BM"
+  };
+
+  const app = initializeApp(firebaseConfig);
+
+  // Expose naar window → je bestaande (niet-module) code kan dit gebruiken
+  window.app = app;
+  window.firebaseApp = app;
+  window.getFirestore = getFirestore;
+  window.doc = doc;
+  window.getDoc = getDoc;
+  window.getDocs = getDocs;
+  window.setDoc = setDoc;
+  window.deleteDoc = deleteDoc;
+  window.collection = collection;
+  window.query = query;
+  window.where = where;
+  window.db = getFirestore(app);
+
+  // Analytics alleen op https/localhost (anders overslaan)
+  try {
+    if (location.protocol === "https:" || location.hostname === "localhost") {
+      getAnalytics(app);
+    }
+  } catch (e) { /* ignore */ }
+
+  // Zet dit als je collecties genest zijn, anders leeg laten:
+  // window.GRID_BASE_PATH = "projects/XYZ/";
+</script>
+
 </head>
 <body>
   <header>
