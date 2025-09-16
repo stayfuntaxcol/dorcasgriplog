@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -79,39 +80,48 @@
     .cell-text{white-space:pre-wrap}
     footer{padding:16px;color:var(--muted);font-size:12px}
   
-/* === Overlay (full-screen menu) + two-pane card === */
-#overlay{position:fixed;inset:0;display:none;z-index:1000}
+/* ===== Fix Pack v4 ===== */
+/* 1) Force-hide legacy Del/Edit in many variants (classes, data-attrs, titles, aria-labels, text) */
+:root{--brand:#0ea5a3;--line:#e5e7eb}
+:is(.actions,.row-actions,td,th,div,span,li,section) :is(.btn-del,.btn-delete,.btn-edit,
+[data-action="delete"],[data-action="del"],[data-action="edit"],
+[data-testid*="delete"],[data-testid*="edit"],
+[title*="Verwijder"],[title*="verwijder"],[title*="Delete"],[title*="delete"],[title*="Bewerk"],[title*="bewerk"],[title*="Edit"],[title*="edit"],
+[aria-label*="Verwijder"],[aria-label*="verwijder"],[aria-label*="Delete"],[aria-label*="delete"],[aria-label*="Bewerk"],[aria-label*="bewerk"],[aria-label*="Edit"],[aria-label*="edit"]) { display:none !important }
+:is(.actions,.row-actions) :is(button,a){ /* tighten generic actions spacing */ margin-left:4px }
+
+/* 2) Overlay base */
+#overlay{position:fixed;inset:0;display:none;z-index:2147483646}
 #overlay.show{display:block}
 .ov-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
-.ov-panel{position:absolute;inset:24px;display:flex;flex-direction:column;background:var(--card,#fff);border:1px solid var(--line,#e5e7eb);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-.ov-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line,#e5e7eb);background:linear-gradient(180deg,#fff,#f8fafc)}
+.ov-panel{position:absolute;inset:24px;display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.ov-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc)}
 .ov-title{font-weight:800;font-size:16px}
-.ov-sub{font-size:12px;color:var(--muted,#64748b)}
+.ov-sub{font-size:12px;color:#64748b}
 .ov-body{padding:0;display:grid;grid-template-columns:1fr 340px;gap:0;min-height:0;flex:1}
 .ov-left{padding:12px 16px;overflow:auto}
-.ov-right{border-left:1px solid var(--line,#e5e7eb);padding:12px 10px;overflow:auto;background:#f9fafb}
-.ov-footer{padding:12px 16px;border-top:1px solid var(--line,#e5e7eb);display:flex;gap:8px;justify-content:space-between;align-items:center;background:#fff}
+.ov-right{border-left:1px solid var(--line);padding:12px 10px;overflow:auto;background:#f9fafb}
+.ov-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center;background:#fff}
 .ov-actions{display:flex;gap:8px;flex-wrap:wrap}
 .ov-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
-.block{grid-column:span 12;background:#fff;border:1px solid var(--line,#e5e7eb);border-radius:12px;padding:12px}
-.block details{border:1px dashed #e5e7eb;border-radius:10px;padding:8px}
-.block details>summary{cursor:pointer;font-weight:700;margin:-8px -8px 8px -8px;padding:8px;border-bottom:1px dashed #e5e7eb}
+.block{grid-column:span 12;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.block details{border:1px dashed var(--line);border-radius:10px;padding:8px}
+.block details>summary{cursor:pointer;font-weight:700;margin:-8px -8px 8px -8px;padding:8px;border-bottom:1px dashed var(--line)}
 .form-row{display:grid;grid-template-columns:160px 1fr;gap:10px;margin:8px 0}
-.form-row label{color:var(--muted,#64748b);font-size:12px;padding-top:6px}
-.form-row input,.form-row textarea,.form-row select{width:100%;padding:8px 10px;border:1px solid var(--line,#e5e7eb);border-radius:8px;background:#fff;font-size:14px}
+.form-row label{color:#64748b;font-size:12px;padding-top:6px}
+.form-row input,.form-row textarea,.form-row select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
 .form-row textarea{min-height:96px;resize:vertical}
-.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#f1f5f9;border:1px solid var(--line,#e5e7eb);border-radius:999px;font-size:12px;color:var(--muted,#64748b)}
-.btn{padding:8px 10px;border:1px solid var(--line,#e5e7eb);background:#fff;border-radius:10px;cursor:pointer}
-.btn.primary{background:var(--brand,#0ea5a3);border-color:var(--brand,#0ea5a3);color:#fff}
-.btn.danger{background:var(--danger,#ef4444);border-color:var(--danger,#ef4444);color:#fff}
-/* Right map of linked items */
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#f1f5f9;border:1px solid var(--line);border-radius:999px;font-size:12px;color:#64748b}
+.btn{padding:8px 10px;border:1px solid var(--line);background:#fff;border-radius:10px;cursor:pointer}
+.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+.btn.danger{background:#ef4444;border-color:#ef4444;color:#fff}
+
+/* 3) Chain map */
 .chain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-.chain-card{border:1px solid var(--line,#e5e7eb);border-radius:10px;background:#fff;padding:8px;cursor:pointer;text-align:center}
-.chain-card.active{outline:2px solid var(--brand,#0ea5a3)}
-.chain-title{font-size:12px;color:var(--muted,#64748b);margin-bottom:6px}
-.chain-root{font-size:11px;color:#fff;background:var(--brand,#0ea5a3);padding:2px 6px;border-radius:999px}
-/* Hide legacy edit/del buttons if present (non-destructive) */
-button.btn-del, button[data-action="delete"], .btn.edit, button[data-action="edit"]{display:none!important}
+.chain-card{border:1px solid var(--line);border-radius:10px;background:#fff;padding:8px;cursor:pointer;text-align:center}
+.chain-card.active{outline:2px solid var(--brand)}
+.chain-title{font-size:12px;color:#64748b;margin-bottom:6px}
+.chain-root{font-size:11px;color:#fff;background:var(--brand);padding:2px 6px;border-radius:999px}
 </style>
 </head>
 <body>
@@ -1137,9 +1147,7 @@ if(editBtn){
       </div>
     </div>
     <div class="ov-body">
-      <div class="ov-left">
-        <div id="ovBody"></div>
-      </div>
+      <div class="ov-left"><div id="ovBody"></div></div>
       <aside class="ov-right">
         <div class="chain-title">Gekoppelde items</div>
         <div id="chainGrid" class="chain-grid"></div>
@@ -1157,310 +1165,365 @@ if(editBtn){
 </div>
 
 <script>
-window.$  = window.$  || (sel => document.querySelector(sel));
-window.$$ = window.$$ || (sel => Array.from(document.querySelectorAll(sel)));
-window.cache = window.cache || {goals:[],risks:[],issues:[],plans:[],questions:[],suggestions:[], notifications:[]};
-const ALL_COLLS = ['goals','risks','issues','plans','questions','suggestions'];
-window.owners   = window.owners   || [''];
-window.statuses = window.statuses || {goals:['Open','Closed'], risks:['Open','Closed'], issues:['Open','Closed'], plans:['Open','Closed']};
-window.tri      = window.tri      || ['Low','Medium','High'];
-window.CAN_EDIT = window.CAN_EDIT ?? true;
-window.CURRENT_ROLE = window.CURRENT_ROLE || 'Viewer';
-window.CURRENT_UID = window.CURRENT_UID || null;
-window.makeNote = window.makeNote || (o=>o);
-window.pickDesc = window.pickDesc || ((s,row)=> row.description||row.goal||'');
-// db, doc, setDoc, updateDoc, deleteDoc, collection, addDoc
+(function(){
+  const $ = (s,d=document)=>d.querySelector(s);
+  const $$ = (s,d=document)=>Array.from(d.querySelectorAll(s));
 
-const PREFIX = {goals:'G',risks:'R',issues:'I',plans:'P',questions:'Q',suggestions:'S'};
-function idNum(id){ return parseInt(String(id||'').replace(/\\D+/g,'')||'0',10); }
-function nextId(list, prefix){
-  let m=0; (list||[]).forEach(x=>{ const n=idNum(x.id); if(n>m) m=n; });
-  return prefix+(m+1);
-}
-function sortAll(){
-  ALL_COLLS.forEach(c => { if(Array.isArray(cache[c])) cache[c].sort((a,b)=>idNum(a.id)-idNum(b.id)); });
-}
+  // ---- Globals & helpers
+  window.cache = window.cache || {goals:[],risks:[],issues:[],plans:[],questions:[],suggestions:[], notifications:[]};
+  const ALL=['goals','risks','issues','plans','questions','suggestions'];
+  const PREFIX={goals:'G',risks:'R',issues:'I',plans:'P',questions:'Q',suggestions:'S'};
+  window.CAN_EDIT = window.CAN_EDIT ?? true;
+  window.CURRENT_ROLE = window.CURRENT_ROLE || 'Viewer';
+  window.owners = window.owners || [''];
+  window.statuses = window.statuses || {goals:['Open','Closed'], risks:['Open','Closed'], issues:['Open','Closed'], plans:['Open','Closed']};
+  window.tri = window.tri || ['Low','Medium','High'];
+  window.pickDesc = window.pickDesc || ((s,row)=> row.description||row.goal||'');
+  window.makeNote = window.makeNote || (o=>o);
 
-let OV = { coll:null, id:null, row:null, edit:false, autosaveTimer:null, chainId:null };
-const AUTOSAVE_MS = 120000;
+  function idNum(id){ return parseInt(String(id||'').replace(/\D+/g,'')||'0',10); }
+  function nextId(list,p){ let m=0;(list||[]).forEach(x=>{const n=idNum(x.id); if(n>m)m=n;}); return p+(m+1); }
+  function sortAll(){ ALL.forEach(c=>{ if(Array.isArray(cache[c])) cache[c].sort((a,b)=>idNum(a.id)-idNum(b.id)); }); }
+  function getRow(c,id){ return (cache[c]||[]).find(x=>String(x.id).trim()===String(id).trim()); }
+  function ensureChainId(row){ if(!row.chainId) row.chainId=row.id; return row.chainId; }
 
-const FIELDSETS = {
-  goals: [
-    ['goal','textarea','Goal','content'],
-    ['notes','textarea','Notes','content'],
-    ['owner','select','Owner', owners,'meta'],
-    ['status','select','Status', statuses.goals,'meta'],
-    ['start','date','Start','dates'],
-    ['end','date','End','dates']
-  ],
-  risks: [
-    ['description','textarea','Description','content'],
-    ['mitigation','textarea','Mitigation','content'],
-    ['owner','select','Owner', owners,'meta'],
-    ['likelihood','select','Likelihood', tri,'meta'],
-    ['impact','select','Impact', tri,'meta'],
-    ['status','select','Status', statuses.risks,'meta']
-  ],
-  issues: [
-    ['description','textarea','Description','content'],
-    ['resolution','textarea','Resolution','content'],
-    ['owner','select','Owner', owners,'meta'],
-    ['severity','select','Severity', tri,'meta'],
-    ['status','select','Status', statuses.issues,'meta']
-  ],
-  plans: [
-    ['description','textarea','Description','content'],
-    ['goalId','text','Goal Link (G#)','meta'],
-    ['owner','select','Owner', owners,'meta'],
-    ['status','select','Status', statuses.plans,'meta'],
-    ['start','date','Start','dates'],
-    ['end','date','End','dates']
-  ],
-  suggestions: [
-    ['description','textarea','Description','content'],
-    ['comments','textarea','Comments','content'],
-    ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
-    ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
-    ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
-    ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
-    ['submitted','date','Submitted','dates'],
-    ['reviewed','date','Reviewed','dates']
-  ],
-  questions: [
-    ['description','textarea','Description','content'],
-    ['comments','textarea','Comments','content'],
-    ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
-    ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
-    ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
-    ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
-    ['submitted','date','Submitted','dates'],
-    ['reviewed','date','Reviewed','dates']
-  ],
-};
-
-function inputHtml(name,type,label,groupOrOpts,value,disabled){
-  const dis = disabled?'disabled':'';
-  if(type==='textarea'){
-    return `<div class="form-row"><label for="f_${name}">${label}</label><textarea id="f_${name}" name="${name}" ${dis}>${(value||'')}</textarea></div>`;
+  // ---- 1) Hide legacy Del/Edit (CSS is primary, JS fallback by text/icon)
+  function hideLegacyButtons(){
+    $$('button, a').forEach(el=>{
+      const t=(el.textContent||'').trim().toLowerCase();
+      const title=(el.getAttribute('title')||'').toLowerCase();
+      const aria=(el.getAttribute('aria-label')||'').toLowerCase();
+      const data=(el.getAttribute('data-action')||'').toLowerCase();
+      const looksDel = /(del|delete|verwijder|remove|trash)/.test(t) || /(delete|verwijder|remove|trash)/.test(title) || /(delete|verwijder)/.test(aria) || /(del|delete)/.test(data);
+      const looksEdit = /(edit|bewerk|wijzig)/.test(t) || /(edit|bewerk|wijzig)/.test(title) || /(edit|bewerk)/.test(aria) || /(edit)/.test(data);
+      if(looksDel || looksEdit){ el.style.setProperty('display','none','important'); }
+    });
   }
-  if(type==='select'){
-    const opts = (Array.isArray(groupOrOpts)? groupOrOpts : []);
-    const options = opts.map(v=>`<option ${String(v)===(value||'')?'selected':''}>${v}</option>`).join('');
-    return `<div class="form-row"><label for="f_${name}">${label}</label><select id="f_${name}" name="${name}" ${dis}>${options}</select></div>`;
+
+  // ---- 2) Ensure Menu buttons exist on each row (and keep after re-renders)
+  function detectCollFromRow(tr){
+    let coll = tr.closest('[data-tab]')?.getAttribute('data-tab') || tr.closest('table')?.getAttribute('data-coll');
+    if(!coll){
+      // find a cell that matches an ID like G12/R3/...
+      const cell = Array.from(tr.cells).find(td=>/^[GRIPQS]\d+$/i.test((td.innerText||'').trim()));
+      const id = cell ? cell.innerText.trim() : null;
+      if(id){ const map={G:'goals',R:'risks',I:'issues',P:'plans',Q:'questions',S:'suggestions'}; coll = map[id[0].toUpperCase()]; }
+    }
+    return ALL.includes(coll)?coll:null;
   }
-  return `<div class="form-row"><label for="f_${name}">${label}</label><input id="f_${name}" name="${name}" type="${type}" value="${value||''}" ${dis} /></div>`;
-}
+  function ensureMenuButtons(root=document){
+    $$('table tbody tr', root).forEach(tr=>{
+      if(tr.querySelector('[data-menu]')) return;
+      const lastTd = tr.querySelector('td:last-child') || tr.appendChild(document.createElement('td'));
+      const btn = document.createElement('button');
+      btn.className='btn'; btn.dataset.menu = detectCollFromRow(tr) || 'goals';
+      btn.textContent='Menu';
+      lastTd.appendChild(btn);
+    });
+  }
 
-function sectionWrap(title,inner){
-  return `<div class="block"><details open><summary>${title}</summary>${inner}</details></div>`;
-}
+  // Observe table changes (framework re-renders)
+  const mo = new MutationObserver(muts=>{
+    let touched=false;
+    for(const m of muts){
+      if(m.type==='childList') { touched=true; }
+    }
+    if(touched){ hideLegacyButtons(); ensureMenuButtons(document); }
+  });
+  mo.observe(document.documentElement, {childList:true,subtree:true});
 
-function ensureChainId(row){ if(!row.chainId){ row.chainId = row.id; } return row.chainId; }
-function getRow(coll,id){ const list = cache[coll]||[]; return list.find(x=> String(x.id).trim() === String(id).trim()); }
+  // ---- 3) Overlay UI
+  function injectOverlay(){
+    if($('#overlay')) return;
+    document.body.insertAdjacentHTML('beforeend', `
+      <div id="overlay" aria-hidden="true">
+        <div class="ov-backdrop"></div>
+        <div class="ov-panel" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+          <div class="ov-header">
+            <div>
+              <div id="ovTitle" class="ov-title">Item</div>
+              <div id="ovSub" class="ov-sub"></div>
+            </div>
+            <div class="ov-actions">
+              <button id="ovAddGoal" class="btn">+ New Goal</button>
+              <button id="ovAddRisk" class="btn">+ New Risk</button>
+              <button id="ovAddIssue" class="btn">+ New Issue</button>
+              <button id="ovAddPlan" class="btn">+ New Plan</button>
+              <button id="ovAddQuestion" class="btn">+ New Question</button>
+              <button id="ovAddSuggestion" class="btn">+ New Suggestion</button>
+              <button id="ovClose" class="btn">Close</button>
+            </div>
+          </div>
+          <div class="ov-body">
+            <div class="ov-left"><div id="ovBody"></div></div>
+            <aside class="ov-right">
+              <div class="chain-title">Gekoppelde items</div>
+              <div id="chainGrid" class="chain-grid"></div>
+            </aside>
+          </div>
+          <div class="ov-footer">
+            <div class="ov-actions">
+              <button id="ovEdit" class="btn">Edit</button>
+              <button id="ovSave" class="btn primary" disabled>Save</button>
+              <button id="ovDelete" class="btn danger">Delete</button>
+            </div>
+            <span class="badge" id="ovMeta"></span>
+          </div>
+        </div>
+      </div>`);
+  }
 
-function buildChainGrid(rootChainId, activeColl, activeId){
-  const nodes = [];
-  ALL_COLLS.forEach(c => {
-    (cache[c]||[]).forEach(x=>{
+  const FIELDSETS = {
+    goals: [
+      ['goal','textarea','Goal','content'],
+      ['notes','textarea','Notes','content'],
+      ['owner','select','Owner', owners,'meta'],
+      ['status','select','Status', statuses.goals,'meta'],
+      ['start','date','Start','dates'],
+      ['end','date','End','dates']
+    ],
+    risks: [
+      ['description','textarea','Description','content'],
+      ['mitigation','textarea','Mitigation','content'],
+      ['owner','select','Owner', owners,'meta'],
+      ['likelihood','select','Likelihood', tri,'meta'],
+      ['impact','select','Impact', tri,'meta'],
+      ['status','select','Status', statuses.risks,'meta']
+    ],
+    issues: [
+      ['description','textarea','Description','content'],
+      ['resolution','textarea','Resolution','content'],
+      ['owner','select','Owner', owners,'meta'],
+      ['severity','select','Severity', tri,'meta'],
+      ['status','select','Status', statuses.issues,'meta']
+    ],
+    plans: [
+      ['description','textarea','Description','content'],
+      ['goalId','text','Goal Link (G#)','meta'],
+      ['owner','select','Owner', owners,'meta'],
+      ['status','select','Status', statuses.plans,'meta'],
+      ['start','date','Start','dates'],
+      ['end','date','End','dates']
+    ],
+    suggestions: [
+      ['description','textarea','Description','content'],
+      ['comments','textarea','Comments','content'],
+      ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
+      ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
+      ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
+      ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
+      ['submitted','date','Submitted','dates'],
+      ['reviewed','date','Reviewed','dates']
+    ],
+    questions: [
+      ['description','textarea','Description','content'],
+      ['comments','textarea','Comments','content'],
+      ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
+      ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
+      ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
+      ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
+      ['submitted','date','Submitted','dates'],
+      ['reviewed','date','Reviewed','dates']
+    ],
+  };
+
+  function inputHtml(name,type,label,optsOrGroup,value,disabled){
+    const dis = disabled?'disabled':'';
+    if(type==='textarea'){
+      return `<div class="form-row"><label for="f_${name}">${label}</label><textarea id="f_${name}" name="${name}" ${dis}>${value||''}</textarea></div>`;
+    }
+    if(type==='select'){
+      const options = (Array.isArray(optsOrGroup)? optsOrGroup : []).map(v=>`<option ${String(v)===(value||'')?'selected':''}>${v}</option>`).join('');
+      return `<div class="form-row"><label for="f_${name}">${label}</label><select id="f_${name}" name="${name}" ${dis}>${options}</select></div>`;
+    }
+    return `<div class="form-row"><label for="f_${name}">${label}</label><input id="f_${name}" name="${name}" type="${type}" value="${value||''}" ${dis} /></div>`;
+  }
+  function sectionWrap(title,inner){ return `<div class="block"><details open><summary>${title}</summary>${inner}</details></div>`; }
+
+  let OV = { coll:null, id:null, row:null, edit:false, autosaveTimer:null, chainId:null };
+  const AUTOSAVE_MS = 120000;
+
+  function buildChainGrid(rootChainId, activeColl, activeId){
+    const nodes=[];
+    ALL.forEach(c => (cache[c]||[]).forEach(x=>{
       const cid = x.chainId || x.linkedTo || null;
       const belongs = (x.chainId && x.chainId===rootChainId) || (!x.chainId && x.id===rootChainId) || (cid===rootChainId);
-      if(belongs){ nodes.push({coll:c,id:x.id,isRoot: x.id===rootChainId}); }
+      if(belongs) nodes.push({coll:c,id:x.id,isRoot:x.id===rootChainId});
+    }));
+    nodes.sort((a,b)=> a.coll===b.coll ? idNum(a.id)-idNum(b.id) : a.coll.localeCompare(b.coll));
+    $('#chainGrid').innerHTML = nodes.map(n=>`<div class="chain-card ${n.coll===activeColl && n.id===activeId?'active':''}" data-coll="${n.coll}" data-id="${n.id}">
+      <div>${n.coll.slice(0,1).toUpperCase()+n.coll.slice(1,-1)} <span class="chain-root" style="display:${n.isRoot?'inline-block':'none'}">root</span></div>
+      <div style="font-weight:700;margin-top:6px">${n.id}</div>
+    </div>`).join('');
+  }
+
+  function renderOverlay(coll,id){
+    sortAll();
+    const row = getRow(coll,id);
+    if(!row){ alert('Item not found'); return; }
+    if(!row.chainId) row.chainId=row.id;
+    OV = { coll, id, row: JSON.parse(JSON.stringify(row)), edit:false, autosaveTimer:null, chainId: row.chainId };
+    $('#ovTitle').textContent = `${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)} – ${id}`;
+    $('#ovSub').textContent = `Type: ${coll} • ID: ${id}`;
+    $('#ovMeta').textContent = (window.CAN_EDIT?'editor':'viewer') + (row.linkedTo?` • linkedTo: ${row.linkedTo}`:'');
+
+    const cfg = FIELDSETS[coll]||[];
+    const pieces = {content:'',meta:'',dates:''};
+    cfg.forEach(f=>{
+      const [name,type,label,groupOrOpts,maybeGroup]=f;
+      const group=(maybeGroup||(!Array.isArray(groupOrOpts)?groupOrOpts:'content'))||'content';
+      const opts= Array.isArray(groupOrOpts)? groupOrOpts : (Array.isArray(maybeGroup)? maybeGroup : null);
+      pieces[group]+= inputHtml(name,type,label,opts,row[name]||'', !OV.edit);
     });
-  });
-  nodes.sort((a,b)=> a.coll===b.coll ? idNum(a.id)-idNum(b.id) : a.coll.localeCompare(b.coll));
-  const html = nodes.map(n=>`<div class="chain-card ${n.coll===activeColl && n.id===activeId?'active':''}" data-coll="${n.coll}" data-id="${n.id}">
-    <div>${n.coll.slice(0,1).toUpperCase()+n.coll.slice(1,-1)} <span class="chain-root" style="display:${n.isRoot?'inline-block':'none'}">root</span></div>
-    <div style="font-weight:700;margin-top:6px">${n.id}</div>
-  </div>`).join('');
-  $('#chainGrid').innerHTML = html;
-}
+    pieces.meta += `<div class="form-row"><label>Item ID</label><input disabled value="${row.id||''}" /></div>`;
+    pieces.meta += `<div class="form-row"><label>Chain ID</label><input disabled value="${OV.chainId||''}" /></div>`;
 
-function renderOverlay(coll,id){
-  sortAll();
-  const row = getRow(coll,id);
-  if(!row){ alert('Item not found'); return; }
-  OV = { coll, id, row: JSON.parse(JSON.stringify(row)), edit:false, autosaveTimer:null, chainId: ensureChainId(row) };
-  $('#ovTitle').textContent = `${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)} – ${id}`;
-  $('#ovSub').textContent = `Type: ${coll} • ID: ${id}`;
-  $('#ovMeta').textContent = (window.CAN_EDIT?'editor':'viewer') + (row.linkedTo?` • linkedTo: ${row.linkedTo}`:'');
+    let html = '';
+    if(pieces.content) html += sectionWrap('Content', pieces.content);
+    if(pieces.meta)    html += sectionWrap('Meta', pieces.meta);
+    if(pieces.dates)   html += sectionWrap('Dates / Links', pieces.dates);
+    $('#ovBody').innerHTML = `<div class="ov-grid">${html}</div>`;
+    buildChainGrid(OV.chainId, coll, id);
 
-  const cfg = FIELDSETS[coll]||[];
-  const pieces = {content:'',meta:'',dates:''};
-  cfg.forEach(f=>{
-    const [name,type,label,groupOrOpts,maybeGroup] = f;
-    const group = (maybeGroup||(!Array.isArray(groupOrOpts)?groupOrOpts:'content')) || 'content';
-    const opts  = Array.isArray(groupOrOpts)? groupOrOpts : (Array.isArray(maybeGroup)? maybeGroup : null);
-    pieces[group] += inputHtml(name,type,label,opts,row[name]||'', !OV.edit);
-  });
-  pieces.meta += `<div class="form-row"><label>Item ID</label><input disabled value="${row.id||''}" /></div>`;
-  pieces.meta += `<div class="form-row"><label>Chain ID</label><input disabled value="${OV.chainId||''}" /></div>`;
+    $('#overlay').classList.add('show');
+    setOverlayEdit(false);
+    attachAutosave();
+  }
 
-  let html = '';
-  if(pieces.content) html += sectionWrap('Content', pieces.content);
-  if(pieces.meta)    html += sectionWrap('Meta', pieces.meta);
-  if(pieces.dates)   html += sectionWrap('Dates / Links', pieces.dates);
-  $('#ovBody').innerHTML = `<div class="ov-grid">${html}</div>`;
+  function closeOverlay(){ $('#overlay').classList.remove('show'); clearTimeout(OV.autosaveTimer); OV={coll:null,id:null,row:null,edit:false,autosaveTimer:null,chainId:null}; }
+  function setOverlayEdit(on){ OV.edit=!!on; $$('#ovBody [name]').forEach(el=>el.disabled=!OV.edit); $('#ovSave').disabled=!OV.edit; }
 
-  buildChainGrid(OV.chainId, coll, id);
+  function scheduleAutosave(){
+    clearTimeout(OV.autosaveTimer);
+    OV.autosaveTimer = setTimeout(async ()=>{
+      if(!OV.edit) return;
+      const updates = collectUpdates();
+      if(Object.keys(updates).length){
+        try{
+          if(window.updateDoc && window.doc){ await updateDoc(doc(db, OV.coll, OV.id), updates); }
+          Object.assign(getRow(OV.coll,OV.id), updates);
+        }catch(err){ console.warn('autosave failed:',err); }
+      }
+    }, AUTOSAVE_MS);
+  }
+  function attachAutosave(){
+    $('#ovBody')?.addEventListener('input', scheduleAutosave);
+    $('#ovBody')?.addEventListener('change', scheduleAutosave);
+  }
+  function collectUpdates(){
+    const cfg = FIELDSETS[OV.coll]||[]; const updates={};
+    cfg.forEach(f=>{
+      const name=f[0]; const el=$(`#ovBody [name="${name}"]`);
+      if(!el) return;
+      const val=el.value;
+      if(String(val)!==String(OV.row[name]||'')) updates[name]=val;
+    });
+    return updates;
+  }
 
-  $('#overlay').classList.add('show');
-  setOverlayEdit(false);
-  attachAutosave();
-}
-
-function closeOverlay(){ $('#overlay').classList.remove('show'); clearTimeout(OV.autosaveTimer); OV={coll:null,id:null,row:null,edit:false,autosaveTimer:null,chainId:null}; }
-function setOverlayEdit(on){ OV.edit = !!on; $$('#ovBody [name]').forEach(el=>{ el.disabled = !OV.edit; }); $('#ovSave').disabled = !OV.edit; }
-
-function scheduleAutosave(){
-  clearTimeout(OV.autosaveTimer);
-  OV.autosaveTimer = setTimeout(async ()=>{
-    if(!OV.edit) return;
-    const updates = collectUpdates();
-    if(Object.keys(updates).length){
-      try{
-        if(window.updateDoc && window.doc){ await updateDoc(doc(db, OV.coll, OV.id), updates); }
-        Object.assign(getRow(OV.coll,OV.id), updates);
-      }catch(err){ console.warn('autosave failed:', err); }
+  // Delegated clicks
+  document.addEventListener('click', (e)=>{
+    const menu = e.target.closest('[data-menu]');
+    if(menu){
+      const tr = menu.closest('tr'); 
+      // prefer any cell with ID pattern
+      const cell = tr ? Array.from(tr.cells).find(td=>/^[GRIPQS]\d+$/i.test((td.innerText||'').trim())) : null;
+      const id = cell ? cell.innerText.trim() : tr?.querySelector('td:first-child')?.innerText.trim();
+      const coll = menu.dataset.menu || detectCollFromRow(tr);
+      if(coll && id) renderOverlay(coll,id);
+      return;
     }
-  }, AUTOSAVE_MS);
-}
-function attachAutosave(){
-  $('#ovBody')?.addEventListener('input', scheduleAutosave, {once:false});
-  $('#ovBody')?.addEventListener('change', scheduleAutosave, {once:false});
-}
-
-function collectUpdates(){
-  const cfg = FIELDSETS[OV.coll]||[];
-  const updates = {};
-  cfg.forEach(f=>{
-    const name = f[0]; const el = document.querySelector(`#ovBody [name="${name}"]`);
-    if(!el) return;
-    const val = el.value;
-    if(String(val)!==String(OV.row[name]||'')) updates[name]=val;
+    const tr = e.target.closest('table tbody tr');
+    if(tr){
+      const cell = Array.from(tr.cells).find(td=>/^[GRIPQS]\d+$/i.test((td.innerText||'').trim()));
+      const id = cell ? cell.innerText.trim() : tr.querySelector('td')?.innerText.trim();
+      const coll = detectCollFromRow(tr);
+      if(coll && id) renderOverlay(coll,id);
+    }
+    const card = e.target.closest('.chain-card');
+    if(card){ renderOverlay(card.dataset.coll, card.dataset.id); }
   });
-  return updates;
-}
 
-document.addEventListener('click', (e)=>{
-  const menuBtn = e.target.closest('[data-menu]');
-  if(menuBtn){
-    const coll = menuBtn.dataset.menu;
-    const tr = menuBtn.closest('tr');
-    const id = tr?.querySelector('td:first-child')?.innerText.trim();
-    if(coll && id) renderOverlay(coll,id);
-  }
-  const tr = e.target.closest('table tbody tr');
-  if(tr && tr.querySelector('td')){
-    let coll = tr.closest('[data-tab]')?.getAttribute('data-tab') || tr.closest('table')?.getAttribute('data-coll');
-    const id = tr.querySelector('td')?.innerText.trim();
-    if(!coll && id){ const p=id[0]; coll = ({G:'goals',R:'risks',I:'issues',P:'plans',Q:'questions',S:'suggestions'})[p]; }
-    if(ALL_COLLS.includes(coll) && id) renderOverlay(coll,id);
-  }
-  const card = e.target.closest('.chain-card');
-  if(card){
-    const coll = card.dataset.coll, id = card.dataset.id;
-    if(coll && id) renderOverlay(coll,id);
-  }
-});
-
-$('#ovClose')?.addEventListener('click', closeOverlay);
-$('#overlay')?.addEventListener('click', (e)=>{ if(e.target.classList.contains('ov-backdrop')) closeOverlay(); });
-$('#ovEdit')?.addEventListener('click', ()=> setOverlayEdit(true));
-
-$('#ovSave')?.addEventListener('click', async ()=>{
-  if(!window.CAN_EDIT){ alert('no edit rights'); return; }
-  const updates = collectUpdates();
-  try{
-    if(Object.keys(updates).length){
-      if(window.updateDoc && window.doc){ await updateDoc(doc(db, OV.coll, OV.id), updates); }
-      Object.assign(getRow(OV.coll,OV.id), updates);
+  document.addEventListener('click',(e)=>{
+    if(e.target.id==='ovClose') closeOverlay();
+    if(e.target.id==='ovEdit') setOverlayEdit(true);
+  });
+  document.addEventListener('click', async (e)=>{
+    if(e.target.id==='ovSave'){
+      if(!window.CAN_EDIT){ alert('no edit rights'); return; }
+      const updates = collectUpdates();
       try{
+        if(Object.keys(updates).length){
+          if(window.updateDoc && window.doc){ await updateDoc(doc(db, OV.coll, OV.id), updates); }
+          Object.assign(getRow(OV.coll,OV.id), updates);
+          if(window.addDoc && window.collection){
+            await addDoc(collection(db,'notifications'), makeNote({
+              subject: OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1),
+              status:'Saved', relatedId:OV.id, description: pickDesc(OV.coll, getRow(OV.coll,OV.id))
+            }));
+          }
+        }
+        setOverlayEdit(false);
+        sortAll();
+        if(typeof renderTab==='function'){ renderTab(OV.coll); }
+      }catch(err){ alert('save failed: '+err.message); }
+    }
+    if(e.target.id==='ovDelete'){
+      if(!window.CAN_EDIT){ alert('no edit rights'); return; }
+      if(!confirm(`Delete ${OV.id}?`)) return;
+      try{
+        if(window.deleteDoc && window.doc){ await deleteDoc(doc(db, OV.coll, OV.id)); }
+        cache[OV.coll] = (cache[OV.coll]||[]).filter(x=>x.id!==OV.id);
         if(window.addDoc && window.collection){
           await addDoc(collection(db,'notifications'), makeNote({
             subject: OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1),
-            status:'Saved', relatedId:OV.id, description: pickDesc(OV.coll, getRow(OV.coll,OV.id))
+            status:'Deleted', relatedId:OV.id, description:''
           }));
         }
-      }catch(_){}
+        sortAll();
+        if(typeof renderTab==='function'){ renderTab(OV.coll); }
+        closeOverlay();
+      }catch(err){ alert('delete failed: '+err.message); }
     }
-    setOverlayEdit(false);
+  });
+
+  async function addNew(coll){
+    if(!window.CAN_EDIT){ alert('no edit rights'); return; }
+    const id = nextId(cache[coll]||[], PREFIX[coll]);
+    const base = { id, chainId: OV.chainId || OV.id, linkedTo: OV.id };
+    const defaults = {
+      goals:       (id)=>Object.assign(base,{ goal:'', owner:'', start:'', end:'', status:'Open', notes:'' }),
+      risks:       (id)=>Object.assign(base,{ description:'', owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' }),
+      issues:      (id)=>Object.assign(base,{ description:'', owner:'', severity:'Medium', status:'Open', resolution:'' }),
+      plans:       (id)=>Object.assign(base,{ description:'', owner:'', goalId: (OV.coll==='goals'? OV.id : ''), start:'', end:'', status:'Open' }),
+      questions:   (id)=>Object.assign(base,{ description:'', subject:'New Goal', owner: window.CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} }),
+      suggestions: (id)=>Object.assign(base,{ description:'', subject:'New Goal', owner: window.CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} }),
+    };
+    const row = defaults[coll](id);
+    try{ if(window.setDoc && window.doc){ await setDoc(doc(db, coll, id), row); } }catch(_){}
+    cache[coll] = cache[coll] || []; cache[coll].push(row);
     sortAll();
-    if(typeof renderTab==='function'){ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab || OV.coll); }
-  }catch(err){ alert('save failed: '+err.message); }
-});
-
-$('#ovDelete')?.addEventListener('click', async ()=>{
-  if(!window.CAN_EDIT){ alert('no edit rights'); return; }
-  if(!confirm(`Delete ${OV.id}?`)) return;
-  try{
-    if(window.deleteDoc && window.doc){ await deleteDoc(doc(db, OV.coll, OV.id)); }
-    cache[OV.coll] = (cache[OV.coll]||[]).filter(x=>x.id!==OV.id);
-    try{
-      if(window.addDoc && window.collection){
-        await addDoc(collection(db,'notifications'), makeNote({
-          subject: OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1),
-          status:'Deleted', relatedId:OV.id, description:''
-        }));
-      }
-    }catch(_){}
-    sortAll();
-    if(typeof renderTab==='function'){ renderTab(OV.coll); }
-    closeOverlay();
-  }catch(err){ alert('delete failed: '+err.message); }
-});
-
-async function addNew(coll){
-  if(!window.CAN_EDIT){ alert('no edit rights'); return; }
-  const id = nextId(cache[coll]||[], PREFIX[coll]);
-  const base = { id, chainId: OV.chainId || OV.id, linkedTo: OV.id };
-  const defaults = {
-    goals:       (id)=>Object.assign(base,{ goal:'', owner:'', start:'', end:'', status:'Open', notes:'' }),
-    risks:       (id)=>Object.assign(base,{ description:'', owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' }),
-    issues:      (id)=>Object.assign(base,{ description:'', owner:'', severity:'Medium', status:'Open', resolution:'' }),
-    plans:       (id)=>Object.assign(base,{ description:'', owner:'', goalId: (OV.coll==='goals'? OV.id : ''), start:'', end:'', status:'Open' }),
-    questions:   (id)=>Object.assign(base,{ description:'', subject:'New Goal', owner: window.CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} }),
-    suggestions: (id)=>Object.assign(base,{ description:'', subject:'New Goal', owner: window.CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} }),
-  };
-  const row = defaults[coll](id);
-  try{ if(window.setDoc && window.doc){ await setDoc(doc(db, coll, id), row); } }catch(_){}
-  cache[coll] = cache[coll] || []; cache[coll].push(row);
-  sortAll();
-  if(typeof renderTab==='function') renderTab(coll);
-  renderOverlay(coll,id);
-}
-
-$('#ovAddGoal')?.addEventListener('click', ()=>addNew('goals'));
-$('#ovAddRisk')?.addEventListener('click', ()=>addNew('risks'));
-$('#ovAddIssue')?.addEventListener('click', ()=>addNew('issues'));
-$('#ovAddPlan')?.addEventListener('click', ()=>addNew('plans'));
-$('#ovAddQuestion')?.addEventListener('click', ()=>addNew('questions'));
-$('#ovAddSuggestion')?.addEventListener('click', ()=>addNew('suggestions'));
-
-(function hookRenderTab(){
-  if(typeof renderTab !== 'function') return;
-  const _ = renderTab;
-  window.renderTab = function(tab){
-    sortAll();
-    const res = _(tab);
-    requestAnimationFrame(()=>{
-      const activeTab = document.querySelector('nav.tabs button.active')?.dataset.tab || tab;
-      const tbl = document.querySelector('table.data-table');
-      if(tbl && activeTab) tbl.setAttribute('data-coll', activeTab);
-    });
-    return res;
-  };
-})();
-
-(function deeplink(){
-  const hash = new URL(location.href).hash || '';
-  const tabMatch = hash.match(/tab=(goals|risks|issues|plans|questions|suggestions)/i);
-  const itemMatch = hash.match(/item=([GRIPQS]\d+)/i);
-  if(tabMatch && typeof renderTab==='function'){ renderTab(tabMatch[1].toLowerCase()); }
-  if(itemMatch){
-    const id = itemMatch[1];
-    const coll = ({G:'goals',R:'risks',I:'issues',P:'plans',Q:'questions',S:'suggestions'})[id[0]];
-    if(coll) renderOverlay(coll,id);
+    if(typeof renderTab==='function') renderTab(coll);
+    renderOverlay(coll,id);
   }
+  document.addEventListener('click',(e)=>{
+    if(e.target.id==='ovAddGoal') return addNew('goals');
+    if(e.target.id==='ovAddRisk') return addNew('risks');
+    if(e.target.id==='ovAddIssue') return addNew('issues');
+    if(e.target.id==='ovAddPlan') return addNew('plans');
+    if(e.target.id==='ovAddQuestion') return addNew('questions');
+    if(e.target.id==='ovAddSuggestion') return addNew('suggestions');
+  });
+
+  // ---- Init once DOM ready
+  function init(){
+    // inject CSS already added by server patch; if not present, do nothing
+    injectOverlay();
+    hideLegacyButtons();
+    ensureMenuButtons();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 
