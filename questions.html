@@ -1013,42 +1013,42 @@ if(editBtn){
       }
     });
 
-    // Add suggestion / question (via prompt)
-    $('#addSuggestionBtn').onclick = async ()=>{
-      const idPrefix = 'S';
-      const next = 1 + Math.max(0, ...cache.suggestions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
-      const id = idPrefix + next;
-      const description = prompt('Describe your suggestion (required):','');
-      if(!description) return;
-      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
-      const owner = CURRENT_ROLE || 'Viewer';
-      const today = new Date().toISOString().slice(0,10);
-      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
-      try{
-        await setDoc(doc(db,'suggestions', id), suggestion);
-        await addDoc(collection(db,'notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
-        cache.suggestions.push(suggestion);
-        renderSuggestions();
-      }catch(err){ alert('Could not add: '+err.message); }
-    };
-    $('#addQuestionBtn').onclick = async ()=>{
-      const idPrefix = 'Q';
-      const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
-      const id = idPrefix + next;
-      const description = prompt('Describe your question (required):','');
-      if(!description) return;
-      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
-      const owner = CURRENT_ROLE || 'Viewer';
-      const today = new Date().toISOString().slice(0,10);
-      const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
-      try{
-        await setDoc(doc(db,'questions', id), qdoc);
-        await addDoc(collection(db,'notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
-        cache.questions.push(qdoc);
-        renderQuestions();
-      }catch(err){ alert('Could not add: '+err.message); }
-    };
+  // Suggestions
+$('#addSuggestionBtn').onclick = async ()=>{
+  if(!CAN_EDIT) return;
+  const id = nextId(cache.suggestions, 'S');
+  const description = prompt('Describe your suggestion (required):','');
+  if(!description) return;
+  const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+  const owner = CURRENT_ROLE || 'Viewer';
+  const today = new Date().toISOString().slice(0,10);
+  const suggestion = { id, description, subject, owner, submitted: today, status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} };
+  try{
+    await setDoc(doc(db,'suggestions', id), suggestion);
+    await addDoc(collection(db,'notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
+    cache.suggestions.push(suggestion);
+    renderSuggestions();
+  }catch(err){ alert('Could not add: '+err.message); }
+};
 
+// Questions
+$('#addQuestionBtn').onclick = async ()=>{
+  if(!CAN_EDIT) return;
+  const id = nextId(cache.questions, 'Q');
+  const description = prompt('Describe your question (required):','');
+  if(!description) return;
+  const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+  const owner = CURRENT_ROLE || 'Viewer';
+  const today = new Date().toISOString().slice(0,10);
+  const qdoc = { id, description, subject, owner, submitted: today, status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{} };
+  try{
+    await setDoc(doc(db,'questions', id), qdoc);
+    await addDoc(collection(db,'notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
+    cache.questions.push(qdoc);
+    renderQuestions();
+  }catch(err){ alert('Could not add: '+err.message); }
+};
+    
     // Extractors (read disabled controls' values)
     function rowsFromTable(kind){
       if(kind!=='suggestions' && kind!=='questions'){
