@@ -417,7 +417,7 @@
     $('#yr').textContent = new Date().getFullYear();
 
     const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
     const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
@@ -600,12 +600,13 @@
     function num(id){ const n=parseInt(String(id).replace(/\\D+/g,'')||'0',10); return isNaN(n)?0:n; }
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
-    function actionsCell(coll){ 
-      if(!CAN_EDIT) return '—'; 
-      return `<div class="row-actions">
-        <button class="btn danger" data-del="${coll}">Del</button>
-      </div>`; 
-    }
+function actionsCell(coll){
+  if(!CAN_EDIT) return '—';
+  return `<div class="row-actions">
+    <button class="btn" data-edit="${coll}">Edit</button>
+    <button class="btn danger" data-del="${coll}">Del</button>
+  </div>`;
+}
 
     // Filter selects
     function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
@@ -632,6 +633,7 @@
       fillSelect('#nStatus', noteStatus, 'Status');
       fillSelect('#nRole', noteRoles, 'Role');
 
+    
       ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
       ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
       ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
@@ -754,7 +756,7 @@
       const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
       const starBtn = `<button class="btn ghost" data-star-sug ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
       const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
-      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn danger" data-del="suggestions">Del</button></div>` : '—';
+      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn" data-edit="suggestions">Edit</button><button class="btn danger" data-del="suggestions">Del</button></div>` : '—';
       return `
         <td>${escapeHtml(r.id||'')}</td>
         <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
@@ -795,7 +797,7 @@
       const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
       const starBtn = `<button class="btn ghost" data-star-q ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
       const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
-      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn danger" data-del="questions">Del</button></div>` : '—';
+      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn" data-edit="questions">Edit</button><button class="btn danger" data-del="questions">Del</button></div>` : '—';
       return `
         <td>${escapeHtml(r.id||'')}</td>
         <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
@@ -931,7 +933,57 @@
           cntEl.textContent = String(current+1);
         }catch(err){ alert('Star failed: '+err.message); starQBtn.disabled=false; }
       }
+const editBtn = e.target.closest('button[data-edit]');
+if(editBtn){
+  if(!CAN_EDIT){ alert('no edit rights'); return; }
+  const coll = editBtn.dataset.edit;
+  const tr = editBtn.closest('tr');
+  const id = tr?.querySelector('td:first-child')?.innerText.trim();
+  if(!coll || !id) return;
 
+  const list = cache[coll] || [];
+  const row = list.find(x => String(x.id).trim() === id);
+  if(!row){ alert('row not found'); return; }
+
+  let updates = {};
+  if(coll==='goals'){
+    const goal  = prompt('Edit goal (SMART):', row.goal||'');        if(goal===null) return;
+    const notes = prompt('Edit notes:', row.notes||'');              if(notes===null) return;
+    updates = { goal, notes };
+  } else if(coll==='risks'){
+    const description = prompt('Edit risk description:', row.description||''); if(description===null) return;
+    const mitigation  = prompt('Edit mitigation:', row.mitigation||'');       if(mitigation===null) return;
+    updates = { description, mitigation };
+  } else if(coll==='issues'){
+    const description = prompt('Edit issue description:', row.description||''); if(description===null) return;
+    const resolution  = prompt('Edit resolution:', row.resolution||'');        if(resolution===null) return;
+    updates = { description, resolution };
+  } else if(coll==='plans'){
+    const description = prompt('Edit plan description:', row.description||''); if(description===null) return;
+    const goalId      = prompt('Link to Goal ID (e.g., G1):', row.goalId||''); if(goalId===null) return;
+    updates = { description, goalId };
+  } else if(coll==='suggestions' || coll==='questions'){
+    const singular = coll.slice(0,-1);
+    const description = prompt(`Edit ${singular} description:`, row.description||''); if(description===null) return;
+    const comments    = prompt('Edit comments:', row.comments||'');            if(comments===null) return;
+    updates = { description, comments };
+  }
+
+  try{
+    await updateDoc(doc(db, coll, id), updates);
+    Object.assign(row, updates);
+    // herteken huidig tabblad
+    renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
+    // note aan Notifications
+    const subj = (coll==='suggestions')?'Suggestion' : (coll==='questions')?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1);
+    await addDoc(collection(db,'notifications'), makeNote({
+      subject: subj, status:'Edited', relatedId:id, description: pickDesc(subj,row)
+    }));
+    // refresh notifications cache
+    const listSnap = await getDocs(collection(db,'notifications'));
+    cache.notifications = listSnap.docs.map(d=>({__id:d.id, ...d.data()}));
+  }catch(err){ alert('edit failed: '+err.message); }
+}
       const delBtn = e.target.closest('button[data-del]');
       if(delBtn){
         const table = delBtn.dataset.del; 
