@@ -1,299 +1,1796 @@
+
+
 <!DOCTYPE html>
-<html lang="nl">
+<html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Griplog — Items & ItemFolder</title>
-
-  <!-- Basic CSP meta (works only for HTML doc) -->
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self' https://www.gstatic.com https://www.google-analytics.com; frame-ancestors 'self'">
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
   <style>
-    :root{
-      --ink:#0f172a;
-      --muted:#64748b;
-      --line:#e5e7eb;
-      --brand:#0ea5a3;
-      --bg:#f8fafc;
-    }
-    html,body{margin:0;padding:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;color:var(--ink);background:#fff}
-    header{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);position:sticky;top:0;background:#fff;z-index:10}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo svg{width:96px;height:28px}
-    .toolbar{margin-left:auto;display:flex;gap:8px;align-items:center}
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
-    .btn.primary{background:var(--brand);border-color:transparent;color:#fff}
-    .btn.warn{background:#fee2e2;border-color:#fecaca;color:#991b1b}
-    .btn.ghost{background:#fff}
-    .pill{padding:4px 8px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
-    main{padding:16px}
-    .grid{border:1px solid var(--line);border-radius:12px;overflow:hidden}
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+
+    header{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:800;font-size:18px}
+    header .sub{color:var(--muted);font-size:12px}
+    .header-left{display:flex;gap:12px;align-items:center}
+    .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
+
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
+    nav.tabs .push-right{margin-left:auto}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar .left{display:flex;gap:8px;align-items:center}
+    .sectionbar .right{display:flex;gap:8px;align-items:center}
+
     table{width:100%;border-collapse:collapse}
-    th,td{border-bottom:1px solid var(--line);padding:10px 12px;text-align:left;font-size:14px;vertical-align:middle}
-    th{background:#fafafa;font-weight:600}
-    tr:hover{background:#fafcff}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+    thead tr.filters th{background:#fff}
 
-    /* Actions button (icon-only) */
-    .btn-actions{display:inline-flex;align-items:center;justify-content:center;gap:0;width:32px;height:32px;padding:0;border:1px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;font-size:18px;line-height:1}
-    .btn-actions:hover{background:#fafafa}
+    .row-actions{display:flex;gap:6px}
+    .col-stars{white-space:nowrap}
 
-    /* FORCE-HIDE any delete triggers in list views */
-    [aria-label="Delete"], [aria-label="Verwijderen"],
-    button[title*="Delete"], button[title*="Verwijder"],
-    a[title*="Delete"], a[title*="Verwijder"],
-    .btn-delete, .delete, .del, [data-action="delete"], .action-delete,
-    .fa-trash, .icon-trash { display:none !important; visibility:hidden !important; }
+    /* Suggestions/Questions wide columns */
+    #tblSuggestions td:nth-child(2),
+    #tblSuggestions th:nth-child(2),
+    #tblSuggestions td:nth-child(9),
+    #tblSuggestions th:nth-child(9),
+    #tblQuestions td:nth-child(2),
+    #tblQuestions th:nth-child(2),
+    #tblQuestions td:nth-child(9),
+    #tblQuestions th:nth-child(9){width:auto}
 
-    /* ItemFolder overlay */
-    .itemfolder-overlay{position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:9999;display:none}
-    .itemfolder-overlay.open{display:block}
-    .itemfolder{position:absolute;inset:32px;background:#fff;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);
-      display:flex;flex-direction:column;overflow:hidden}
-    .itemfolder-header{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .itemfolder-title{font-size:18px;font-weight:800;color:var(--ink);display:flex;align-items:center;gap:10px}
-    .itemfolder-body{height:100%;overflow:auto;background:linear-gradient(180deg,#f8fafc,#fff)}
-    .itemfolder-footer{position:sticky;bottom:0;padding:10px 16px;border-top:1px solid var(--line);background:#fff;display:flex;justify-content:flex-end;gap:10px}
+    #tblNotifications th:nth-child(1),
+    #tblNotifications td:nth-child(1){width:70px}
+    #tblNotifications th:nth-child(2),
+    #tblNotifications td:nth-child(2){width:auto}
 
-    /* Collapsible sections */
-    .acc{border-bottom:1px solid var(--line);background:#fff}
-    .acc-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;cursor:pointer}
-    .acc-h h3{margin:0;font-size:15px}
-    .acc-h .count{font-size:12px;color:var(--muted)}
-    .acc-b{display:none;padding:14px 16px;background:#fff}
-    .acc.open .acc-b{display:block}
+    #tblPlans th:nth-child(4),
+    #tblPlans td:nth-child(4){width:100px}
 
-    /* Form grid */
-    .formgrid{display:grid;grid-template-columns:1fr;gap:10px}
-    @media(min-width: 900px){ .formgrid{grid-template-columns:1fr 1fr} }
-    .field{display:flex;flex-direction:column;gap:.35rem}
-    .field label{font-size:12px;color:var(--muted)}
+    .cell-text{white-space:pre-wrap}
+    footer{padding:16px;color:var(--muted);font-size:12px}
+  
+/* === Actions (icon-only) + force hide Delete + ItemFolder styles === */
+:root{
+  --folder-bg: rgba(15,23,42,.55);
+  --folder-card:#fff;
+  --folder-line: var(--line, #e5e7eb);
+  --folder-ink: var(--ink, #0f172a);
+}
+/* Hide all delete triggers in lists/grids */
+[aria-label="Delete"], [aria-label="Verwijderen"],
+button[title*="Delete"], button[title*="Verwijder"],
+a[title*="Delete"], a[title*="Verwijder"],
+.btn-delete, .delete, .del, [data-action="delete"], .action-delete,
+.fa-trash, .icon-trash { display:none !important; visibility:hidden !important; }
 
-    input[type="text"], textarea, select, input[type="date"]{
-      width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:14px
-    }
-    textarea{min-height:110px;resize:vertical}
+/* Icon-only Actions button */
+.btn-actions{ display:inline-flex; align-items:center; justify-content:center; gap:0;
+  width:32px; height:32px; padding:0; border:1px solid var(--folder-line); border-radius:8px;
+  background:#fff; cursor:pointer; font-size:18px; line-height:1; }
+.btn-actions:hover{ background:#fafafa; }
 
-    /* Related lists */
-    .list{display:grid;grid-template-columns:1fr;gap:8px}
-    @media(min-width:1000px){ .list{grid-template-columns:1fr 1fr} }
-    .card{border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px}
-    .card h4{margin:0 0 6px 0;font-size:14px}
-    .card p{margin:0;font-size:13px;color:var(--muted)}
+/* Overlay */
+.itemfolder-overlay{ position:fixed; inset:0; background:var(--folder-bg); z-index:9999; display:none; }
+.itemfolder-overlay.open{ display:block; }
+.itemfolder{ position:absolute; inset:32px; background:var(--folder-card); border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+  display:flex; flex-direction:column; overflow:hidden; }
+.itemfolder-header{ padding:14px 18px; border-bottom:1px solid var(--folder-line); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.itemfolder-title{ font-size:18px; font-weight:800; color:var(--folder-ink); display:flex; align-items:center; gap:10px; }
+.itemfolder-body{ padding:0; height:100%; overflow:auto; background:linear-gradient(180deg,#f8fafc,#fff); }
+.itemfolder-actions{ display:flex; gap:8px; align-items:center; }
+.btn{ padding:8px 12px; border-radius:10px; border:1px solid var(--folder-line); background:#fff; cursor:pointer; }
+.btn.primary{ background:var(--brand,#0ea5a3); color:#fff; border-color:transparent; }
+.btn.warn{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
 
-    /* Accessibility utility */
-    .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Collapsibles */
+.acc{ border-bottom:1px solid var(--folder-line); background:#fff; }
+.acc-h{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; }
+.acc-h h3{ margin:0; font-size:15px; }
+.acc-h .count{ font-size:12px; color:#64748b; }
+.acc-b{ display:none; padding:14px 16px; background:#fff; }
+.acc.open .acc-b{ display:block; }
 
-    /* Hide missing external logo (to avoid 404 noise) */
-    img[src$="dorcas-logo.svg"]{display:none}
-  </style>
+/* Form grid */
+.formgrid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+@media(min-width: 900px){ .formgrid{ grid-template-columns: 1fr 1fr; } }
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field label{ font-size:12px; color:#64748b; }
+.field input[type="text"], .field textarea, .field select{
+  width:100%; padding:10px 12px; border:1px solid var(--folder-line); border-radius:10px; background:#fff; font-size:14px;
+}
+.field textarea{ min-height:110px; resize:vertical; }
 
-  <!-- Firebase (v12) modules: app + firestore + analytics. Expose to window for inline scripts. -->
+/* Related lists */
+.list{ display:grid; grid-template-columns: 1fr; gap:8px; }
+@media(min-width: 1000px){ .list{ grid-template-columns: 1fr 1fr; } }
+.card{ border:1px solid var(--folder-line); border-radius:12px; background:#fff; padding:12px; }
+.card h4{ margin:0 0 6px 0; font-size:14px; }
+.card p{ margin:0; font-size:13px; color:#64748b; }
+
+/* Sticky footer */
+.itemfolder-footer{ position:sticky; bottom:0; padding:10px 16px; border-top:1px solid var(--folder-line); background:#fff; display:flex; justify-content:flex-end; gap:10px; }
+
+/* === Build: Actions (icon-only) + force hide Delete + ItemFolder styles === */
+[aria-label="Delete"], [aria-label="Verwijderen"],
+button[title*="Delete"], button[title*="Verwijder"],
+a[title*="Delete"], a[title*="Verwijder"],
+.btn-delete, .delete, .del, [data-action="delete"], .action-delete,
+.fa-trash, .icon-trash { display:none !important; visibility:hidden !important; }
+
+.btn-actions{ display:inline-flex; align-items:center; justify-content:center; gap:0;
+  width:32px; height:32px; padding:0; border:1px solid var(--line); border-radius:8px;
+  background:#fff; cursor:pointer; font-size:18px; line-height:1; }
+.btn-actions:hover{ background:#fafafa; }
+
+.itemfolder-overlay{ position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:9999; display:none; }
+.itemfolder-overlay.open{ display:block; }
+.itemfolder{ position:absolute; inset:32px; background:#fff; border-radius:16px; box-shadow:0 20px 60px rgba(0,0,0,.25);
+  display:flex; flex-direction:column; overflow:hidden; }
+.itemfolder-header{ padding:14px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.itemfolder-title{ font-size:18px; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:10px; }
+.itemfolder-body{ padding:0; height:100%; overflow:auto; background:linear-gradient(180deg,#f8fafc,#fff); }
+.itemfolder-actions{ display:flex; gap:8px; align-items:center; }
+.btn.warn{ background:#fee2e2; color:#991b1b; border-color:#fecaca; }
+
+.acc{ border-bottom:1px solid var(--line); background:#fff; }
+.acc-h{ display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; }
+.acc-h h3{ margin:0; font-size:15px; }
+.acc-h .count{ font-size:12px; color:#64748b; }
+.acc-b{ display:none; padding:14px 16px; background:#fff; }
+.acc.open .acc-b{ display:block; }
+
+.formgrid{ display:grid; grid-template-columns: 1fr; gap:10px; }
+@media(min-width: 900px){ .formgrid{ grid-template-columns: 1fr 1fr; } }
+.field{ display:flex; flex-direction:column; gap:6px; }
+.field label{ font-size:12px; color:#64748b; }
+.field input[type="text"], .field textarea, .field select{
+  width:100%; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:#fff; font-size:14px;
+}
+.field textarea{ min-height:110px; resize:vertical; }
+
+.list{ display:grid; grid-template-columns: 1fr; gap:8px; }
+@media(min-width: 1000px){ .list{ grid-template-columns: 1fr 1fr; } }
+.card{ border:1px solid var(--line); border-radius:12px; background:#fff; padding:12px; }
+.card h4{ margin:0 0 6px 0; font-size:14px; }
+.card p{ margin:0; font-size:13px; color:#64748b; }
+
+.itemfolder-footer{ position:sticky; bottom:0; padding:10px 16px; border-top:1px solid var(--line); background:#fff; display:flex; justify-content:flex-end; gap:10px; }
+
+/* a11y helper */
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+</style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+      <div>
+        <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="leftbar">
+      <button id="btnLoad" class="btn">Load Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
+    </div>
+
+    <div class="rightbar">
+      <input id="fullName" class="input" placeholder="full name *" />
+      <input id="email" class="input" type="email" placeholder="email (required for editors)" />
+      <input id="org" class="input" placeholder="organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Admin</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="password *" />
+      <button id="btnSignup" class="btn">register</button>
+      <button id="btnSignin" class="btn primary">login</button>
+      <button id="btnSignout" class="btn" style="display:none">logout</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+    <button class="push-right" data-tab="questions">Q – Questions</button>
+    <button data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="notifications">N – Notifications</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right"><button class="btn" id="addGoalBtn" disabled>+ New Goal</button></div>
+      </div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Goal (SMART)</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th>Notes</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="gSearch" class="input" placeholder="search goal/notes" /></th>
+            <th><select id="gOwner" class="input"></select></th>
+            <th><input type="date" id="gStartFrom" class="input" /></th>
+            <th><input type="date" id="gEndTo" class="input" /></th>
+            <th><select id="gStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="gReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right"><button class="btn" id="addRiskBtn" disabled>+ New Risk</button></div>
+      </div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th>
+            <th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th>
+            <th>Mitigation</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="rSearch" class="input" placeholder="search description/mitigation" /></th>
+            <th><select id="rOwner" class="input"></select></th>
+            <th><select id="rLikelihood" class="input"></select></th>
+            <th><select id="rImpact" class="input"></select></th>
+            <th><select id="rStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="rReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right"><button class="btn" id="addIssueBtn" disabled>+ New Issue</button></div>
+      </div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th>Resolution</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="iSearch" class="input" placeholder="search description/resolution" /></th>
+            <th><select id="iOwner" class="input"></select></th>
+            <th><select id="iSeverity" class="input"></select></th>
+            <th><select id="iStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="iReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right"><button class="btn" id="addPlanBtn" disabled>+ New Plan</button></div>
+      </div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th>Goal Link</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="pSearch" class="input" placeholder="search description" /></th>
+            <th><select id="pOwner" class="input"></select></th>
+            <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
+            <th></th>
+            <th></th>
+            <th><select id="pStatus" class="input"></select></th>
+            <th><button id="pReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Questions -->
+  <section id="questions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Questions</h2></div>
+        <div class="right">
+          <span id="questionsUser" class="user-info"></span>
+          <button class="btn" id="addQuestionBtn">+ New Question</button>
+        </div>
+      </div>
+      <table id="tblQuestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Submitted</th>
+            <th style="width:130px">Status</th>
+            <th style="width:160px">Reviewer Role</th>
+            <th style="width:130px">Reviewed</th>
+            <th>Comments</th>
+            <th class="col-stars" style="width:120px">Stars</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="qSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="qSubject" class="input"></select></th>
+            <th><select id="qOwner" class="input"></select></th>
+            <th><input type="date" id="qSubmitted" class="input" /></th>
+            <th><select id="qStatus" class="input"></select></th>
+            <th><select id="qReviewerRole" class="input"></select></th>
+            <th><input type="date" id="qReviewed" class="input" /></th>
+            <th></th>
+            <th></th>
+            <th><button id="qReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Suggestions -->
+  <section id="suggestions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right">
+          <span id="suggestionsUser" class="user-info"></span>
+          <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
+        </div>
+      </div>
+      <table id="tblSuggestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Submitted</th>
+            <th style="width:130px">Status</th>
+            <th style="width:160px">Reviewer Role</th>
+            <th style="width:130px">Reviewed</th>
+            <th>Comments</th>
+            <th class="col-stars" style="width:120px">Stars</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="sSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="sSubject" class="input"></select></th>
+            <th><select id="sOwner" class="input"></select></th>
+            <th><input type="date" id="sSubmitted" class="input" /></th>
+            <th><select id="sStatus" class="input"></select></th>
+            <th><select id="sReviewerRole" class="input"></select></th>
+            <th><input type="date" id="sReviewed" class="input" /></th>
+            <th></th>
+            <th></th>
+            <th><button id="sReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Notifications -->
+  <section id="notifications" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Notifications</h2></div>
+        <div class="right"><span id="notificationsUser" class="user-info"></span></div>
+      </div>
+      <table id="tblNotifications">
+        <thead>
+          <tr class="labels">
+            <th>ID</th>
+            <th>Description</th>
+            <th style="width:160px">Subject</th>
+            <th style="width:140px">Status</th>
+            <th style="width:160px">Role</th>
+            <th style="width:140px">Date</th>
+            <th>Comments</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th><input type="text" id="nId" class="input" placeholder="G1/R2/..."/></th>
+            <th><input type="text" id="nSearch" class="input" placeholder="search description/comments"/></th>
+            <th><select id="nSubject" class="input"></select></th>
+            <th><select id="nStatus" class="input"></select></th>
+            <th><select id="nRole" class="input"></select></th>
+            <th><input type="date" id="nFrom" class="input"/> – <input type="date" id="nTo" class="input"/></th>
+            <th></th>
+            <th><button id="nReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="help">Only <strong>Admin</strong> can edit or delete rows in this logbook.</p>
+    </div>
+  </section>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
+
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
-    import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-analytics.js";
-    import {
-      getFirestore, doc, getDoc, getDocs, setDoc, deleteDoc, collection, query, where
-    } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
-    // === CONFIG: pas aan indien nodig ===
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
       authDomain: "griplog.firebaseapp.com",
       projectId: "griplog",
-      storageBucket: "griplog.firebasestorage.app",
+      storageBucket: "griplog.appspot.com",
       messagingSenderId: "1097061844582",
-      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7",
-      measurementId: "G-NPE08326BM"
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
     };
 
     const app = initializeApp(firebaseConfig);
-    try{
-      if (location.protocol === "https:" || location.hostname === "localhost") {
-        getAnalytics(app);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    // expose for ItemFolder & non-local callers
+    window.app = app; window.db = db;
+    window._fs = {collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc, query, where};
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
+
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert'];
+    const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
+    const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+    const tri=["","Low","Medium","High"];
+
+    const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
+    const suggestionStatus   = ["","Approved","Pending","Dismissed"];
+    const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+
+    const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
+    const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
+    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+
+    let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
+
+    let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
+    let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[]};
+
+    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
+    async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
+
+    // Auth
+    $('#btnSignup').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!org||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await createUserWithEmailAndPassword(auth, used, pass);
+        await updateProfile(cred.user,{displayName:fullName});
+        await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() });
+        alert('registered. please login.');
+        await signOut(auth);
+      }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'account exists. login.' : e.message); }
+    };
+    $('#btnSignin').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(rolePick) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await signInWithEmailAndPassword(auth, used, pass);
+        if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
+      }catch(e){ alert('login failed: '+e.message); }
+    };
+    $('#btnSignout').onclick=()=>signOut(auth);
+
+    onAuthStateChanged(auth, async (user)=>{
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
+
+      let role='Viewer', full=user.displayName||user.email||'';
+      try{
+        const snap=await getDoc(doc(db,'users',user.uid));
+        if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
+        else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
+      }catch(err){ console.warn('role load failed', err); }
+
+      CURRENT_ROLE=role; CURRENT_NAME=full;
+      const isEditor = EDIT_ROLES.has(role) && !!user.email;
+      authTxt.textContent = isEditor? 'editor' : 'viewer';
+      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      syncSectionUserLabels();
+      setEditMode(isEditor);
+      await loadAll();
+    });
+
+    function syncSectionUserLabels(){
+      const label = CURRENT_NAME ? `${CURRENT_NAME.toLowerCase()} – ${CURRENT_ROLE.toLowerCase()}` : '';
+      $('#suggestionsUser').textContent = label;
+      $('#questionsUser').textContent = label;
+      $('#notificationsUser').textContent = label;
+    }
+
+    function setEditMode(can){
+      CAN_EDIT=!!can;
+      $('#btnSaveAll').disabled=!CAN_EDIT;
+      $('#addGoalBtn').disabled=!CAN_EDIT;
+      $('#addRiskBtn').disabled=!CAN_EDIT;
+      $('#addIssueBtn').disabled=!CAN_EDIT;
+      $('#addPlanBtn').disabled=!CAN_EDIT;
+      renderAll();
+    }
+
+    // Tabs
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderTab(tab);
+    }));
+
+    // Notification helpers
+    function makeNote({subject,status,relatedId,description,comments=''}) {
+      return {
+        id: relatedId,
+        description: description||'',
+        subject, status,
+        role: CURRENT_ROLE||'Viewer',
+        date: new Date().toISOString().slice(0,10),
+        comments
+      };
+    }
+    function pickDesc(label,row){
+      if(label==='Goal') return row.goal||'';
+      if(label==='Risk') return row.description||'';
+      if(label==='Issue') return row.description||'';
+      if(label==='Plan') return row.description||'';
+      if(label==='Suggestion') return row.description||'';
+      if(label==='Question') return row.description||'';
+      return '';
+    }
+
+    // Load / Save
+    async function loadAll(){
+      const [g,r,i,p,s,q,n] = await Promise.all([
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+        getDocs(collection(db,'suggestions')),
+        getDocs(collection(db,'questions')),
+        getDocs(collection(db,'notifications')),
+      ]);
+
+      prevCache = JSON.parse(JSON.stringify(cache));
+
+      cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+      cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+      cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+      cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+      cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+      cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
+      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
+
+      buildFilterOptions();
+      renderAll();
+    }
+
+    async function saveAll(){
+      if(!CAN_EDIT){ alert('no edit rights'); return; }
+      const tasks=[]; const notes=[];
+
+      const newGoals = rowsFromTable('goals');
+      const newRisks = rowsFromTable('risks');
+      const newIssues= rowsFromTable('issues');
+      const newPlans = rowsFromTable('plans');
+
+      const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
+      const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
+
+      function upserts(prevArr, nextArr, coll, label){
+        const prevMap = byId(prevArr);
+        nextArr.forEach(row=>{
+          tasks.push(setDoc(doc(db,coll,row.id), row));
+          if(!prevMap[row.id]){
+            notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
+          } else if(changed(prevMap[row.id], row)){
+            notes.push(makeNote({subject: label, status:'Edited', relatedId: row.id, description: pickDesc(label,row)}));
+          }
+        });
+        prevArr.forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
+          notes.push(makeNote({subject: label, status:'Deleted', relatedId: prev.id, description: pickDesc(label,prev)}));
+        }});
       }
-    }catch(e){ console.warn("[Analytics] skipped", e); }
 
-    // Expose to window
-    window.app = app;
-    window.firebaseApp = app;
-    window.getFirestore = getFirestore;
-    window.doc = doc;
-    window.getDoc = getDoc;
-    window.getDocs = getDocs;
-    window.setDoc = setDoc;
-    window.deleteDoc = deleteDoc;
-    window.collection = collection;
-    window.query = query;
-    window.where = where;
-    window.db = getFirestore(app);
+      upserts(prevCache.goals, newGoals, 'goals', 'Goal');
+      upserts(prevCache.risks, newRisks, 'risks', 'Risk');
+      upserts(prevCache.issues,newIssues,'issues','Issue');
+      upserts(prevCache.plans, newPlans, 'plans', 'Plan');
 
-    // Nested collections? (bv. "projects/XYZ/") -> stel hier in.
-    window.GRID_BASE_PATH = ""; // e.g. "projects/XYZ/"
+      await Promise.all(tasks);
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
+      alert('saved to firestore');
+      await loadAll();
+    }
+    $('#btnLoad').onclick=loadAll;
+    $('#btnSaveAll').onclick=saveAll;
+
+    // Helpers
+    function num(id){ const n=parseInt(String(id).replace(/\\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    function actionsCell(coll){ 
+      if(!CAN_EDIT) return '—'; 
+      return `<div class="row-actions">
+        <button class="btn danger" data-del="${coll}">Del</button>
+      </div>`; 
+    }
+
+    // Filter selects
+    function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+    function buildFilterOptions(){
+      fillSelect('#gOwner', owners, 'Owner'); fillSelect('#gStatus', statuses.goals, 'Status');
+      fillSelect('#rOwner', owners, 'Owner'); fillSelect('#rLikelihood', tri, 'Likelihood'); fillSelect('#rImpact', tri, 'Impact'); fillSelect('#rStatus', statuses.risks, 'Status');
+      fillSelect('#iOwner', owners, 'Owner'); fillSelect('#iSeverity', tri, 'Severity'); fillSelect('#iStatus', statuses.issues, 'Status');
+      fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
+
+      // Suggestions filters
+      fillSelect('#sSubject', suggestionSubjects, 'Subject');
+      fillSelect('#sOwner', [''].concat(ownerRoles), 'Owner');
+      fillSelect('#sStatus', suggestionStatus, 'Status');
+      fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
+
+      // Questions filters
+      fillSelect('#qSubject', suggestionSubjects, 'Subject');
+      fillSelect('#qOwner', [''].concat(ownerRoles), 'Owner');
+      fillSelect('#qStatus', suggestionStatus, 'Status');
+      fillSelect('#qReviewerRole', suggestionReviewer, 'Reviewer Role');
+
+      // Notifications filters
+      fillSelect('#nSubject', noteSubjects, 'Subject');
+      fillSelect('#nStatus', noteStatus, 'Status');
+      fillSelect('#nRole', noteRoles, 'Role');
+
+      ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
+      ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
+      ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
+      ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
+
+      ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
+      ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderQuestions));
+
+      ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(id=> $('#'+id)?.addEventListener('input', ()=>renderNotifications(cache.notifications)));
+
+      $('#gReset')?.addEventListener('click', ()=>{ ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(i=>$('#'+i).value=''); renderGoals(); });
+      $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
+      $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
+      $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pGoalId','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
+      $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
+      $('#qReset')?.addEventListener('click', ()=>{ ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
+      $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
+    }
+
+    // ---------- Row renderers: behave like Suggestions/Questions (disabled controls) ----------
+    function rowGoal(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel = `<select disabled>${statuses.goals.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.goal||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.notes||'')}</div></td>
+        <td>${actionsCell('goals')}</td>`;
+    }
+    function rowRisk(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const likeSel  = `<select disabled>${tri.map(v=>`<option ${v===(r.likelihood||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const impSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.impact||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.risks.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${likeSel}</td>
+        <td>${impSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.mitigation||'')}</div></td>
+        <td>${actionsCell('risks')}</td>`;
+    }
+    function rowIssue(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const sevSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.severity||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.issues.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${sevSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.resolution||'')}</div></td>
+        <td>${actionsCell('issues')}</td>`;
+    }
+    function rowPlan(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.plans.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td><input type="text" value="${escapeHtml(r.goalId||'')}" disabled /></td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
+        <td>${actionsCell('plans')}</td>`;
+    }
+
+    // Renderers (with filters)
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
+    }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+    }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
+    }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
+    }
+
+    // Suggestions (read-only; star allowed)
+    function rowSuggestion(r){
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+      const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
+      const starBtn = `<button class="btn ghost" data-star-sug ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
+      const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
+      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn danger" data-del="suggestions">Del</button></div>` : '—';
+      return `
+        <td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td><div class="cell-text">${escapeHtml(r.comments||'')}</div></td>
+        <td class="col-stars">${starBtn} ${starCnt}</td>
+        <td>${actions}</td>`;
+    }
+    function renderSuggestions(){
+      const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
+      let rows=[...cache.suggestions];
+      const q=$('#sSearch').value?.toLowerCase()||'';
+      const fSub=$('#sSubject').value; const fOwner=$('#sOwner').value; const fSubm=$('#sSubmitted').value; const fStatus=$('#sStatus').value; const fRevRole=$('#sReviewerRole').value; const fRevDate=$('#sReviewed').value;
+      if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+      if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+      if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+      if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
+    }
+
+    // Questions
+    function rowQuestion(r){
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+      const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
+      const starBtn = `<button class="btn ghost" data-star-q ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
+      const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
+      const actions = CAN_EDIT ? `<div class="row-actions"><button class="btn danger" data-del="questions">Del</button></div>` : '—';
+      return `
+        <td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td><div class="cell-text">${escapeHtml(r.comments||'')}</div></td>
+        <td class="col-stars">${starBtn} ${starCnt}</td>
+        <td>${actions}</td>`;
+    }
+    function renderQuestions(){
+      const tbody=$('#tblQuestions tbody'); tbody.innerHTML='';
+      let rows=[...cache.questions];
+      const q=$('#qSearch').value?.toLowerCase()||'';
+      const fSub=$('#qSubject').value; const fOwner=$('#qOwner').value; const fSubm=$('#qSubmitted').value; const fStatus=$('#qStatus').value; const fRevRole=$('#qReviewerRole').value; const fRevDate=$('#qReviewed').value;
+      if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+      if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+      if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+      if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.qid=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
+    }
+
+    // Notifications
+    function renderNotifications(rows){
+      const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
+      let list=[...rows];
+      const idf=$('#nId').value?.trim(); const q=$('#nSearch').value?.toLowerCase()||''; const sub=$('#nSubject').value; const st=$('#nStatus').value; const rl=$('#nRole').value; const from=$('#nFrom').value; const to=$('#nTo').value;
+      if(idf) list=list.filter(r=> (r.id||'').toLowerCase().includes(idf.toLowerCase()));
+      if(q) list=list.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(sub) list=list.filter(r=> (r.subject||'')===sub);
+      if(st) list=list.filter(r=> (r.status||'')===st);
+      if(rl) list=list.filter(r=> (r.role||'')===rl);
+      if(from) list=list.filter(r=> (r.date||'')>=from);
+      if(to) list=list.filter(r=> (r.date||'')<=to);
+      list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+      list.forEach(r=>{
+        const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
+        const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
+        tr.innerHTML = `
+          <td>${escapeHtml(r.id||'')}</td>
+          <td>${escapeHtml(r.description||'')}</td>
+          <td>${escapeHtml(r.subject||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${escapeHtml(r.role||'')}</td>
+          <td>${escapeHtml(r.date||'')}</td>
+          <td>${escapeHtml(r.comments||'')}</td>
+          <td>${actions}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Add via prompt (like Suggestions/Questions)
+    function nextId(arr, prefix){
+      let m=0; arr.forEach(x=>{
+        const n=parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10); if(n>m) m=n;
+      });
+      return prefix + (m+1);
+    }
+
+    $('#addGoalBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextId(cache.goals,'G');
+      const goal = prompt('Goal (SMART):','');
+      if(!goal) return;
+      const row = { id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
+      await setDoc(doc(db,'goals', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Goal', status:'Added', relatedId:id, description:goal}));
+      cache.goals.push(row); renderGoals();
+    };
+    $('#addRiskBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextId(cache.risks,'R');
+      const description = prompt('Risk description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
+      await setDoc(doc(db,'risks', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
+      cache.risks.push(row); renderRisks();
+    };
+    $('#addIssueBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextId(cache.issues,'I');
+      const description = prompt('Issue description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
+      await setDoc(doc(db,'issues', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
+      cache.issues.push(row); renderIssues();
+    };
+    $('#addPlanBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = nextId(cache.plans,'P');
+      const description = prompt('Plan description:','');
+      if(!description) return;
+      const row = { id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
+      await setDoc(doc(db,'plans', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
+      cache.plans.push(row); renderPlans();
+    };
+
+    // Click handlers
+    document.addEventListener('click', async (e)=>{
+      const starBtn = e.target.closest('[data-star-sug]');
+      if(starBtn){
+        if(!CURRENT_UID){ alert('Please login to star.'); return; }
+        const tr = starBtn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
+        starBtn.disabled = true;
+        try{
+          const ref = doc(db,'suggestions', sugId);
+          const cntEl = tr.querySelector('[data-star-count]');
+          const current = parseInt(cntEl?.textContent||'0',10) || 0;
+          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
+          cntEl.textContent = String(current+1);
+        }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
+      }
+      const starQBtn = e.target.closest('[data-star-q]');
+      if(starQBtn){
+        if(!CURRENT_UID){ alert('Please login to star.'); return; }
+        const tr = starQBtn.closest('tr'); const qid = tr?.dataset.qid; if(!qid) return;
+        starQBtn.disabled = true;
+        try{
+          const ref = doc(db,'questions', qid);
+          const cntEl = tr.querySelector('[data-star-count]');
+          const current = parseInt(cntEl?.textContent||'0',10) || 0;
+          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
+          cntEl.textContent = String(current+1);
+        }catch(err){ alert('Star failed: '+err.message); starQBtn.disabled=false; }
+      }
+
+      const delBtn = e.target.closest('button[data-del]');
+      if(delBtn){
+        const table = delBtn.dataset.del; 
+        if(!CAN_EDIT){ alert('no edit rights'); return; }
+        const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
+        const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions', questions:'questions'}; 
+        const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
+        if(!confirm(`Delete ${id} from ${coll}?`)) return;
+        try{ 
+          await deleteDoc(doc(db, coll, id)); 
+          tr.remove(); 
+          const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
+          await addDoc(collection(db,'notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
+          const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
+        }catch(err){ alert('delete failed: '+err.message); }
+      }
+
+      const delNoteBtn = e.target.closest('[data-del-note]');
+      if(delNoteBtn){
+        if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
+        const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
+        if(!confirm('Delete this notification?')) return;
+        await deleteDoc(doc(db,'notifications',id));
+        const list = await getDocs(collection(db,'notifications'));
+        cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+        renderNotifications(cache.notifications);
+      }
+    });
+
+    // Add suggestion / question (via prompt)
+    $('#addSuggestionBtn').onclick = async ()=>{
+      const idPrefix = 'S';
+      const next = 1 + Math.max(0, ...cache.suggestions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
+      const id = idPrefix + next;
+      const description = prompt('Describe your suggestion (required):','');
+      if(!description) return;
+      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+      const owner = CURRENT_ROLE || 'Viewer';
+      const today = new Date().toISOString().slice(0,10);
+      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      try{
+        await setDoc(doc(db,'suggestions', id), suggestion);
+        await addDoc(collection(db,'notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
+        cache.suggestions.push(suggestion);
+        renderSuggestions();
+      }catch(err){ alert('Could not add: '+err.message); }
+    };
+    $('#addQuestionBtn').onclick = async ()=>{
+      const idPrefix = 'Q';
+      const next = 1 + Math.max(0, ...cache.questions.map(x=> parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10)));
+      const id = idPrefix + next;
+      const description = prompt('Describe your question (required):','');
+      if(!description) return;
+      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+      const owner = CURRENT_ROLE || 'Viewer';
+      const today = new Date().toISOString().slice(0,10);
+      const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      try{
+        await setDoc(doc(db,'questions', id), qdoc);
+        await addDoc(collection(db,'notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
+        cache.questions.push(qdoc);
+        renderQuestions();
+      }catch(err){ alert('Could not add: '+err.message); }
+    };
+
+    // Extractors (read disabled controls' values)
+    function rowsFromTable(kind){
+      if(kind!=='suggestions' && kind!=='questions'){
+        const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'}[kind];
+        return Array.from(document.querySelectorAll(`${map} tbody tr`)).map(tr=>{
+          const tds = Array.from(tr.querySelectorAll('td'));
+          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', start:tds[3].querySelector('input')?.value||'', end:tds[4].querySelector('input')?.value||'', status:tds[5].querySelector('select')?.value||'', notes:tds[6].innerText.trim() };
+          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', likelihood:tds[3].querySelector('select')?.value||'', impact:tds[4].querySelector('select')?.value||'', status:tds[5].querySelector('select')?.value||'', mitigation:tds[6].innerText.trim() };
+          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', severity:tds[3].querySelector('select')?.value||'', status:tds[4].querySelector('select')?.value||'', resolution:tds[5].innerText.trim() };
+          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', goalId:tds[3].querySelector('input')?.value.trim()||'', start:tds[4].querySelector('input')?.value||'', end:tds[5].querySelector('input')?.value||'', status:tds[6].querySelector('select')?.value||'' };
+        }).filter(x=>x && x.id);
+      }
+      return [];
+    }
+
+    function renderAll(){
+      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      renderTab(active);
+      $('#btnSaveAll').disabled = !CAN_EDIT;
+    }
+    function renderTab(kind){
+      if(kind==='goals') renderGoals();
+      else if(kind==='risks') renderRisks();
+      else if(kind==='issues') renderIssues();
+      else if(kind==='plans') renderPlans();
+      else if(kind==='questions') renderQuestions();
+      else if(kind==='suggestions') renderSuggestions();
+      else renderNotifications(cache.notifications||[]);
+    }
+
+    // Initial
+    buildFilterOptions();
+    renderAll();
   </script>
-</head>
-<body>
-  <header>
-    <div class="logo" aria-label="Dorcas">
-      <!-- Inline placeholder logo -->
-      <svg viewBox="0 0 96 28" role="img" aria-label="Dorcas"><rect width="96" height="28" rx="6" fill="#0ea5a3"></rect><text x="12" y="19" font-family="system-ui, sans-serif" font-size="14" fill="#fff">Dorcas</text></svg>
-      <span class="pill">Griplog</span>
-    </div>
-    <div class="toolbar">
-      <button id="btnRefresh" class="btn">Refresh</button>
-      <select id="roleSelect" aria-label="Kies rol">
-        <option value="viewer">Viewer</option>
-        <option value="editor">Editor</option>
-        <option value="admin">Admin</option>
-      </select>
-    </div>
-  </header>
 
-  <main>
-    <!-- Demo grid (je eigen tabellen blijven werken; dit is alleen als voorbeeld) -->
-    <section class="grid" aria-label="Goals grid">
-      <table id="goalsGrid">
-        <thead>
-          <tr>
-            <th scope="col">ID</th>
-            <th scope="col">Goal</th>
-            <th scope="col">Owner</th>
-            <th scope="col">Status</th>
-            <th scope="col">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="goalsTbody">
-          <!-- Voorbeeld-rijen (verwijder gerust). Pattern G#, R#, I#, P#, Q#, S# wordt automatisch herkend. -->
-          <tr data-id="G1">
-            <td>G1</td><td>Voorbeeld doel</td><td>Team</td><td>Open</td><td></td>
-          </tr>
-          <tr data-id="G2">
-            <td>G2</td><td>Veiligheid verbeteren</td><td>Kernteam</td><td>In progress</td><td></td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section style="margin-top:16px;color:var(--muted);font-size:13px">
-      Tip: jouw bestaande lijsten/tabellen hoeven niet aangepast te worden. Deze pagina injecteert automatisch een 📁 Actions-knop in elke rij
-      waar een ID als <code>G12/R3/I7/P2/S4/Q9</code> zichtbaar is of als <code>data-id</code> attribuut staat.
-    </section>
-  </main>
-
-  <!-- === ItemFolder Overlay === -->
-  <div id="ItemFolderOverlay" class="itemfolder-overlay" aria-hidden="true">
-    <div class="itemfolder" role="dialog" aria-modal="true">
-      <div class="itemfolder-header">
-        <div class="itemfolder-title">
-          <span id="ItemFolderType">Item</span>
-          <span id="ItemFolderId" style="opacity:.7"></span>
-        </div>
-        <div class="itemfolder-actions">
-          <button class="btn" id="IF_CloseBtn" title="Sluiten">Close</button>
-          <button class="btn primary" id="IF_SaveBtn" title="Opslaan">Save</button>
-          <button class="btn warn" id="IF_DeleteBtn" title="Verwijderen">Delete</button>
-        </div>
+<!-- === ItemFolder Overlay === -->
+<div id="ItemFolderOverlay" class="itemfolder-overlay" aria-hidden="true">
+  <div class="itemfolder" role="dialog" aria-modal="true" aria-labelledby="ItemFolderTitle">
+    <div class="itemfolder-header">
+      <div class="itemfolder-title">
+        <span id="ItemFolderType">Item</span>
+        <span id="ItemFolderId" style="opacity:.7"></span>
       </div>
-      <div class="itemfolder-body" id="ItemFolderBody">
-        <section class="acc open" id="IF_Section_Summary">
-          <div class="acc-h"><h3>Summary</h3><div class="count"></div></div>
-          <div class="acc-b">
-            <div class="formgrid">
-              <div class="field">
-                <label for="IF_Title">Title</label>
-                <input id="IF_Title" name="IF_Title" type="text" placeholder="Short title" autocomplete="off">
-              </div>
-              <div class="field">
-                <label for="IF_Status">Status</label>
-                <select id="IF_Status" name="IF_Status" aria-label="Status">
-                  <option value="">—</option>
-                  <option>Open</option><option>In progress</option><option>Blocked</option><option>Closed</option>
-                </select>
-              </div>
-              <div class="field" style="grid-column:1/-1">
-                <label for="IF_Description">Description</label>
-                <textarea id="IF_Description" name="IF_Description" placeholder="Description"></textarea>
-              </div>
-              <div class="field" style="grid-column:1/-1">
-                <label for="IF_Notes">Notes</label>
-                <textarea id="IF_Notes" name="IF_Notes" placeholder="Notes"></textarea>
-              </div>
+      <div class="itemfolder-actions">
+        <button class="btn" id="IF_CloseBtn" title="Close">Close</button>
+        <button class="btn primary" id="IF_SaveBtn" title="Save">Save</button>
+        <button class="btn warn" id="IF_DeleteBtn" title="Delete">Delete</button>
+      </div>
+    </div>
+    <div class="itemfolder-body" id="ItemFolderBody">
+      <section class="acc open" id="IF_Section_Summary">
+        <div class="acc-h"><h3>Summary</h3><div class="count"></div></div>
+        <div class="acc-b">
+          <div class="formgrid">
+            <div class="field">
+              <label for="IF_Title">Title</label>
+              <input id="IF_Title" type="text" placeholder="Short title">
+            </div>
+            <div class="field">
+              <label for="IF_Status">Status</label>
+              <select id="IF_Status">
+                <option value="">—</option>
+                <option>Open</option><option>In progress</option><option>Blocked</option><option>Closed</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="IF_Description">Description</label>
+              <textarea id="IF_Description" placeholder="Description"></textarea>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="IF_Notes">Notes</label>
+              <textarea id="IF_Notes" placeholder="Notes"></textarea>
             </div>
           </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Risks">
-          <div class="acc-h"><h3>Risks</h3><div class="count" id="IF_Count_Risks">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Risks"></div>
-            <div id="IF_New_Risk_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn primary" id="IF_AddRiskBtn">New Risk</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Issues">
-          <div class="acc-h"><h3>Issues</h3><div class="count" id="IF_Count_Issues">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Issues"></div>
-            <div id="IF_New_Issue_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn primary" id="IF_AddIssueBtn">New Issue</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Plans">
-          <div class="acc-h"><h3>Plans</h3><div class="count" id="IF_Count_Plans">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Plans"></div>
-            <div id="IF_New_Plan_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn primary" id="IF_AddPlanBtn">New Plan</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Questions">
-          <div class="acc-h"><h3>Questions</h3><div class="count" id="IF_Count_Questions">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Questions"></div>
-            <div id="IF_New_Question_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn primary" id="IF_AddQuestionBtn">New Question</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Suggestions">
-          <div class="acc-h"><h3>Suggestions</h3><div class="count" id="IF_Count_Suggestions">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Suggestions"></div>
-            <div id="IF_New_Suggestion_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn primary" id="IF_AddSuggestionBtn">New Suggestion</button>
-            </div>
-          </div>
-        </section>
-
-        <section class="acc" id="IF_Section_Notifications">
-          <div class="acc-h"><h3>Notifications</h3><div class="count" id="IF_Count_Notifications">0</div></div>
-          <div class="acc-b">
-            <div class="list" id="IF_List_Notifications"></div>
-            <div id="IF_New_Notification_Wrap" style="margin-top:8px;display:flex;gap:8px;">
-              <button class="btn" id="IF_AddNotificationBtn">New Notification</button>
-            </div>
-          </div>
-        </section>
-
-        <div class="itemfolder-footer">
-          <button class="btn" id="IF_CancelBtn">Cancel</button>
-          <button class="btn primary" id="IF_SaveBtn_Footer">Save</button>
         </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Risks">
+        <div class="acc-h"><h3>Risks</h3><div class="count" id="IF_Count_Risks">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Risks"></div>
+          <div id="IF_New_Risk_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn primary" id="IF_AddRiskBtn">New Risk</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Issues">
+        <div class="acc-h"><h3>Issues</h3><div class="count" id="IF_Count_Issues">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Issues"></div>
+          <div id="IF_New_Issue_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn primary" id="IF_AddIssueBtn">New Issue</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Plans">
+        <div class="acc-h"><h3>Plans</h3><div class="count" id="IF_Count_Plans">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Plans"></div>
+          <div id="IF_New_Plan_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn primary" id="IF_AddPlanBtn">New Plan</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Questions">
+        <div class="acc-h"><h3>Questions</h3><div class="count" id="IF_Count_Questions">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Questions"></div>
+          <div id="IF_New_Question_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn primary" id="IF_AddQuestionBtn">New Question</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Suggestions">
+        <div class="acc-h"><h3>Suggestions</h3><div class="count" id="IF_Count_Suggestions">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Suggestions"></div>
+          <div id="IF_New_Suggestion_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn primary" id="IF_AddSuggestionBtn">New Suggestion</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Notifications">
+        <div class="acc-h"><h3>Notifications</h3><div class="count" id="IF_Count_Notifications">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Notifications"></div>
+          <div id="IF_New_Notification_Wrap" style="margin-top:8px; display:flex; gap:8px;">
+            <button class="btn" id="IF_AddNotificationBtn">New Notification</button>
+          </div>
+        </div>
+      </section>
+
+      <div class="itemfolder-footer">
+        <button class="btn" id="IF_CancelBtn">Cancel</button>
+        <button class="btn primary" id="IF_SaveBtn_Footer">Save</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-  // ==== Utilities & Config ====
+
+<script>
+async function computeNextId(collName, prefix){
+  let maxNum = 0;
+  try{
+    const local = (window.cache && window.cache[collName]) ? window.cache[collName] : [];
+    local.forEach(x=>{
+      const n = parseInt(String(x.id||'').replace(/\D+/g,'')||'0', 10);
+      if(!isNaN(n) && n > maxNum) maxNum = n;
+    });
+  }catch(e){}
+  try{
+    const cr = (typeof collection==='function') ? collection(db, collName) : null;
+    const snap = cr ? await getDocs(cr) : null;
+    if(snap && snap.docs){
+      snap.docs.forEach(d=>{
+        const n = parseInt(String(d.id||'').replace(/\D+/g,'')||'0', 10);
+        if(!isNaN(n) && n > maxNum) maxNum = n;
+      });
+    }
+  }catch(err){
+    console.warn('computeNextId: fallback to cache only', err);
+  }
+  return prefix + String(maxNum + 1);
+}
+</script>
+
+
+<script>
+// === Firestore compatibility bridge + BASE_PATH ===
+window.GRID_BASE_PATH = window.GRID_BASE_PATH || ""; // e.g. "projects/XYZ/"
+function basePathParts(){ return (window.GRID_BASE_PATH||"").split('/').filter(Boolean); }
+function collRef(db, coll){ const parts = basePathParts(); parts.push(coll); return (typeof collection==='function') ? collection(db, ...parts) : { __v8coll: parts.join('/') }; }
+function docRef(db, coll, id){ const parts = basePathParts(); parts.push(coll, id); return (typeof doc==='function') ? doc(db, ...parts) : { __v8: true, coll: parts.join('/'), id }; }
+
+// v8 shims if needed
+(function(){
+  try{
+    if(typeof getDoc === 'undefined' && window.firebase && firebase.firestore){
+      const db8 = firebase.firestore();
+      if(!window.db) window.db = db8;
+      window.doc = (db,x,y)=>({ coll:x, id:y });
+      window.collection = (db,x)=>({ __v8coll:x });
+      window.getDoc = async (ref)=>{ const s = await db8.collection(ref.coll).doc(ref.id).get(); return { exists: ()=>s.exists, data: ()=>s.data() }; };
+      window.setDoc = (ref, data, opts)=> db8.collection(ref.coll).doc(ref.id).set(data, (opts&&opts.merge)?{merge:true}:undefined);
+      window.deleteDoc = (ref)=> db8.collection(ref.coll).doc(ref.id).delete();
+      window.getDocs = async (qry)=>{ const qs = qry.__v8query ? await qry.__v8query.get() : await db8.collection(qry.__v8coll).get(); return { docs: qs.docs.map(d=>({ id:d.id, data:()=>d.data() })) }; };
+      window.where = (field, op, val)=> ({ __v8where:{ field, op, val } });
+      window.query = (cr, ...filters)=>{ let q = db8.collection(cr.__v8coll); filters.forEach(f=>{ if(f.__v8where){ q = q.where(f.__v8where.field, f.__v8where.op, f.__v8where.val); } }); return { __v8query:q }; };
+      console.info('[Bridge] Firebase v8 compat actief');
+    }
+  }catch(e){ console.warn('[Bridge] compat init error', e); }
+})();
+
+// Ensure db if modular SDK is present globally
+try{
+  if(!window.db && typeof getFirestore==='function' && (window.app||window.firebaseApp)){
+    window.db = getFirestore(window.app||window.firebaseApp);
+  }
+}catch(e){}
+</script>
+
+
+<script>
+window.ItemFolder = (function(){
   const $ = (s,r=document)=>r.querySelector(s);
   const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+  const COLL_FOR = { goal:'goals', risk:'risks', issue:'issues', plan:'plans', question:'questions', suggestion:'suggestions', notification:'notifications' };
+  let ctx = { type:null, id:null, data:null, role:(window.CURRENT_ROLE||'viewer') };
+
+  function canEdit(t){
+    if(window.isAdminDorcas && window.isAdminDorcas()) return true;
+    if(window.EDIT_ROLES && window.EDIT_ROLES.has && window.EDIT_ROLES.has(ctx.role)) return true;
+    if(ctx.role && window.PARTNER_ROLES && window.PARTNER_ROLES.has && window.PARTNER_ROLES.has(ctx.role)){ return (t==='suggestion' || t==='question'); }
+    return false;
+  }
+  function canDelete(){ return (window.isAdminDorcas && window.isAdminDorcas()); }
+
+  function titleFor(type, d){
+    if(!d) return '';
+    if(type==='goal') return d.goal || d.title || d.name || d.summary || '';
+    if(type==='question' || type==='suggestion') return d.subject || d.title || d.summary || '';
+    return d.title || d.summary || d.description || '';
+  }
+  function notesFor(d){ return d && (d.notes || d.note || d.resolution || d.mitigation) || ''; }
+
+  async function open(type, id){
+    ctx = {...ctx, type, id};
+    const ov = $('#ItemFolderOverlay');
+    $('#ItemFolderType').textContent = type.charAt(0).toUpperCase()+type.slice(1);
+    $('#ItemFolderId').textContent = '• ' + id;
+    $('#IF_SaveBtn').style.display = canEdit(type) ? '' : 'none';
+    $('#IF_SaveBtn_Footer').style.display = canEdit(type) ? '' : 'none';
+    $('#IF_DeleteBtn').style.display = canDelete() ? '' : 'none';
+    $$('.acc', ov).forEach(sec=>sec.classList.remove('open'));
+    $('#IF_Section_Summary').classList.add('open');
+
+    const data = await loadItem(type, id); ctx.data = data||{};
+    $('#IF_Title').value = titleFor(type, ctx.data);
+    $('#IF_Status').value = ctx.data.status || '';
+    $('#IF_Description').value = ctx.data.description || ctx.data.desc || '';
+    $('#IF_Notes').value = notesFor(ctx.data);
+
+    ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
+  }
+
+  async function loadItem(type, id){
+    try{
+      const collName = COLL_FOR[type]; if(!collName) return null;
+      // First try by doc id
+      const ref = docRef(db, collName, id);
+      const snap = await getDoc(ref);
+      if(snap && snap.exists && snap.exists()){ return snap.data(); }
+      // Fallback by field 'id'
+      try{
+        const cr = collRef(db, collName);
+        const qy = query(cr, where('id','==', id));
+        const qs = await getDocs(qy);
+        if(qs && qs.docs && qs.docs.length){ return qs.docs[0].data(); }
+      }catch(e2){ console.warn('Fallback query failed', e2); }
+      console.warn('Item not found for', type, id);
+      return null;
+    }catch(e){ console.warn('loadItem error', e); return null; }
+  }
+
+  function collectSummary(){
+    return {
+      title: $('#IF_Title').value.trim(),
+      status: $('#IF_Status').value,
+      description: $('#IF_Description').value.trim(),
+      notes: $('#IF_Notes').value.trim(),
+      updatedAt: Date.now()
+    };
+  }
+
+  async function save(){
+    if(!canEdit(ctx.type)) return;
+    const coll = COLL_FOR[ctx.type];
+    const current = ctx.data||{};
+    const up = collectSummary();
+    if(ctx.type==='goal'){ up.goal = up.title; delete up.title; }
+    else if(ctx.type==='question' || ctx.type==='suggestion'){ up.subject = up.title; delete up.title; }
+    try{ await setDoc(docRef(db, coll, ctx.id), {...current, ...up}, {merge:true}); close(); }
+    catch(e){ alert('Save failed'); console.warn(e); }
+  }
+
+  async function doDelete(){
+    if(!canDelete()) return;
+    if(!confirm('Delete this item?')) return;
+    try{ await deleteDoc(docRef(db, COLL_FOR[ctx.type], ctx.id)); close(); }
+    catch(e){ alert('Delete failed'); console.warn(e); }
+  }
+
+  function close(){ const ov = document.getElementById('ItemFolderOverlay'); ov.classList.remove('open'); ov.setAttribute('aria-hidden','true'); }
+
+  window.addEventListener('DOMContentLoaded', ()=>{
+    document.getElementById('IF_CloseBtn')?.addEventListener('click', close);
+    document.getElementById('IF_CancelBtn')?.addEventListener('click', close);
+    document.getElementById('IF_SaveBtn')?.addEventListener('click', save);
+    document.getElementById('IF_SaveBtn_Footer')?.addEventListener('click', save);
+    document.getElementById('IF_DeleteBtn')?.addEventListener('click', doDelete);
+  });
+
+  return { open };
+})();
+
+// === Grid augmentation + delete hide + observers + bootstrap click handler ===
+(function(){
+  function inferTypeFromId(id){ return ({'G':'goal','R':'risk','I':'issue','P':'plan','S':'suggestion','Q':'question'}[(id||'')[0]?.toUpperCase()] ) || null; }
+  function findIdInRow(row){
+    if(row.dataset && row.dataset.id && /^[GRIPSQ]\d+$/i.test(row.dataset.id)) return row.dataset.id.toUpperCase();
+    let cell = row.querySelector('[data-col="id"], .col-id, [data-field="id"]');
+    if(cell){ const m = (cell.textContent||'').match(/\b([GRIPSQ]\d{1,8})\b/i); if(m) return m[1].toUpperCase(); }
+    const m = (row.innerText||'').match(/\b([GRIPSQ]\d{1,8})\b/i); if(m) return m[1].toUpperCase();
+    return null;
+  }
+  function injectActions(row, id){
+    if(row.querySelector('.btn-actions')) return;
+    const type = inferTypeFromId(id); if(!type) return;
+    const btn = document.createElement('button');
+    btn.className='btn-actions'; btn.type='button'; btn.setAttribute('title','Open folder'); btn.setAttribute('aria-label','Open folder'); btn.textContent = '📁';
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); if(window.ItemFolder && ItemFolder.open) ItemFolder.open(type, id); });
+    const lastCell = row.querySelector('td:last-child') || row;
+    const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.justifyContent='flex-end';
+    wrap.appendChild(btn); lastCell.appendChild(wrap);
+    row.classList.add('folder-injected');
+    row.addEventListener('dblclick', ()=>{ if(window.ItemFolder && ItemFolder.open) ItemFolder.open(type,id); });
+  }
+  function hideDelete(){
+    document.querySelectorAll('button, a, [role="button"]').forEach(el=>{
+      const t = (el.textContent||'').trim().toLowerCase();
+      const title = (el.title||'').toLowerCase();
+      if(el.matches('.btn-delete,.delete,.del,[data-action="delete"],.action-delete,[aria-label="Delete"],[aria-label="Verwijderen"]') || /\bdelete\b|\bverwijder/i.test(t+title)){
+        el.style.display='none'; el.style.visibility='hidden';
+      }
+    });
+  }
+  function AUGMENT(){
+    hideDelete();
+    document.querySelectorAll('tr, .row, .grid-row').forEach(row=>{
+      if(row.classList && row.classList.contains('folder-injected')) return;
+      const id = findIdInRow(row);
+      if(id) injectActions(row, id);
+    });
+  }
+  document.addEventListener('DOMContentLoaded', AUGMENT);
+  window.addEventListener('load', AUGMENT);
+  setTimeout(AUGMENT, 400); setTimeout(AUGMENT, 1500); setTimeout(AUGMENT, 3000);
+  const mo = new MutationObserver(()=>AUGMENT());
+  mo.observe(document.body, {childList:true, subtree:true});
+
+  // Global capture-phase click to guarantee opening even if other scripts intercept
+  document.addEventListener('click', function(ev){
+    const btn = ev.target.closest && ev.target.closest('.btn-actions');
+    if(!btn) return;
+    const row = btn.closest('tr, .row, .grid-row') || document.body;
+    const txtId = findIdInRow(row);
+    const type = inferTypeFromId(txtId||'');
+    if(txtId && type && window.ItemFolder && ItemFolder.open){
+      ItemFolder.open(type, txtId);
+      ev.preventDefault(); ev.stopPropagation();
+    }
+  }, true);
+})();
+</script>
+
+
+<script>
+(function(){
+  const $ = (s,r=document)=>r.querySelector(s);
+  const $$ = (s,r=document)=>Array.from(r.querySelectorAll(s));
+
+  // Ensure delegation for accordion headers
+  document.addEventListener('click', function(e){
+    const h = e.target.closest && e.target.closest('.acc-h');
+    if(!h) return;
+    const sec = h.parentElement;
+    if(!sec || !sec.classList.contains('acc')) return;
+    const opened = sec.classList.toggle('open');
+    if(opened){
+      const id = sec.id || '';
+      if(id.endsWith('_Risks')) lazyLoadRelated('risks');
+      if(id.endsWith('_Issues')) lazyLoadRelated('issues');
+      if(id.endsWith('_Plans')) lazyLoadRelated('plans');
+      if(id.endsWith('_Questions')) lazyLoadRelated('questions');
+      if(id.endsWith('_Suggestions')) lazyLoadRelated('suggestions');
+      if(id.endsWith('_Notifications')) lazyLoadRelated('notifications');
+    }
+  }, true);
+
+  // Make sure we have ItemFolder context
+  const ItemFolderNS = window.ItemFolder || {};
+  function ctx(){ return (ItemFolderNS && ItemFolderNS.__ctx) || window.__IF_CTX || {}; }
+  function setCtx(v){ if(ItemFolderNS) ItemFolderNS.__ctx = v; window.__IF_CTX = v; }
+
+  // Hook into ItemFolder.open to retain current context and show buttons per parent type
+  const oldOpen = window.ItemFolder && window.ItemFolder.open;
+  if(oldOpen){
+    window.ItemFolder.open = async function(type, id){
+      const ret = await oldOpen(type, id);
+      // keep a light ctx mirror
+      const t = type, i = id;
+      setCtx({ type:t, id:i, data:(window.ItemFolder.__data||null) });
+      configureCreateButtons(t);
+      return ret;
+    }
+  }
+
+  function configureCreateButtons(t){
+    const show = (id, flag)=>{ const el = document.getElementById(id); if(el) el.style.display = flag ? '' : 'none'; };
+    ['IF_New_Risk_Wrap','IF_New_Issue_Wrap','IF_New_Plan_Wrap','IF_New_Question_Wrap','IF_New_Suggestion_Wrap','IF_New_Notification_Wrap']
+      .forEach(id=>show(id,false));
+
+    if(t==='goal'){
+      show('IF_New_Risk_Wrap', true);
+      show('IF_New_Issue_Wrap', true);
+      show('IF_New_Plan_Wrap', true);
+      show('IF_New_Question_Wrap', true);
+      show('IF_New_Suggestion_Wrap', true);
+      show('IF_New_Notification_Wrap', true);
+    }else if(t==='risk'){
+      show('IF_New_Issue_Wrap', true);
+      show('IF_New_Plan_Wrap', true);
+      show('IF_New_Question_Wrap', true);
+      show('IF_New_Suggestion_Wrap', true);
+    }else if(t==='issue'){
+      show('IF_New_Plan_Wrap', true);
+      show('IF_New_Question_Wrap', true);
+      show('IF_New_Suggestion_Wrap', true);
+    }else if(t==='plan'){
+      show('IF_New_Question_Wrap', true);
+      show('IF_New_Suggestion_Wrap', true);
+    }
+  }
+
+  function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+
+  async function lazyLoadRelated(kind){
+    try{
+      const state = ctx();
+      // Try to fetch latest data of current item (in case we just opened)
+      let data = state.data;
+      if(!data && window.ItemFolder && typeof window.ItemFolder.loadItem === 'function'){
+        try{ data = await window.ItemFolder.loadItem(state.type, state.id); }catch(_){}
+      }
+      const goalId = (state.type==='goal') ? state.id : (data && (data.parentGoalId || data.goalId));
+      const riskId = (state.type==='risk') ? state.id : (data && data.parentRiskId);
+      const issueId = (state.type==='issue') ? state.id : (data && data.parentIssueId);
+
+      const listEl = document.getElementById('IF_List_'+capitalize(kind));
+      const countEl = document.getElementById('IF_Count_'+capitalize(kind));
+      if(!listEl) return;
+      listEl.innerHTML = '<div class="card"><em>Loading…</em></div>';
+
+      let qList = [];
+      if(kind==='risks'){ if(goalId) qList.push( query(collRef(db,'risks'), where('parentGoalId','==',goalId)) ); }
+      else if(kind==='issues'){
+        if(goalId) qList.push( query(collRef(db,'issues'), where('parentGoalId','==',goalId)) );
+        if(riskId) qList.push( query(collRef(db,'issues'), where('parentRiskId','==',riskId)) );
+      }else if(kind==='plans'){
+        if(goalId) qList.push( query(collRef(db,'plans'), where('parentGoalId','==',goalId)) );
+        if(issueId) qList.push( query(collRef(db,'plans'), where('parentIssueId','==',issueId)) );
+      }else if(kind==='questions'){
+        if(goalId) qList.push( query(collRef(db,'questions'), where('parentGoalId','==',goalId)) );
+        if(riskId) qList.push( query(collRef(db,'questions'), where('parentRiskId','==',riskId)) );
+        if(issueId) qList.push( query(collRef(db,'questions'), where('parentIssueId','==',issueId)) );
+      }else if(kind==='suggestions'){
+        if(goalId) qList.push( query(collRef(db,'suggestions'), where('parentGoalId','==',goalId)) );
+        if(riskId) qList.push( query(collRef(db,'suggestions'), where('parentRiskId','==',riskId)) );
+        if(issueId) qList.push( query(collRef(db,'suggestions'), where('parentIssueId','==',issueId)) );
+      }else if(kind==='notifications'){
+        if(goalId) qList.push( query(collRef(db,'notifications'), where('parentGoalId','==',goalId)) );
+      }
+
+      let items = [];
+      for(const qy of qList){
+        const snap = await getDocs(qy);
+        snap.docs.forEach(d=> items.push({ id:d.id, ...(typeof d.data==='function' ? d.data() : {}) }) );
+      }
+
+      if(items.length===0){
+        listEl.innerHTML = '<div class="card"><em>No items.</em></div>';
+      }else{
+        listEl.innerHTML = items.map(it=>{
+          const title = it.title || it.name || it.summary || it.subject || it.id;
+          const desc = it.description || it.desc || '';
+          const pid = it.id || '';
+          const type = kind.slice(0,-1);
+          return `<div class="card">
+            <h4>${escapeHtml(title)} <small style="opacity:.6">${escapeHtml(pid)}</small></h4>
+            <p>${escapeHtml(desc).slice(0,180)}</p>
+            <div style="margin-top:8px; display:flex; gap:6px;">
+              <button class="btn" onclick="ItemFolder.open('${type}','${pid}')">Open</button>
+            </div>
+          </div>`;
+        }).join('');
+      }
+      if(countEl) countEl.textContent = String(items.length);
+    }catch(e){
+      console.warn('lazyLoadRelated error', e);
+      const listEl = document.getElementById('IF_List_'+capitalize(kind));
+      if(listEl) listEl.innerHTML = '<div class="card"><em>Error loading.</em></div>';
+    }
+  }
+
+  // Create child handlers
+  async function createChild(childType){
+    try{
+      const state = ctx();
+      const coll = { risk:'risks', issue:'issues', plan:'plans', question:'questions', suggestion:'suggestions', notification:'notifications' }[childType];
+      if(!coll) return;
+      const prefix = { risk:'R', issue:'I', plan:'P', question:'Q', suggestion:'S', notification:'N' }[childType];
+      const id = await computeNextId(coll, prefix);
+      const title = prompt(`Title for new ${childType}?`) || '';
+      if(!title.trim()) return;
+      const base = { id, title, createdAt: Date.now(), updatedAt: Date.now() };
+      // set parent links
+      if(state.type==='goal'){ base.parentGoalId = state.id; }
+      else if(state.type==='risk'){ base.parentRiskId = state.id; base.parentGoalId = (state.data && (state.data.parentGoalId || state.data.goalId)) || ''; }
+      else if(state.type==='issue'){ base.parentIssueId = state.id; base.parentGoalId = (state.data && (state.data.parentGoalId || state.data.goalId)) || ''; }
+      else if(state.type==='plan'){ base.parentGoalId = (state.data && (state.data.parentGoalId || state.data.goalId)) || ''; }
+      await setDoc(docRef(db, coll, id), base);
+      // refresh if section open
+      const sec = document.getElementById('IF_Section_'+coll.charAt(0).toUpperCase()+coll.slice(1));
+      if(sec && sec.classList.contains('open')) lazyLoadRelated(coll);
+    }catch(e){ alert('Create failed'); console.warn(e); }
+  }
+
+  // Wire buttons (works even if added later thanks to delegation)
+  document.addEventListener('click', function(e){
+    if(e.target && e.target.id==='IF_AddRiskBtn'){ createChild('risk'); }
+    if(e.target && e.target.id==='IF_AddIssueBtn'){ createChild('issue'); }
+    if(e.target && e.target.id==='IF_AddPlanBtn'){ createChild('plan'); }
+    if(e.target && e.target.id==='IF_AddQuestionBtn'){ createChild('question'); }
+    if(e.target && e.target.id==='IF_AddSuggestionBtn'){ createChild('suggestion'); }
+    if(e.target && e.target.id==='IF_AddNotificationBtn'){ createChild('notification'); }
+  }, true);
+
+})();
+</script>
+
+
+<!-- === ItemFolder Overlay (build) === -->
+<div id="ItemFolderOverlay" class="itemfolder-overlay" aria-hidden="true">
+  <div class="itemfolder" role="dialog" aria-modal="true" aria-labelledby="ItemFolderTitle">
+    <div class="itemfolder-header">
+      <div class="itemfolder-title" id="ItemFolderTitle">
+        <span id="ItemFolderType">Item</span>
+        <span id="ItemFolderId" style="opacity:.7"></span>
+      </div>
+      <div class="itemfolder-actions">
+        <button class="btn" id="IF_CloseBtn" title="Close">Close</button>
+        <button class="btn primary" id="IF_SaveBtn" title="Save">Save</button>
+        <button class="btn warn" id="IF_DeleteBtn" title="Delete">Delete</button>
+      </div>
+    </div>
+    <div class="itemfolder-body" id="ItemFolderBody">
+      <section class="acc open" id="IF_Section_Summary">
+        <div class="acc-h"><h3>Summary</h3><div class="count"></div></div>
+        <div class="acc-b">
+          <div class="formgrid">
+            <div class="field">
+              <label for="IF_Title">Title</label>
+              <input id="IF_Title" type="text" placeholder="Short title" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="IF_Status">Status</label>
+              <select id="IF_Status" aria-label="Status">
+                <option value="">—</option>
+                <option>Open</option><option>In progress</option><option>Blocked</option><option>Done</option>
+              </select>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="IF_Description">Description</label>
+              <textarea id="IF_Description" placeholder="Description"></textarea>
+            </div>
+            <div class="field" style="grid-column:1/-1">
+              <label for="IF_Notes">Notes</label>
+              <textarea id="IF_Notes" placeholder="Notes"></textarea>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Risks">
+        <div class="acc-h"><h3>Risks</h3><div class="count" id="IF_Count_Risks">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Risks"></div>
+          <div id="IF_New_Risk_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn primary" id="IF_AddRiskBtn">New Risk</button></div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Issues">
+        <div class="acc-h"><h3>Issues</h3><div class="count" id="IF_Count_Issues">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Issues"></div>
+          <div id="IF_New_Issue_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn primary" id="IF_AddIssueBtn">New Issue</button></div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Plans">
+        <div class="acc-h"><h3>Plans</h3><div class="count" id="IF_Count_Plans">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Plans"></div>
+          <div id="IF_New_Plan_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn primary" id="IF_AddPlanBtn">New Plan</button></div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Questions">
+        <div class="acc-h"><h3>Questions</h3><div class="count" id="IF_Count_Questions">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Questions"></div>
+          <div id="IF_New_Question_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn primary" id="IF_AddQuestionBtn">New Question</button></div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Suggestions">
+        <div class="acc-h"><h3>Suggestions</h3><div class="count" id="IF_Count_Suggestions">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Suggestions"></div>
+          <div id="IF_New_Suggestion_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn primary" id="IF_AddSuggestionBtn">New Suggestion</button></div>
+        </div>
+      </section>
+
+      <section class="acc" id="IF_Section_Notifications">
+        <div class="acc-h"><h3>Notifications</h3><div class="count" id="IF_Count_Notifications">0</div></div>
+        <div class="acc-b">
+          <div class="list" id="IF_List_Notifications"></div>
+          <div id="IF_New_Notification_Wrap" style="margin-top:8px;display:flex;gap:8px;"><button class="btn" id="IF_AddNotificationBtn">New Notification</button></div>
+        </div>
+      </section>
+
+      <div class="itemfolder-footer">
+        <button class="btn" id="IF_CancelBtn">Cancel</button>
+        <button class="btn primary" id="IF_SaveBtn_Footer">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script type="module">
+  // ---- Augment tabs with ARIA roles ----
+  const tabs = document.querySelectorAll('nav.tabs button');
+  tabs.forEach(btn=>{
+    const id = btn.dataset.tab;
+    btn.setAttribute('role','tab');
+    btn.setAttribute('aria-controls', id);
+    btn.setAttribute('aria-selected', btn.classList.contains('active') ? 'true' : 'false');
+  });
+  document.querySelectorAll('section[role="tabpanel"]').forEach(sec=>{
+    if(!sec.id){ sec.id = 'panel-' + Math.random().toString(36).slice(2,7); }
+    if(!sec.getAttribute('aria-labelledby')){
+      const btn = document.querySelector(`nav.tabs button[data-tab="${sec.id}"]`);
+      if(btn){ btn.id = 'tab-' + sec.id; sec.setAttribute('aria-labelledby', btn.id); }
+    }
+  });
+  document.querySelectorAll('nav.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+    document.querySelectorAll('nav.tabs button').forEach(b=>b.setAttribute('aria-selected','false'));
+    btn.setAttribute('aria-selected','true');
+  }));
+
+  // ---- Add aria-labels to date filters (quietly) ----
+  ['gStartFrom','gEndTo','qSubmitted','qReviewed','sSubmitted','sReviewed','nFrom','nTo'].forEach(id=>{
+    const el=document.getElementById(id); if(el && !el.getAttribute('aria-label')){
+      el.setAttribute('aria-label', id.replace(/[A-Z]/g,' $&').trim());
+      if(!el.name) el.name = id;
+    }
+  });
+
+  // ---- Firestore helpers ----
+  const db = window.db;
+  const {collection, getDocs, setDoc, doc, getDoc, deleteDoc, addDoc, query, where} = window._fs || {};
+
   const COLL_FOR = { goal:'goals', risk:'risks', issue:'issues', plan:'plans', question:'questions', suggestion:'suggestions', notification:'notifications' };
   const PREFIX_FOR = { goal:'G', risk:'R', issue:'I', plan:'P', question:'Q', suggestion:'S', notification:'N' };
   const CHILDREN_FOR = {
@@ -302,336 +1799,267 @@
     issue:['plan','question','suggestion'],
     plan: ['question','suggestion']
   };
-  window.CURRENT_ROLE = 'viewer';
 
-  function basePathParts(){
-    return (window.GRID_BASE_PATH||"").split('/').filter(Boolean);
-  }
-  function collRef(db, coll){
-    const parts = basePathParts(); parts.push(coll);
-    return window.collection(db, ...parts);
-  }
-  function docRef(db, coll, id){
-    const parts = basePathParts(); parts.push(coll, id);
-    return window.doc(db, ...parts);
-  }
-
-  // ==== ID compute ====
   async function computeNextId(collName, prefix){
-    // scan doc IDs (cheap for small sets; for big sets, replace by a counter doc)
     let maxNum = 0;
     try{
-      const snap = await window.getDocs(collRef(window.db, collName));
-      snap.docs.forEach(d=>{
-        const n = parseInt(String(d.id||'').replace(/\\D+/g,''),10);
+      // prefer cache in table if available
+      const cacheRows = Array.from(document.querySelectorAll(`#tbl${collName.charAt(0).toUpperCase()+collName.slice(1)} tbody tr td:first-child`)).map(td=>td.textContent.trim());
+      cacheRows.forEach(id=>{
+        const n=parseInt(String(id).replace(/\D+/g,''),10);
         if(!isNaN(n) && n>maxNum) maxNum=n;
       });
-    }catch(e){ console.warn('computeNextId fallback', e); }
+      const snap = await getDocs(collection(db, collName));
+      snap.docs.forEach(d=>{
+        const n=parseInt(String(d.id).replace(/\D+/g,''),10);
+        if(!isNaN(n) && n>maxNum) maxNum=n;
+      });
+    }catch(e){ console.warn('computeNextId', e); }
     return prefix + String(maxNum+1);
   }
 
-  // ==== ItemFolder ====
-  window.ItemFolder = (function(){
-    let ctx = { type:null, id:null, data:null };
+  function docRef(coll, id){ return doc(db, coll, id); }
 
-    function isAdmin(){ return (window.CURRENT_ROLE === 'admin'); }
-    function canEdit(t){
-      if(isAdmin()) return true;
-      if(window.CURRENT_ROLE === 'editor') return true;
-      if(window.CURRENT_ROLE === 'viewer') return (t==='question' || t==='suggestion') ? false : false;
-      return false;
-    }
-    function canDelete(){ return isAdmin(); }
+  async function loadItem(type, id){
+    const coll = COLL_FOR[type];
+    try{
+      const s = await getDoc(docRef(coll, id));
+      if(s.exists()) return s.data();
+      // fallback: field 'id' or 'code'
+      for(const field of ['id','code']){
+        const qy = query(collection(db, coll), where(field,'==', id));
+        const qs = await getDocs(qy);
+        if(qs.docs.length) return qs.docs[0].data();
+      }
+    }catch(e){ console.warn('loadItem', e); }
+    return null;
+  }
 
-    function titleFor(type, d){
-      if(!d) return '';
-      if(type==='goal') return d.goal || d.title || d.name || d.summary || '';
-      if(type==='question' || type==='suggestion') return d.subject || d.title || d.summary || '';
-      return d.title || d.summary || d.description || '';
-    }
-    function notesFor(d){ return (d && (d.notes||d.note||d.resolution||d.mitigation)) || ''; }
+  function titleFor(type, d){
+    if(!d) return '';
+    if(type==='goal') return d.goal || d.title || d.name || d.summary || '';
+    if(type==='question' || type==='suggestion') return d.subject || d.title || d.summary || '';
+    return d.title || d.summary || d.description || '';
+  }
+  function notesFor(d){ return (d && (d.notes||d.note||d.resolution||d.mitigation)) || ''; }
 
-    async function loadItem(type, id){
-      try{
-        const coll = COLL_FOR[type];
-        // try by doc id
-        const snap = await window.getDoc(docRef(window.db, coll, id));
-        if(snap.exists()) return snap.data();
-        // fallback: by field 'id' or 'code'
-        for(const field of ['id','code']){
-          const qy = window.query(collRef(window.db, coll), window.where(field,'==', id));
-          const qs = await window.getDocs(qy);
-          if(qs.docs.length) return qs.docs[0].data();
-        }
-        return null;
-      }catch(e){ console.warn('loadItem error', e); return null; }
-    }
+  // ---- ItemFolder API ----
+  const ItemFolder = {
+    ctx: {type:null, id:null, data:null},
+    async open(type, id){
+      this.ctx = {type, id, data:null};
+      document.getElementById('ItemFolderType').textContent = type.toUpperCase();
+      document.getElementById('ItemFolderId').textContent = '• '+id;
 
-    async function open(type, id){
-      ctx = { type, id, data:null };
-      $('#ItemFolderType').textContent = type.charAt(0).toUpperCase()+type.slice(1);
-      $('#ItemFolderId').textContent = '• ' + id;
-      $('#IF_SaveBtn').style.display = canEdit(type) ? '' : 'none';
-      $('#IF_SaveBtn_Footer').style.display = canEdit(type) ? '' : 'none';
-      $('#IF_DeleteBtn').style.display = canDelete() ? '' : 'none';
+      // role-based buttons (uses global state from qwerty: CURRENT_ROLE / CAN_EDIT)
+      const canEdit = (window.CAN_EDIT===true);
+      const canDelete = (window.CURRENT_ROLE==='Admin');
+      document.getElementById('IF_SaveBtn').style.display = canEdit ? '' : 'none';
+      document.getElementById('IF_SaveBtn_Footer').style.display = canEdit ? '' : 'none';
+      document.getElementById('IF_DeleteBtn').style.display = canDelete ? '' : 'none';
 
-      $$('.acc').forEach(sec=>sec.classList.remove('open'));
-      $('#IF_Section_Summary').classList.add('open');
+      document.querySelectorAll('.acc').forEach(sec=>sec.classList.remove('open'));
+      document.getElementById('IF_Section_Summary').classList.add('open');
 
-      const data = await loadItem(type, id); ctx.data = data||{};
-      // fill fields
-      $('#IF_Title').value = titleFor(type, ctx.data);
-      $('#IF_Status').value = ctx.data.status || '';
-      $('#IF_Description').value = ctx.data.description || ctx.data.desc || '';
-      $('#IF_Notes').value = notesFor(ctx.data);
+      const data = await loadItem(type, id);
+      this.ctx.data = data||{};
+      document.getElementById('IF_Title').value = titleFor(type, this.ctx.data);
+      document.getElementById('IF_Status').value = this.ctx.data.status || '';
+      document.getElementById('IF_Description').value = this.ctx.data.description || this.ctx.data.desc || '';
+      document.getElementById('IF_Notes').value = notesFor(this.ctx.data);
 
-      // show correct "new" buttons
       configureCreateButtons(type);
 
-      // open overlay
-      const ov = $('#ItemFolderOverlay'); ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
-    }
-
-    function configureCreateButtons(parentType){
-      const show = (id, flag)=>{ const el = $('#'+id); if(el) el.style.display = flag ? '' : 'none'; };
-      ['IF_New_Risk_Wrap','IF_New_Issue_Wrap','IF_New_Plan_Wrap','IF_New_Question_Wrap','IF_New_Suggestion_Wrap','IF_New_Notification_Wrap']
-        .forEach(id=>show(id,false));
-
-      const allow = CHILDREN_FOR[parentType] || [];
-      if(allow.includes('risk')) show('IF_New_Risk_Wrap', true);
-      if(allow.includes('issue')) show('IF_New_Issue_Wrap', true);
-      if(allow.includes('plan')) show('IF_New_Plan_Wrap', true);
-      if(allow.includes('question')) show('IF_New_Question_Wrap', true);
-      if(allow.includes('suggestion')) show('IF_New_Suggestion_Wrap', true);
-      if(allow.includes('notification')) show('IF_New_Notification_Wrap', true);
-    }
-
-    function collectSummary(){
-      return {
-        title: $('#IF_Title').value.trim(),
-        status: $('#IF_Status').value,
-        description: $('#IF_Description').value.trim(),
-        notes: $('#IF_Notes').value.trim(),
+      const ov=document.getElementById('ItemFolderOverlay');
+      ov.classList.add('open'); ov.setAttribute('aria-hidden','false');
+    },
+    close(){
+      const ov=document.getElementById('ItemFolderOverlay');
+      ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
+    },
+    async save(){
+      if(window.CAN_EDIT!==true) return;
+      const {type, id, data} = this.ctx;
+      const coll = COLL_FOR[type];
+      const up = {
+        title: document.getElementById('IF_Title').value.trim(),
+        status: document.getElementById('IF_Status').value,
+        description: document.getElementById('IF_Description').value.trim(),
+        notes: document.getElementById('IF_Notes').value.trim(),
         updatedAt: Date.now()
       };
-    }
-
-    async function save(){
-      if(!canEdit(ctx.type)) return;
-      const coll = COLL_FOR[ctx.type];
-      const up = collectSummary();
-      // map back field names
-      if(ctx.type==='goal'){ up.goal = up.title; delete up.title; }
-      else if(ctx.type==='question' || ctx.type==='suggestion'){ up.subject = up.title; delete up.title; }
+      if(type==='goal'){ up.goal = up.title; delete up.title; }
+      else if(type==='question' || type==='suggestion'){ up.subject = up.title; delete up.title; }
       try{
-        await window.setDoc(docRef(window.db, coll, ctx.id), { ...(ctx.data||{}), ...up }, { merge:true });
-        close();
+        await setDoc(docRef(coll,id), {...(data||{}), ...up}, {merge:true});
+        this.close();
       }catch(e){ alert('Save failed'); console.warn(e); }
+    },
+    async remove(){
+      if(window.CURRENT_ROLE!=='Admin') return;
+      const {type, id} = this.ctx;
+      if(!confirm(`Delete ${type.toUpperCase()} ${id}?`)) return;
+      try{ await deleteDoc(docRef(COLL_FOR[type], id)); this.close(); }catch(e){ alert('Delete failed'); }
+    }
+  };
+  window.ItemFolder = ItemFolder;
+
+  function configureCreateButtons(parentType){
+    const show = (id, flag)=>{ const el=document.getElementById(id); if(el) el.style.display = flag? '' : 'none'; };
+    ['IF_New_Risk_Wrap','IF_New_Issue_Wrap','IF_New_Plan_Wrap','IF_New_Question_Wrap','IF_New_Suggestion_Wrap','IF_New_Notification_Wrap'].forEach(id=>show(id,false));
+    const allow = CHILDREN_FOR[parentType] || [];
+    if(allow.includes('risk')) show('IF_New_Risk_Wrap', true);
+    if(allow.includes('issue')) show('IF_New_Issue_Wrap', true);
+    if(allow.includes('plan')) show('IF_New_Plan_Wrap', true);
+    if(allow.includes('question')) show('IF_New_Question_Wrap', true);
+    if(allow.includes('suggestion')) show('IF_New_Suggestion_Wrap', true);
+    if(allow.includes('notification')) show('IF_New_Notification_Wrap', true);
+  }
+
+  async function lazyLoadRelated(kind, ctx){
+    const listEl = document.getElementById('IF_List_'+kind.charAt(0).toUpperCase()+kind.slice(1));
+    const countEl = document.getElementById('IF_Count_'+kind.charAt(0).toUpperCase()+kind.slice(1));
+    if(!listEl) return;
+    listEl.innerHTML = '<div class="card"><em>Loading…</em></div>';
+
+    const type = ctx.type, id = ctx.id, data = ctx.data||{};
+    let goalId = (type==='goal')? id : (data.parentGoalId || data.goalId || '');
+    let riskId = (type==='risk')? id : (data.parentRiskId || '');
+    let issueId= (type==='issue')? id : (data.parentIssueId || '');
+
+    const buckets = {
+      risks: [['risks','parentGoalId',goalId]],
+      issues: [['issues','parentGoalId',goalId], ['issues','parentRiskId',riskId]],
+      plans: [['plans','parentGoalId',goalId], ['plans','parentIssueId',issueId]],
+      questions: [['questions','parentGoalId',goalId], ['questions','parentRiskId',riskId], ['questions','parentIssueId',issueId]],
+      suggestions: [['suggestions','parentGoalId',goalId], ['suggestions','parentRiskId',riskId], ['suggestions','parentIssueId',issueId]],
+      notifications: [['notifications','parentGoalId',goalId]]
+    }[kind] || [];
+
+    let items=[];
+    for(const [coll, field, val] of buckets){
+      if(!val) continue;
+      const qy = query(collection(db, coll), where(field,'==', val));
+      const snap = await getDocs(qy);
+      snap.docs.forEach(d=> items.push({id:d.id, ...(d.data())}));
     }
 
-    async function doDelete(){
-      if(!canDelete()) return;
-      if(!confirm('Delete this item?')) return;
-      try{
-        await window.deleteDoc(docRef(window.db, COLL_FOR[ctx.type], ctx.id));
-        close();
-      }catch(e){ alert('Delete failed'); console.warn(e); }
+    if(items.length===0){ listEl.innerHTML = '<div class="card"><em>No items.</em></div>'; }
+    else{
+      listEl.innerHTML = items.map(it=>{
+        const title = it.title || it.name || it.summary || it.subject || it.id;
+        const desc = it.description || it.desc || '';
+        const pid = it.id || '';
+        const type = kind.slice(0,-1);
+        return `<div class="card">
+          <h4>${escapeHtml(title)} <small style="opacity:.6">${escapeHtml(pid)}</small></h4>
+          <p>${escapeHtml(desc).slice(0,180)}</p>
+          <div style="margin-top:8px;display:flex;gap:6px;">
+            <button class="btn" data-open-type="${type}" data-open-id="${pid}">Open</button>
+          </div>
+        </div>`;
+      }).join('');
     }
+    if(countEl) countEl.textContent = String(items.length);
+  }
 
-    function close(){
-      const ov = $('#ItemFolderOverlay'); ov.classList.remove('open'); ov.setAttribute('aria-hidden','true');
-    }
+  function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
+  function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
 
-    // Lazy-load related lists when section opens
-    async function lazyLoadRelated(kind){
-      try{
-        const type = ctx.type, id = ctx.id;
-        let goalId = (type==='goal') ? id : (ctx.data && (ctx.data.parentGoalId || ctx.data.goalId));
-        let riskId = (type==='risk') ? id : (ctx.data && ctx.data.parentRiskId);
-        let issueId = (type==='issue') ? id : (ctx.data && ctx.data.parentIssueId);
-
-        const listEl = $('#IF_List_'+capitalize(kind));
-        const countEl = $('#IF_Count_'+capitalize(kind));
-        if(!listEl) return;
-        listEl.innerHTML = '<div class="card"><em>Loading…</em></div>';
-
-        let qList = [];
-        if(kind==='risks'){ if(goalId) qList.push( window.query(collRef(window.db,'risks'), window.where('parentGoalId','==',goalId)) ); }
-        else if(kind==='issues'){
-          if(goalId) qList.push( window.query(collRef(window.db,'issues'), window.where('parentGoalId','==',goalId)) );
-          if(riskId) qList.push( window.query(collRef(window.db,'issues'), window.where('parentRiskId','==',riskId)) );
-        }else if(kind==='plans'){
-          if(goalId) qList.push( window.query(collRef(window.db,'plans'), window.where('parentGoalId','==',goalId)) );
-          if(issueId) qList.push( window.query(collRef(window.db,'plans'), window.where('parentIssueId','==',issueId)) );
-        }else if(kind==='questions'){
-          if(goalId) qList.push( window.query(collRef(window.db,'questions'), window.where('parentGoalId','==',goalId)) );
-          if(riskId) qList.push( window.query(collRef(window.db,'questions'), window.where('parentRiskId','==',riskId)) );
-          if(issueId) qList.push( window.query(collRef(window.db,'questions'), window.where('parentIssueId','==',issueId)) );
-        }else if(kind==='suggestions'){
-          if(goalId) qList.push( window.query(collRef(window.db,'suggestions'), window.where('parentGoalId','==',goalId)) );
-          if(riskId) qList.push( window.query(collRef(window.db,'suggestions'), window.where('parentRiskId','==',riskId)) );
-          if(issueId) qList.push( window.query(collRef(window.db,'suggestions'), window.where('parentIssueId','==',issueId)) );
-        }else if(kind==='notifications'){
-          if(goalId) qList.push( window.query(collRef(window.db,'notifications'), window.where('parentGoalId','==',goalId)) );
-        }
-
-        let items = [];
-        for(const qy of qList){
-          const snap = await window.getDocs(qy);
-          snap.docs.forEach(d=> items.push({ id:d.id, ...(typeof d.data==='function' ? d.data() : {}) }) );
-        }
-
-        if(items.length===0){
-          listEl.innerHTML = '<div class="card"><em>No items.</em></div>';
-        }else{
-          listEl.innerHTML = items.map(it=>renderMiniCard(it, kind)).join('');
-        }
-        if(countEl) countEl.textContent = String(items.length);
-      }catch(e){
-        console.warn('lazyLoadRelated', kind, e);
-        const listEl = $('#IF_List_'+capitalize(kind));
-        if(listEl) listEl.innerHTML = '<div class="card"><em>Error loading.</em></div>';
+  // Wire overlay events
+  document.addEventListener('click', async (e)=>{
+    const h = e.target.closest && e.target.closest('.acc-h');
+    if(h){ const sec = h.parentElement; if(sec && sec.classList.contains('acc')){
+      const opened = sec.classList.toggle('open');
+      if(opened){
+        const id = sec.id||'';
+        const map = { '_Risks':'risks','_Issues':'issues','_Plans':'plans','_Questions':'questions','_Suggestions':'suggestions','_Notifications':'notifications' };
+        for(const suf in map){ if(id.endsWith(suf)) await lazyLoadRelated(map[suf], ItemFolder.ctx); }
       }
+    }}
+
+    if(e.target && e.target.id==='IF_CloseBtn') ItemFolder.close();
+    if(e.target && e.target.id==='IF_CancelBtn') ItemFolder.close();
+    if(e.target && (e.target.id==='IF_SaveBtn' || e.target.id==='IF_SaveBtn_Footer')) ItemFolder.save();
+    if(e.target && e.target.id==='IF_DeleteBtn') ItemFolder.remove();
+
+    const openBtn = e.target.closest('button[data-open-type]');
+    if(openBtn){
+      ItemFolder.open(openBtn.dataset.openType, openBtn.dataset.openId);
     }
 
-    function renderMiniCard(it, kind){
-      const title = it.title || it.name || it.summary || it.subject || it.id;
-      const desc = it.description || it.desc || '';
-      const pid = it.id || '';
-      const type = kind.slice(0,-1);
-      return `<div class="card">
-        <h4>${escapeHtml(title)} <small style="opacity:.6">${escapeHtml(pid)}</small></h4>
-        <p>${escapeHtml(desc).slice(0,180)}</p>
-        <div style="margin-top:8px;display:flex;gap:6px;">
-          <button class="btn" onclick="ItemFolder.open('${type}','${pid}')">Open</button>
-        </div>
-      </div>`;
+    if(e.target && e.target.id==='IF_AddRiskBtn') createChild('risk');
+    if(e.target && e.target.id==='IF_AddIssueBtn') createChild('issue');
+    if(e.target && e.target.id==='IF_AddPlanBtn') createChild('plan');
+    if(e.target && e.target.id==='IF_AddQuestionBtn') createChild('question');
+    if(e.target && e.target.id==='IF_AddSuggestionBtn') createChild('suggestion');
+    if(e.target && e.target.id==='IF_AddNotificationBtn') createChild('notification');
+  });
+
+  async function createChild(childType){
+    const parentType = ItemFolder.ctx.type;
+    const coll = COLL_FOR[childType];
+    const prefix = PREFIX_FOR[childType];
+    const id = await computeNextId(coll, prefix);
+    const title = prompt(`Title for new ${childType}?`) || '';
+    if(!title.trim()) return;
+
+    const base = { id, title, createdAt: Date.now(), updatedAt: Date.now() };
+    // link parents
+    if(parentType==='goal'){ base.parentGoalId = ItemFolder.ctx.id; }
+    else if(parentType==='risk'){
+      base.parentRiskId = ItemFolder.ctx.id;
+      base.parentGoalId = (ItemFolder.ctx.data && (ItemFolder.ctx.data.parentGoalId || ItemFolder.ctx.data.goalId)) || '';
+    }else if(parentType==='issue'){
+      base.parentIssueId = ItemFolder.ctx.id;
+      base.parentGoalId = (ItemFolder.ctx.data && (ItemFolder.ctx.data.parentGoalId || ItemFolder.ctx.data.goalId)) || '';
+    }else if(parentType==='plan'){
+      base.parentGoalId = (ItemFolder.ctx.data && (ItemFolder.ctx.data.parentGoalId || ItemFolder.ctx.data.goalId)) || '';
     }
 
-    // Create child
-    async function createChild(childType){
-      try{
-        const parentType = ctx.type;
-        const coll = { risk:'risks', issue:'issues', plan:'plans', question:'questions', suggestion:'suggestions', notification:'notifications' }[childType];
-        const prefix = { risk:'R', issue:'I', plan:'P', question:'Q', suggestion:'S', notification:'N' }[childType];
-        const id = await computeNextId(coll, prefix);
-        const title = prompt(`Title for new ${childType}?`) || '';
-        if(!title.trim()) return;
-
-        const base = { id, title, createdAt: Date.now(), updatedAt: Date.now() };
-        // link parents
-        if(parentType==='goal'){ base.parentGoalId = ctx.id; }
-        else if(parentType==='risk'){
-          base.parentRiskId = ctx.id;
-          base.parentGoalId = (ctx.data && (ctx.data.parentGoalId || ctx.data.goalId)) || '';
-        }else if(parentType==='issue'){
-          base.parentIssueId = ctx.id;
-          base.parentGoalId = (ctx.data && (ctx.data.parentGoalId || ctx.data.goalId)) || '';
-        }else if(parentType==='plan'){
-          base.parentGoalId = (ctx.data && (ctx.data.parentGoalId || ctx.data.goalId)) || '';
-        }
-
-        await window.setDoc(docRef(window.db, coll, id), base);
-        // refresh if its section is open
-        const secId = 'IF_Section_' + (coll.charAt(0).toUpperCase()+coll.slice(1));
-        const sec = $('#'+secId);
-        if(sec && sec.classList.contains('open')){
-          const kind = coll; // same naming
-          await lazyLoadRelated(kind);
-        }
-      }catch(e){ alert('Create failed'); console.warn(e); }
-    }
-
-    // Helpers
-    function capitalize(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
-    function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;" }[m])); }
-
-    // Wire events
-    document.addEventListener('click', (e)=>{
-      const h = e.target.closest && e.target.closest('.acc-h');
-      if(h){ const sec = h.parentElement; if(sec && sec.classList.contains('acc')){
-        const opened = sec.classList.toggle('open');
-        if(opened){
-          const id = sec.id || '';
-          if(id.endsWith('_Risks')) lazyLoadRelated('risks');
-          if(id.endsWith('_Issues')) lazyLoadRelated('issues');
-          if(id.endsWith('_Plans')) lazyLoadRelated('plans');
-          if(id.endsWith('_Questions')) lazyLoadRelated('questions');
-          if(id.endsWith('_Suggestions')) lazyLoadRelated('suggestions');
-          if(id.endsWith('_Notifications')) lazyLoadRelated('notifications');
-        }
-      }}
-
-      if(e.target && e.target.id==='IF_AddRiskBtn') createChild('risk');
-      if(e.target && e.target.id==='IF_AddIssueBtn') createChild('issue');
-      if(e.target && e.target.id==='IF_AddPlanBtn') createChild('plan');
-      if(e.target && e.target.id==='IF_AddQuestionBtn') createChild('question');
-      if(e.target && e.target.id==='IF_AddSuggestionBtn') createChild('suggestion');
-      if(e.target && e.target.id==='IF_AddNotificationBtn') createChild('notification');
-
-      if(e.target && e.target.id==='IF_CloseBtn') close();
-      if(e.target && e.target.id==='IF_CancelBtn') close();
-      if(e.target && (e.target.id==='IF_SaveBtn' || e.target.id==='IF_SaveBtn_Footer')) save();
-      if(e.target && e.target.id==='roleSelect'){
-        window.CURRENT_ROLE = e.target.value;
+    try{
+      await setDoc(docRef(coll, id), base);
+      // no auto-refresh of table here; user can reload. Section reload if open:
+      const secMap = {'risk':'Risks','issue':'Issues','plan':'Plans','question':'Questions','suggestion':'Suggestions','notification':'Notifications'};
+      const secId = 'IF_Section_'+secMap[childType];
+      const sec = document.getElementById(secId);
+      if(sec && sec.classList.contains('open')){
+        const kind = secMap[childType].toLowerCase();
+        await lazyLoadRelated(kind, ItemFolder.ctx);
       }
+    }catch(e){ alert('Create failed'); console.warn(e); }
+  }
+
+  // ---- Inject 📁 Actions buttons in every Actions cell ----
+  function injectActions(){
+    const tables = ['Goals','Risks','Issues','Plans','Suggestions','Questions','Notifications']
+      .map(name=>document.getElementById('tbl'+name))
+      .filter(Boolean);
+    tables.forEach(tbl=>{
+      const idxActions = tbl.querySelector('thead tr.labels th:last-child') ? tbl.querySelector('thead tr.labels th:last-child').cellIndex : (tbl.tHead?.rows[0]?.cells.length-1);
+      Array.from(tbl.tBodies[0].rows).forEach(tr=>{
+        const idCell = tr.cells[0]; if(!idCell) return;
+        const id = (idCell.textContent||'').trim().toUpperCase();
+        if(!/^[GRIPQSN]\d+$/.test(id)) return;
+        // determine type by prefix
+        const type = ({'G':'goal','R':'risk','I':'issue','P':'plan','Q':'question','S':'suggestion','N':'notification'})[id[0]];
+        const actCell = tr.cells[idxActions] || tr.lastElementChild;
+        if(!actCell) return;
+        if(actCell.querySelector('.btn-actions')) return;
+        const btn = document.createElement('button');
+        btn.className='btn-actions'; btn.type='button'; btn.title='Open folder'; btn.setAttribute('aria-label','Open folder'); btn.textContent='📁';
+        btn.addEventListener('click', (e)=>{ e.stopPropagation(); ItemFolder.open(type, id); });
+        const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.justifyContent='flex-end'; wrap.style.gap='6px';
+        wrap.appendChild(btn);
+        actCell.appendChild(wrap);
+        tr.addEventListener('dblclick', ()=> ItemFolder.open(type, id));
+      });
     });
+  }
+  const obs = new MutationObserver(()=>injectActions());
+  obs.observe(document.body, {childList:true, subtree:true});
+  window.addEventListener('load', injectActions);
+</script>
 
-    return { open, loadItem };
-  })();
-
-  // ==== Grid augmentation: inject 📁 and hide delete ====
-  (function(){
-    function inferTypeFromId(id){
-      return ({'G':'goal','R':'risk','I':'issue','P':'plan','S':'suggestion','Q':'question'}[(id||'')[0]?.toUpperCase()] ) || null;
-    }
-    function findIdInRow(row){
-      if(row.dataset && row.dataset.id && /^[GRIPSQ]\d+$/i.test(row.dataset.id)) return row.dataset.id.toUpperCase();
-      let cell = row.querySelector('[data-col="id"], .col-id, [data-field="id"]');
-      if(cell){
-        const m = (cell.textContent||'').match(/\b([GRIPSQ]\d{1,8})\b/i);
-        if(m) return m[1].toUpperCase();
-      }
-      const m = (row.innerText||'').match(/\b([GRIPSQ]\d{1,8})\b/i);
-      if(m) return m[1].toUpperCase();
-      return null;
-    }
-    function injectActions(row, id){
-      if(row.querySelector('.btn-actions')) return;
-      const type = inferTypeFromId(id); if(!type) return;
-      const btn = document.createElement('button');
-      btn.className='btn-actions'; btn.type='button'; btn.setAttribute('title','Open folder'); btn.setAttribute('aria-label','Open folder'); btn.textContent='📁';
-      btn.addEventListener('click', (e)=>{ e.stopPropagation(); ItemFolder.open(type, id); });
-      const lastCell = row.querySelector('td:last-child') || row;
-      const wrap = document.createElement('div'); wrap.style.display='flex'; wrap.style.justifyContent='flex-end';
-      wrap.appendChild(btn); lastCell.appendChild(wrap);
-      row.classList.add('folder-injected');
-      row.addEventListener('dblclick', ()=> ItemFolder.open(type,id) );
-    }
-    function hideDelete(){
-      document.querySelectorAll('button, a, [role="button"]').forEach(el=>{
-        const t = (el.textContent||'').trim().toLowerCase();
-        const title = (el.title||'').toLowerCase();
-        if(el.matches('.btn-delete,.delete,.del,[data-action="delete"],.action-delete,[aria-label="Delete"],[aria-label="Verwijderen"]') || /\bdelete\b|\bverwijder/.test(t+title)){
-          el.style.display='none'; el.style.visibility='hidden';
-        }
-      });
-    }
-    function AUGMENT(){
-      hideDelete();
-      document.querySelectorAll('tr, .row, .grid-row').forEach(row=>{
-        if(row.classList && row.classList.contains('folder-injected')) return;
-        const id = findIdInRow(row);
-        if(id) injectActions(row, id);
-      });
-    }
-    document.addEventListener('DOMContentLoaded', AUGMENT);
-    window.addEventListener('load', AUGMENT);
-    setInterval(AUGMENT, 1200); // keep it simple for dynamic grids
-  })();
-
-  // ==== Demo: refresh button (no-op placeholder) ====
-  document.getElementById('btnRefresh').addEventListener('click', ()=>location.reload());
-  </script>
 </body>
 </html>
