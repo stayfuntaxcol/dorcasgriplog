@@ -239,15 +239,16 @@
       if(DEMO){ showInfo('Demo mode: gebruik van in‑memory data. Er wordt niets opgeslagen.'); return; }
       // Allow override via window.FIREBASE_CONFIG
       const fallbackConfig = {
-        apiKey: "YOUR_API_KEY",
-        authDomain: "YOUR_PROJECT.firebaseapp.com",
-        projectId: "YOUR_PROJECT",
-        storageBucket: "YOUR_PROJECT.appspot.com",
-        messagingSenderId: "1234567890",
-        appId: "1:1234567890:web:abcdef"
+          apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+  authDomain: "griplog.firebaseapp.com",
+  projectId: "griplog",
+  storageBucket: "griplog.firebasestorage.app",
+  messagingSenderId: "1097061844582",
+  appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7",
+  measurementId: "G-NPE08326BM"
       };
       const cfg = window.FIREBASE_CONFIG || fallbackConfig;
-      if(cfg.apiKey==='YOUR_API_KEY'){ showErr('Firebase config ontbreekt. Zet window.FIREBASE_CONFIG op je pagina of vul je echte config in.'); return; }
+      if(cfg.apiKey==='AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps'){ showErr('Firebase config ontbreekt. Zet window.FIREBASE_CONFIG op je pagina of vul je echte config in.'); return; }
 
       try{
         const [{ initializeApp }, { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile }, { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc }] = await Promise.all([
