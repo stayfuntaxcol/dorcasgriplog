@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>GRIPlog – Honey Value Chain (Invulkaart + Boomgrafiek)</title>
+<title>GRIPlog – Honey Value Chain (Overlay + Simple Tree)</title>
 <link rel="icon" href="assets/dorcas-logo.svg" />
 <style>
   :root{
@@ -47,23 +47,27 @@
 
   .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
   h2{margin:0;font-size:18px}
-  .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+  .sectionbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin:6px 0}
   .sectionbar .left{display:flex;gap:8px;align-items:center}
-  .sectionbar .right{display:flex;gap:8px;align-items:center}
+  .sectionbar .right{display:flex;gap:8px;align-items:center;justify-content:flex-end}
 
-  table{width:100%;border-collapse:collapse}
+  table{width:100%;border-collapse:collapse;table-layout:auto}
   th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
   th{background:#f9fbfb;text-align:left}
   thead tr.filters th{background:#fff}
+
+  /* Kolombreedtes: ID min, Description max */
+  .col-id{white-space:nowrap;width:1%;font-variant-numeric:tabular-nums}
+  .col-desc{width:99%}
   .row-actions{display:flex;gap:6px}
   .cell-text{white-space:pre-wrap}
 
-  /* Overlay Invulkaart */
+  /* Overlay Invulkaart (Close rechts) */
   #overlay{position:fixed;inset:0;display:none;z-index:1000}
   #overlay.show{display:block}
   .ov-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
   .ov-panel{position:absolute;inset:24px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-  .ov-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc)}
+  .ov-header{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc)}
   .ov-title{font-weight:800;font-size:16px}
   .ov-body{padding:12px 16px;overflow:auto}
   .ov-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
@@ -75,29 +79,14 @@
   .form-row input,.form-row textarea,.form-row select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
   .form-row textarea{min-height:96px;resize:vertical}
 
-  /* Boomgrafiek */
-  .ov-body .ov-split{display:flex;gap:16px}
-  .ov-left{flex:1.3;min-width:0}
-  .ov-right{flex:0.7;min-width:260px;max-width:520px;border-left:1px solid #e5e7eb;padding-left:12px}
-  .tree-wrap{max-height:100%;height:100%;overflow-x:auto;overflow-y:auto;padding-bottom:8px}
-  .tree, .tree ul{list-style:none;margin:0;padding-left:14px;position:relative}
-  .tree ul:before{content:'';position:absolute;left:6px;top:0;bottom:0;border-left:1px solid #d1d5db}
-  .tree li{position:relative;margin:0;padding:8px 0 0 12px}
-  .tree li:before{content:'';position:absolute;left:6px;top:18px;width:10px;border-top:1px solid #d1d5db}
-  .node{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #cbd5e1;border-radius:14px;background:linear-gradient(180deg,#fff,#f9fafb);font-weight:600;font-size:12px;box-shadow:0 2px 6px rgba(0,0,0,.06);transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease;cursor:pointer}
-  .node:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(0,0,0,.08)}
-  .node small{font-weight:500;color:#6b7280;margin-left:6px}
-  .node.goal{background:#eef2ff;border-color:#c7d2fe}
-  .node.risk{background:#fef3c7;border-color:#fde68a}
-  .node.issue{background:#fee2e2;border-color:#fecaca}
-  .node.plan{background:#dcfce7;border-color:#bbf7d0}
-  .node.question{background:#e0f2fe;border-color:#bae6fd}
-  .node.suggestion{background:#f3e8ff;border-color:#e9d5ff}
-  /* Huidig item duidelijk groter */
-  .node.current{transform:scale(1.14);border-color:#6366f1;box-shadow:0 10px 22px rgba(99,102,241,.22);padding:10px 14px;font-size:13px}
-
-  /* Actieknop in rijen */
-  .row-actions .btn{padding:6px 10px}
+  /* Eenvoudige Boomgrafiek (terug naar basic) */
+  .tree-wrap{max-height:100%;height:100%;overflow:auto;padding:8px;border:1px dashed var(--line);border-radius:12px;background:#fff}
+  .tree, .tree ul{list-style:none;margin:0;padding-left:18px;position:relative}
+  .tree ul:before{content:'';position:absolute;left:8px;top:0;bottom:0;border-left:1px solid #d1d5db}
+  .tree li{position:relative;margin:0;padding:6px 0 0 10px}
+  .tree li:before{content:'';position:absolute;left:8px;top:16px;width:8px;border-top:1px solid #d1d5db}
+  .node{display:inline-block;padding:6px 8px;border:1px solid #cbd5e1;border-radius:10px;background:#ffffff;font-size:12px}
+  .node small{color:#6b7280;margin-left:6px}
 </style>
 </head>
 <body>
@@ -106,7 +95,7 @@
       <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
       <div>
         <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
+        <div class="sub">Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
       </div>
     </div>
     <div class="header-right">
@@ -153,22 +142,21 @@
   <section id="goals" class="active" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Goals</h2>
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right">
           <button class="btn" id="addGoalBtn" disabled>+ New Goal</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblGoals">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Goal (SMART)</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Goal (SMART)</th>
             <th style="width:160px">Owner</th>
             <th style="width:130px">Start</th>
             <th style="width:130px">End</th>
             <th style="width:140px">Status</th>
-            <th>DateStamp</th>
+            <th style="width:140px">DateStamp</th>
             <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
@@ -191,22 +179,21 @@
   <section id="risks" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Risks</h2>
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right">
           <button class="btn" id="addRiskBtn" disabled>+ New Risk</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblRisks">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:160px">Owner</th>
             <th style="width:120px">Likelihood</th>
             <th style="width:120px">Impact</th>
             <th style="width:140px">Status</th>
-            <th>DateStamp</th>
+            <th style="width:140px">DateStamp</th>
             <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
@@ -229,21 +216,20 @@
   <section id="issues" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Issues</h2>
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right">
           <button class="btn" id="addIssueBtn" disabled>+ New Issue</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblIssues">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:160px">Owner</th>
             <th style="width:120px">Severity</th>
             <th style="width:140px">Status</th>
-            <th>DateStamp</th>
+            <th style="width:140px">DateStamp</th>
             <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
@@ -265,32 +251,28 @@
   <section id="plans" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Plans</h2>
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right">
           <button class="btn" id="addPlanBtn" disabled>+ New Plan</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblPlans">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:160px">Owner</th>
-            <th>Goal Link</th>
             <th style="width:130px">Start</th>
             <th style="width:130px">End</th>
             <th style="width:140px">Status</th>
-            <th>DateStamp</th>
+            <th style="width:140px">DateStamp</th>
             <th style="width:110px">Actions</th>
           </tr>
           <tr class="filters">
             <th></th>
             <th><input type="text" id="pSearch" class="input" placeholder="search description" /></th>
             <th><select id="pOwner" class="input"></select></th>
-            <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
-            <th></th>
-            <th></th>
+            <th></th><th></th>
             <th><select id="pStatus" class="input"></select></th>
             <th></th>
             <th><button id="pReset" class="btn">Reset</button></th>
@@ -301,21 +283,20 @@
     </div>
   </section>
 
-  <!-- Questions (zonder user-label + zonder Comments-kolom) -->
+  <!-- Questions -->
   <section id="questions" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Questions</h2>
+        <div class="left"><h2>Questions</h2></div>
+        <div class="right">
           <button class="btn" id="addQuestionBtn">+ New Question</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblQuestions">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:150px">Subject</th>
             <th style="width:160px">Owner</th>
             <th style="width:130px">Submitted</th>
@@ -343,22 +324,20 @@
     </div>
   </section>
 
-  <!-- Suggestions (zonder user-label + zonder Comments-kolom) -->
+  <!-- Suggestions (Subject kolom verwijderd) -->
   <section id="suggestions" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
-        <div class="left">
-          <h2>Suggestions</h2>
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right">
           <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
         </div>
-        <div class="right"></div>
       </div>
       <table id="tblSuggestions">
         <thead>
           <tr class="labels">
-            <th style="width:70px">ID</th>
-            <th>Description</th>
-            <th style="width:150px">Subject</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:160px">Owner</th>
             <th style="width:130px">Submitted</th>
             <th style="width:130px">Status</th>
@@ -370,7 +349,6 @@
           <tr class="filters">
             <th></th>
             <th><input type="text" id="sSearch" class="input" placeholder="search description" /></th>
-            <th><select id="sSubject" class="input"></select></th>
             <th><select id="sOwner" class="input"></select></th>
             <th><input type="date" id="sSubmitted" class="input" /></th>
             <th><select id="sStatus" class="input"></select></th>
@@ -385,19 +363,21 @@
     </div>
   </section>
 
-  <!-- Notifications (zonder user-label + zonder Comments-kolom) -->
+  <!-- Notifications (Subject kolom verwijderd) -->
   <section id="notifications" role="tabpanel">
     <div class="card">
       <div class="sectionbar">
         <div class="left"><h2>Notifications</h2></div>
-        <div class="right"></div>
+        <div class="right">
+          <!-- Op verzoek geen creation flow hier (beperken van DB); knop kan later geactiveerd worden -->
+          <!-- <button class="btn" id="addNoteBtn" disabled>+ New Notification</button> -->
+        </div>
       </div>
       <table id="tblNotifications">
         <thead>
           <tr class="labels">
-            <th style="width:80px">ID</th>
-            <th>Description</th>
-            <th style="width:160px">Subject</th>
+            <th class="col-id">ID</th>
+            <th class="col-desc">Description</th>
             <th style="width:140px">Status</th>
             <th style="width:160px">Role</th>
             <th style="width:140px">Date</th>
@@ -406,7 +386,6 @@
           <tr class="filters">
             <th><input type="text" id="nId" class="input" placeholder="G1/R2/..."/></th>
             <th><input type="text" id="nSearch" class="input" placeholder="search description"/></th>
-            <th><select id="nSubject" class="input"></select></th>
             <th><select id="nStatus" class="input"></select></th>
             <th><select id="nRole" class="input"></select></th>
             <th><input type="date" id="nFrom" class="input"/> – <input type="date" id="nTo" class="input"/></th>
@@ -430,14 +409,10 @@
         <div><button class="btn" id="ovClose">Close</button></div>
       </div>
       <div class="ov-body">
-        <div class="ov-split">
-          <div class="ov-left">
-            <div class="block" id="ovFormBlock">
-              <!-- dynamic form -->
-            </div>
-          </div>
-          <div class="ov-right">
-            <h4>Boomgrafiek</h4>
+        <div class="ov-grid">
+          <div class="block" id="ovFormBlock"><!-- dynamic form --></div>
+          <div class="block">
+            <h4 style="margin:0 0 8px">Boomgrafiek</h4>
             <div class="tree-wrap"><div id="tree" class="tree"></div></div>
           </div>
         </div>
@@ -475,15 +450,10 @@
   const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
   $('#yr').textContent = new Date().getFullYear();
 
-  // ---------- Loginvelden onthouden (localStorage) ----------
-  const LS = {
-    set:(k,v)=>localStorage.setItem(k,v),
-    get:(k)=>localStorage.getItem(k)||'',
-  };
-  const loginFields = ['fullName','email','org','role'];
-  loginFields.forEach(id=>{
-    const el = $('#'+id);
-    const val = LS.get('login.'+id);
+  // ---------- Loginvelden onthouden ----------
+  const LS = { set:(k,v)=>localStorage.setItem(k,v), get:(k)=>localStorage.getItem(k)||'' };
+  ['fullName','email','org','role'].forEach(id=>{
+    const el = $('#'+id); const val = LS.get('login.'+id);
     if(val) el.value = val;
     el.addEventListener('change',()=>LS.set('login.'+id, el.value));
     el.addEventListener('blur',()=>LS.set('login.'+id, el.value));
@@ -495,10 +465,9 @@
   function setEditMode(can){
     CAN_EDIT=!!can;
     $('#btnSaveAll').disabled=!CAN_EDIT;
-    $('#addGoalBtn').disabled=!CAN_EDIT;
-    $('#addRiskBtn').disabled=!CAN_EDIT;
-    $('#addIssueBtn').disabled=!CAN_EDIT;
-    $('#addPlanBtn').disabled=!CAN_EDIT;
+    ['addGoalBtn','addRiskBtn','addIssueBtn','addPlanBtn','addSuggestionBtn','addQuestionBtn'].forEach(id=>{
+      const el=$('#'+id); if(el) el.disabled=!CAN_EDIT;
+    });
     renderAll();
   }
 
@@ -565,20 +534,12 @@
 
   // ---------- Data + helpers ----------
   let DATA_READY=false;
-  function disableNewButtons(disabled=true){
-    ['addGoalBtn','addRiskBtn','addIssueBtn','addPlanBtn'].forEach(id=>{
-      const el = document.getElementById(id); if(el) el.disabled = disabled;
-    });
-  }
-  disableNewButtons(true);
-
   const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator","Partner/Sponsor"];
   const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
   const tri=["","Low","Medium","High"];
   const suggestionSubjects=["","New Goal","New Risk","New Issue","New Plan"];
   const suggestionStatus=["","Approved","Pending","Dismissed"];
   const suggestionReviewer=["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
-  const noteSubjects=["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
   const noteStatus=["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
   const noteRoles=["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
@@ -606,12 +567,13 @@
     cache.plans  = p.docs.map(d=>({id:d.id,...d.data()}));
     cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
     cache.questions   = q.docs.map(d=>({id:d.id,...d.data()}));
+    // notifications load blijft uitgeschakeld (bewust beperkt)
     buildFilterOptions();
     renderAll();
-    DATA_READY=true; disableNewButtons(false);
+    DATA_READY=true;
   }
   $('#btnLoad').onclick=loadAll;
-  $('#btnSaveAll').onclick=()=>alert('Tabel-massasave niet nodig; gebruik de Invulkaart (Save).');
+  $('#btnSaveAll').onclick=()=>alert('Gebruik de Overlay Invulkaart (Save) om items op te slaan.');
 
   function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
   function buildFilterOptions(){
@@ -620,47 +582,51 @@
     fillSelect('#iOwner', owners, 'Owner'); fillSelect('#iSeverity', tri, 'Severity'); fillSelect('#iStatus', statuses.issues, 'Status');
     fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
 
-    fillSelect('#sSubject', suggestionSubjects, 'Subject');
-    fillSelect('#sOwner', owners, 'Owner');
-    fillSelect('#sStatus', suggestionStatus, 'Status');
-    fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
-
+    // Questions filters (heeft Subject)
     fillSelect('#qSubject', suggestionSubjects, 'Subject');
     fillSelect('#qOwner', owners, 'Owner');
     fillSelect('#qStatus', suggestionStatus, 'Status');
-    fillSelect('#qReviewerRole', suggestionReviewer, 'Reviewer Role');
+    fillSelect('#qReviewerRole', suggestionReviewer, 'Reviewer');
 
-    fillSelect('#nSubject', noteSubjects, 'Subject');
+    // Suggestions filters (zonder Subject)
+    fillSelect('#sOwner', owners, 'Owner');
+    fillSelect('#sStatus', suggestionStatus, 'Status');
+    fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer');
+
+    // Notifications filters (zonder Subject)
     fillSelect('#nStatus', noteStatus, 'Status');
     fillSelect('#nRole', noteRoles, 'Role');
 
-    // filters event
+    // filter events
     ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
     ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
     ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
-    ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
-    ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
+    ['pOwner','pStatus','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
+    ['sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
     ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderQuestions));
-    ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(id=> $('#'+id)?.addEventListener('input', ()=>renderNotifications(cache.notifications)));
+    ['nId','nSearch','nStatus','nRole','nFrom','nTo'].forEach(id=> $('#'+id)?.addEventListener('input', ()=>renderNotifications(cache.notifications)));
 
+    // resets
     $('#gReset')?.addEventListener('click', ()=>{ ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(i=>$('#'+i).value=''); renderGoals(); });
     $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
     $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
-    $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pGoalId','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
-    $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
+    $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
+    $('#sReset')?.addEventListener('click', ()=>{ ['sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
     $('#qReset')?.addEventListener('click', ()=>{ ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
-    $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
+    $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
   }
 
   // ---------- Renderers ----------
   function actionsCell(coll, id){ return `<div class="row-actions"><button class="btn" data-menu="${coll}" data-id="${id}">Menu</button></div>`; }
+
   function rowGoal(r){
     const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
     const statusSel= `<select disabled>${statuses.goals.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
     const start = `<input type="date" value="${r.start||''}" disabled />`;
     const end   = `<input type="date" value="${r.end||''}" disabled />`;
-    return `<td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.goal||'')}</div></td>
+    return `
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.goal||'')}</div></td>
       <td>${ownerSel}</td>
       <td>${start}</td>
       <td>${end}</td>
@@ -673,8 +639,9 @@
     const likeSel  = `<select disabled>${tri.map(v=>`<option ${v===(r.likelihood||'')?'selected':''}>${v}</option>`).join('')}</select>`;
     const impSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.impact||'')?'selected':''}>${v}</option>`).join('')}</select>`;
     const statusSel= `<select disabled>${statuses.risks.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
-    return `<td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.description||'')}</div></td>
+    return `
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.description||'')}</div></td>
       <td>${ownerSel}</td>
       <td>${likeSel}</td>
       <td>${impSel}</td>
@@ -686,8 +653,9 @@
     const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
     const sevSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.severity||'')?'selected':''}>${v}</option>`).join('')}</select>`;
     const statusSel= `<select disabled>${statuses.issues.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
-    return `<td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.description||'')}</div></td>
+    return `
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.description||'')}</div></td>
       <td>${ownerSel}</td>
       <td>${sevSel}</td>
       <td>${statusSel}</td>
@@ -699,10 +667,10 @@
     const statusSel= `<select disabled>${statuses.plans.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
     const start = `<input type="date" value="${r.start||''}" disabled />`;
     const end   = `<input type="date" value="${r.end||''}" disabled />`;
-    return `<td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.description||'')}</div></td>
+    return `
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.description||'')}</div></td>
       <td>${ownerSel}</td>
-      <td><input type="text" value="${(r.goalId||'')}" disabled /></td>
       <td>${start}</td>
       <td>${end}</td>
       <td>${statusSel}</td>
@@ -710,7 +678,6 @@
       <td>${actionsCell('plans', r.id)}</td>`;
   }
   function rowSuggestion(r){
-    const subjectSel = `<select disabled>${suggestionSubjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
     const ownerSel   = `<select disabled>${owners.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
     const statusSel  = `<select disabled>${suggestionStatus.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
     const revRoleSel = `<select disabled>${suggestionReviewer.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
@@ -720,9 +687,8 @@
     const starBtn = `<button class="btn ghost" data-star-sug ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
     const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
     return `
-      <td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.description||'')}</div></td>
-      <td>${subjectSel}</td>
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.description||'')}</div></td>
       <td>${ownerSel}</td>
       <td>${subDate}</td>
       <td>${statusSel}</td>
@@ -742,8 +708,8 @@
     const starBtn = `<button class="btn ghost" data-star-q ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
     const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
     return `
-      <td>${r.id||''}</td>
-      <td><div class="cell-text">${(r.description||'')}</div></td>
+      <td class="col-id">${r.id||''}</td>
+      <td class="col-desc"><div class="cell-text">${(r.description||'')}</div></td>
       <td>${subjectSel}</td>
       <td>${ownerSel}</td>
       <td>${subDate}</td>
@@ -779,17 +745,15 @@
   function renderPlans(){ const tb=$('#tblPlans tbody'); tb.innerHTML=''; let rows=[...cache.plans];
     const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
     const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
-    const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
     const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
     rows.sort(idSort); rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tb.appendChild(tr); });
   }
   function renderSuggestions(){
     const tb=$('#tblSuggestions tbody'); tb.innerHTML=''; let rows=[...cache.suggestions];
     const q=$('#sSearch').value?.toLowerCase()||'';
-    const fSub=$('#sSubject').value; const fOwner=$('#sOwner').value; const fSubm=$('#sSubmitted').value;
+    const fOwner=$('#sOwner').value; const fSubm=$('#sSubmitted').value;
     const fStatus=$('#sStatus').value; const fRevRole=$('#sReviewerRole').value; const fRevDate=$('#sReviewed').value;
     if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
-    if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
     if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
     if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
     if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
@@ -815,11 +779,10 @@
     const tb=$('#tblNotifications tbody'); tb.innerHTML='';
     let list=[...rows];
     const idf=$('#nId').value?.trim(); const q=$('#nSearch').value?.toLowerCase()||'';
-    const sub=$('#nSubject').value; const st=$('#nStatus').value; const rl=$('#nRole').value;
+    const st=$('#nStatus').value; const rl=$('#nRole').value;
     const from=$('#nFrom').value; const to=$('#nTo').value;
     if(idf) list=list.filter(r=> (r.id||'').toLowerCase().includes(idf.toLowerCase()));
     if(q) list=list.filter(r=> ((r.description||'')).toLowerCase().includes(q));
-    if(sub) list=list.filter(r=> (r.subject||'')===sub);
     if(st) list=list.filter(r=> (r.status||'')===st);
     if(rl) list=list.filter(r=> (r.role||'')===rl);
     if(from) list=list.filter(r=> (r.date||'')>=from);
@@ -829,9 +792,8 @@
       const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
       const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn delete" data-del-note>Del</button></div>` : '—';
       tr.innerHTML = `
-        <td>${r.id||''}</td>
-        <td>${r.description||''}</td>
-        <td>${r.subject||''}</td>
+        <td class="col-id">${r.id||''}</td>
+        <td class="col-desc">${r.description||''}</td>
         <td>${r.status||''}</td>
         <td>${r.role||''}</td>
         <td>${r.date||''}</td>
@@ -839,10 +801,7 @@
       tb.appendChild(tr);
     });
   }
-
-  function renderAll(){
-    renderGoals(); renderRisks(); renderIssues(); renderPlans(); renderSuggestions(); renderQuestions(); renderNotifications(cache.notifications||[]);
-  }
+  function renderAll(){ renderGoals(); renderRisks(); renderIssues(); renderPlans(); renderSuggestions(); renderQuestions(); renderNotifications(cache.notifications||[]); }
 
   // Tabs
   $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
@@ -850,7 +809,7 @@
     const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
   }));
 
-  // ---------- New Item → Overlay (i.p.v. prompt pop-ups) ----------
+  // ---------- Overlay (NEW/EDIT) ----------
   const prefixByColl = {goals:'G', risks:'R', issues:'I', plans:'P', suggestions:'S', questions:'Q'};
   function nextIdFrom(cacheArr, prefix){ let m=0; cacheArr.forEach(x=>{ const n=getNum(x.id); if(n>m) m=n; }); return prefix+(m+1); }
 
@@ -903,34 +862,22 @@
     const delNoteBtn = e.target.closest('[data-del-note]');
     if(delNoteBtn){
       if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
-      // notifications opslag is uitgeschakeld in deze versie
-      alert('Notifications storage is uitgeschakeld.');
+      alert('Notifications storage is uitgeschakeld in deze versie.');
     }
   });
 
-  const overlay = {
-    el: $('#overlay'),
-    mode: 'new',
-    coll: '',
-    id: '',
-    currentDoc: null
-  };
+  const overlay = { el: $('#overlay'), mode: 'new', coll: '', id: '', currentDoc: null };
 
   function openOverlay(coll, mode='new', id=null){
     overlay.mode = mode; overlay.coll = coll; overlay.id = id||'';
     const titleMap = {goals:'Goal',risks:'Risk',issues:'Issue',plans:'Plan',suggestions:'Suggestion',questions:'Question'};
     $('#ovTitle').textContent = (mode==='new' ? 'New ' : 'Edit ') + titleMap[coll] + (id? ' '+id : '');
-    // Bouw form
-    const formHtml = buildForm(coll, mode);
-    $('#ovFormBlock').innerHTML = formHtml;
-    // standaard EDIT aan voor editors
-    enableForm(CAN_EDIT);
-    // Knoppen-visibility
+    $('#ovFormBlock').innerHTML = buildForm(coll, mode);
+    enableForm(CAN_EDIT); // edit direct aan voor editors
     $('#ovEdit').style.display = CAN_EDIT? 'none' : 'inline-block';
     $('#ovDelete').style.display = (mode==='edit' && CAN_EDIT)? 'inline-block' : 'none';
     $('#ovHint').textContent = CAN_EDIT ? 'Je kunt direct bewerken en opslaan.' : 'Lezen alleen. Log in met edit-rechten om te bewerken.';
-    // Boomgrafiek opbouwen en huidig ID highlighten
-    renderTree(overlay.coll, overlay.id || $('#fld_id')?.value || '');
+    renderTree(coll, overlay.id || $('#fld_id')?.value || '');
     overlay.el.classList.add('show');
   }
   function closeOverlay(){ overlay.el.classList.remove('show'); overlay.currentDoc=null; }
@@ -943,14 +890,14 @@
     if(isNew){
       const prefix = prefixByColl[coll];
       const nextId = nextIdFrom(cache[coll], prefix);
+      // DateStamp voor NEW Goal/Risk/Plan (en beschikbaar voor overige types)
       data = { id: nextId, dateStamp: todayISO() };
     }else{
-      const docData = (cache[coll]||[]).find(x=>String(x.id)===String(overlay.id)) || {};
+      const docData = (cache[coll]||").find(x=>String(x.id)===String(overlay.id)) || {};
       data = {...docData};
     }
     overlay.currentDoc = {...data};
 
-    // velden per type
     const commonTop = `
       <div class="form-row"><label>ID</label><input id="fld_id" value="${data.id||''}" disabled /></div>
       <div class="form-row"><label>DateStamp (string)</label><input id="fld_dateStamp" value="${data.dateStamp||todayISO()}" /></div>
@@ -959,43 +906,43 @@
     if(coll==='goals'){
       return `
         ${commonTop}
-        <div class="form-row"><label>Goal (SMART)</label><textarea id="fld_goal">${data.goal||''}</textarea></div>
+        <div class="form-row"><label>Goal (SMART)</label><textarea id="fld_goal" class="col-desc">${data.goal||''}</textarea></div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         <div class="form-row"><label>Start</label><input type="date" id="fld_start" value="${data.start||''}"/></div>
         <div class="form-row"><label>End</label><input type="date" id="fld_end" value="${data.end||''}"/></div>
         <div class="form-row"><label>Status</label>${selectHtml('fld_status', statuses.goals, data.status||'')}</div>
-        <div class="form-row"><label>Notes</label><textarea id="fld_notes">${data.notes||''}</textarea></div>
+        <div class="form-row"><label>Notes</label><textarea id="fld_notes" class="col-desc">${data.notes||''}</textarea></div>
       `;
     }
     if(coll==='risks'){
       return `
         ${commonTop}
-        <div class="form-row"><label>Description</label><textarea id="fld_description">${data.description||''}</textarea></div>
+        <div class="form-row"><label>Description</label><textarea id="fld_description" class="col-desc">${data.description||''}</textarea></div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         <div class="form-row"><label>Likelihood</label>${selectHtml('fld_likelihood', tri, data.likelihood||'')}</div>
         <div class="form-row"><label>Impact</label>${selectHtml('fld_impact', tri, data.impact||'')}</div>
         <div class="form-row"><label>Status</label>${selectHtml('fld_status', statuses.risks, data.status||'')}</div>
-        <div class="form-row"><label>Mitigation</label><textarea id="fld_mitigation">${data.mitigation||''}</textarea></div>
+        <div class="form-row"><label>Mitigation</label><textarea id="fld_mitigation" class="col-desc">${data.mitigation||''}</textarea></div>
       `;
     }
     if(coll==='issues'){
       return `
         ${commonTop}
-        <div class="form-row"><label>Description</label><textarea id="fld_description">${data.description||''}</textarea></div>
+        <div class="form-row"><label>Description</label><textarea id="fld_description" class="col-desc">${data.description||''}</textarea></div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         <div class="form-row"><label>Severity</label>${selectHtml('fld_severity', tri, data.severity||'')}</div>
         <div class="form-row"><label>Status</label>${selectHtml('fld_status', statuses.issues, data.status||'')}</div>
-        <div class="form-row"><label>Resolution</label><textarea id="fld_resolution">${data.resolution||''}</textarea></div>
+        <div class="form-row"><label>Resolution</label><textarea id="fld_resolution" class="col-desc">${data.resolution||''}</textarea></div>
       `;
     }
     if(coll==='plans'){
-      // LET OP: bij New Plan GEEN Goal Link veld tonen (op verzoek)
+      /* NEW: Goal Link volledig weglaten bij NEW; bij EDIT blijft het zichtbaar */
       const goalLinkBlock = (mode==='edit')
         ? `<div class="form-row"><label>Goal Link</label><input id="fld_goalId" value="${data.goalId||''}"/></div>`
         : '';
       return `
         ${commonTop}
-        <div class="form-row"><label>Description</label><textarea id="fld_description">${data.description||''}</textarea></div>
+        <div class="form-row"><label>Description</label><textarea id="fld_description" class="col-desc">${data.description||''}</textarea></div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         ${goalLinkBlock}
         <div class="form-row"><label>Start</label><input type="date" id="fld_start" value="${data.start||''}"/></div>
@@ -1006,7 +953,7 @@
     if(coll==='suggestions'){
       return `
         ${commonTop}
-        <div class="form-row"><label>Description</label><textarea id="fld_description">${data.description||''}</textarea></div>
+        <div class="form-row"><label>Description</label><textarea id="fld_description" class="col-desc">${data.description||''}</textarea></div>
         <div class="form-row"><label>Subject</label>${selectHtml('fld_subject', suggestionSubjects, data.subject||'')}</div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         <div class="form-row"><label>Submitted</label><input type="date" id="fld_submitted" value="${data.submitted||todayISO()}"/></div>
@@ -1018,7 +965,7 @@
     if(coll==='questions'){
       return `
         ${commonTop}
-        <div class="form-row"><label>Description</label><textarea id="fld_description">${data.description||''}</textarea></div>
+        <div class="form-row"><label>Description</label><textarea id="fld_description" class="col-desc">${data.description||''}</textarea></div>
         <div class="form-row"><label>Subject</label>${selectHtml('fld_subject', suggestionSubjects, data.subject||'')}</div>
         <div class="form-row"><label>Owner</label>${selectHtml('fld_owner', owners, data.owner||'')}</div>
         <div class="form-row"><label>Submitted</label><input type="date" id="fld_submitted" value="${data.submitted||todayISO()}"/></div>
@@ -1036,7 +983,7 @@
 
   function enableForm(on){
     $('#ovFormBlock').querySelectorAll('input,textarea,select').forEach(el=>{
-      if(el.id==='fld_id') return; // id altijd locken
+      if(el.id==='fld_id') return; // id lock
       el.disabled = !on;
     });
     $('#ovSave').disabled = !on;
@@ -1049,45 +996,24 @@
     const base = { id, dateStamp: $('#fld_dateStamp').value.trim() };
     let docData = {};
     if(c==='goals'){
-      docData = {...base,
-        goal:$('#fld_goal').value, owner:$('#fld_owner').value, start:$('#fld_start').value, end:$('#fld_end').value,
-        status:$('#fld_status').value, notes:$('#fld_notes').value
-      };
+      docData = {...base, goal:$('#fld_goal').value, owner:$('#fld_owner').value, start:$('#fld_start').value, end:$('#fld_end').value, status:$('#fld_status').value, notes:$('#fld_notes').value };
     }else if(c==='risks'){
-      docData = {...base,
-        description:$('#fld_description').value, owner:$('#fld_owner').value,
-        likelihood:$('#fld_likelihood').value, impact:$('#fld_impact').value,
-        status:$('#fld_status').value, mitigation:$('#fld_mitigation').value
-      };
+      docData = {...base, description:$('#fld_description').value, owner:$('#fld_owner').value, likelihood:$('#fld_likelihood').value, impact:$('#fld_impact').value, status:$('#fld_status').value, mitigation:$('#fld_mitigation').value };
     }else if(c==='issues'){
-      docData = {...base,
-        description:$('#fld_description').value, owner:$('#fld_owner').value,
-        severity:$('#fld_severity').value, status:$('#fld_status').value, resolution:$('#fld_resolution').value
-      };
+      docData = {...base, description:$('#fld_description').value, owner:$('#fld_owner').value, severity:$('#fld_severity').value, status:$('#fld_status').value, resolution:$('#fld_resolution').value };
     }else if(c==='plans'){
-      docData = {...base,
-        description:$('#fld_description').value, owner:$('#fld_owner').value,
-        goalId: ($('#fld_goalId')?.value || ''), start:$('#fld_start').value, end:$('#fld_end').value, status:$('#fld_status').value
-      };
+      docData = {...base, description:$('#fld_description').value, owner:$('#fld_owner').value, goalId: ($('#fld_goalId')?.value || ''), start:$('#fld_start').value, end:$('#fld_end').value, status:$('#fld_status').value };
     }else if(c==='suggestions' || c==='questions'){
-      docData = {...base,
-        description:$('#fld_description').value, subject:$('#fld_subject').value, owner:$('#fld_owner').value,
-        submitted:$('#fld_submitted').value, status:$('#fld_status').value,
-        reviewerRole:$('#fld_reviewerRole').value, reviewed:$('#fld_reviewed').value,
-        stars: overlay.currentDoc?.stars||0, starredBy: overlay.currentDoc?.starredBy||{}
-      };
+      docData = {...base, description:$('#fld_description').value, subject:$('#fld_subject').value, owner:$('#fld_owner').value, submitted:$('#fld_submitted').value, status:$('#fld_status').value, reviewerRole:$('#fld_reviewerRole').value, reviewed:$('#fld_reviewed').value, stars: overlay.currentDoc?.stars||0, starredBy: overlay.currentDoc?.starredBy||{} };
     }
     await setDoc(doc(db, c, id), docData);
-    // cache updaten
-    const arr = cache[c]||[];
-    const ix = arr.findIndex(x=>String(x.id)===String(id));
+    const arr = cache[c]||[]; const ix = arr.findIndex(x=>String(x.id)===String(id));
     if(ix>=0) arr[ix]=docData; else arr.push(docData);
     renderTabForColl(c);
     renderTree(c, id);
     alert('Saved.');
     overlay.mode='edit'; overlay.id=id; overlay.currentDoc=docData;
     $('#ovTitle').textContent = 'Edit ' + ({goals:'Goal',risks:'Risk',issues:'Issue',plans:'Plan',suggestions:'Suggestion',questions:'Question'})[c] + ' ' + id;
-    // Na save blijft edit aan
     enableForm(true);
     $('#ovDelete').style.display = CAN_EDIT? 'inline-block' : 'none';
   }
@@ -1111,27 +1037,24 @@
     else if(c==='questions') renderQuestions();
   }
 
-  // ---------- Boomgrafiek ----------
+  // ---------- Simple Boomgrafiek (terug naar basis) ----------
   function renderTree(currentColl='', currentId=''){
     const t = $('#tree'); if(!t) return;
     const groups = [
-      {key:'goals', label:'Goals', cls:'goal'},
-      {key:'risks', label:'Risks', cls:'risk'},
-      {key:'issues',label:'Issues',cls:'issue'},
-      {key:'plans', label:'Plans', cls:'plan'},
-      {key:'questions',label:'Questions',cls:'question'},
-      {key:'suggestions',label:'Suggestions',cls:'suggestion'},
+      {key:'goals', label:'Goals'},
+      {key:'risks', label:'Risks'},
+      {key:'issues',label:'Issues'},
+      {key:'plans', label:'Plans'},
+      {key:'questions',label:'Questions'},
+      {key:'suggestions',label:'Suggestions'},
     ];
     t.innerHTML = groups.map(g=>{
       const rows = (cache[g.key]||[]).slice().sort(idSort).map(r=>{
-        const isCurrent = (String(r.id)===String(currentId));
         const meta = (g.key==='plans' && r.goalId)? `<small>→ ${r.goalId}</small>` : (r.dateStamp? `<small>${r.dateStamp}</small>` : '');
-        return `<li><span class="node ${g.cls} ${isCurrent?'current':''}" data-jump="${g.key}" data-id="${r.id}"><span class="id">${r.id}</span> ${meta}</span></li>`;
+        return `<li><span class="node" data-jump="${g.key}" data-id="${r.id}"><span class="id">${r.id}</span> ${meta}</span></li>`;
       }).join('');
       return `<ul><li><strong>${g.label}</strong><ul>${rows||''}</ul></li></ul>`;
     }).join('');
-
-    // klik op node → open overlay edit
     t.querySelectorAll('.node').forEach(n=>{
       n.addEventListener('click',()=>{
         const c=n.getAttribute('data-jump'), id=n.getAttribute('data-id');
@@ -1140,34 +1063,12 @@
     });
   }
 
-  // ---------- Nav helpers ----------
+  // ---------- Delegation ----------
   document.addEventListener('click', (e)=>{
-    const tabBtn = e.target.closest('nav.tabs button'); if(tabBtn) return;
+    const btn = e.target.closest('button[data-menu]');
+    if(!btn) return;
+    openOverlay(btn.dataset.menu, 'edit', btn.dataset.id);
   });
-
-  // ---------- Actions in tables open overlay ----------
-  function actionsDelegation(){
-    document.addEventListener('click', (e)=>{
-      const btn = e.target.closest('button[data-menu]');
-      if(!btn) return;
-      const coll = btn.dataset.menu; const id = btn.dataset.id;
-      openOverlay(coll, 'edit', id);
-    });
-  }
-  actionsDelegation();
-
-  // ---------- Open vanuit URL hash (optioneel) ----------
-  function openFromHash(){
-    if(location.hash && DATA_READY){
-      const m = location.hash.match(/^#(G|R|I|P|Q|S)(\d+)/i);
-      if(m){
-        const map = {G:'goals',R:'risks',I:'issues',P:'plans',Q:'questions',S:'suggestions'};
-        const coll = map[m[1].toUpperCase()]; const id = m[1].toUpperCase()+m[2];
-        if(coll) openOverlay(coll,'edit',id);
-      }
-    }
-  }
-  window.addEventListener('hashchange', openFromHash);
 
 </script>
 </body>
