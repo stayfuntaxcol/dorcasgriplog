@@ -889,7 +889,7 @@
     let data = {};
     if(isNew){
       const prefix = prefixByColl[coll];
-      const nextId = nextIdFrom(cache[coll], prefix);
+      const nextId = nextIdFrom(cache[coll"], prefix);
       // DateStamp voor NEW Goal/Risk/Plan (en beschikbaar voor overige types)
       data = { id: nextId, dateStamp: todayISO() };
     }else{
