@@ -1,17 +1,4 @@
 <!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GRIPlog – Honey Value Chain (Kitui) • Overlay Invulkaart + Fixes</title>
-  <link rel="icon" href="assets/dorcas-logo.svg" />
-  <style>
-    :root{
-      --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
-      --brand:#0ea5a3; --danger:#ef4444; --ok:#10b981;
-      --gray-50:#f9fafb; --gray-100:#f3f4f6; --gr
-
-<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />
