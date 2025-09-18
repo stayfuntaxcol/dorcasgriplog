@@ -1,0 +1,1681 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+
+    header{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:10}
+    header img{height:34px;width:auto}
+    header .title{font-weight:800;font-size:18px}
+    header .sub{color:var(--muted);font-size:12px}
+    .header-left{display:flex;gap:12px;align-items:center}
+    .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
+
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
+    nav.tabs .push-right{margin-left:auto}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar .left{display:flex;gap:8px;align-items:center}
+    .sectionbar .right{display:flex;gap:8px;align-items:center}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+    thead tr.filters th{background:#fff}
+
+    .row-actions{display:flex;gap:6px}
+    .col-stars{white-space:nowrap}
+
+    /* Suggestions/Questions wide columns */
+    #tblSuggestions td:nth-child(2),
+    #tblSuggestions th:nth-child(2),
+    #tblSuggestions td:nth-child(9),
+    #tblSuggestions th:nth-child(9),
+    #tblQuestions td:nth-child(2),
+    #tblQuestions th:nth-child(2),
+    #tblQuestions td:nth-child(9),
+    #tblQuestions th:nth-child(9){width:auto}
+
+    #tblNotifications th:nth-child(1),
+    #tblNotifications td:nth-child(1){width:70px}
+    #tblNotifications th:nth-child(2),
+    #tblNotifications td:nth-child(2){width:auto}
+
+    #tblPlans th:nth-child(4),
+    #tblPlans td:nth-child(4){width:100px}
+
+    .cell-text{white-space:pre-wrap}
+    footer{padding:16px;color:var(--muted);font-size:12px}
+  
+
+/* === Overlay (full-screen menu) === */
+#overlay{position:fixed;inset:0;display:none;z-index:1000}
+#overlay.show{display:block}
+.ov-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+.ov-panel{position:absolute;inset:24px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.ov-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc)}
+.ov-title{font-weight:800;font-size:16px}
+.ov-sub{font-size:12px;color:var(--muted)}
+.ov-body{padding:12px 16px;overflow:auto}
+.ov-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
+.ov-actions{display:flex;gap:8px}
+.ov-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.block{grid-column:span 12;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px}
+.block details{border:1px dashed #e5e7eb;border-radius:10px;padding:8px}
+.block details>summary{cursor:pointer;font-weight:700;margin:-8px -8px 8px -8px;padding:8px;border-bottom:1px dashed #e5e7eb}
+.form-row{display:grid;grid-template-columns:160px 1fr;gap:10px;margin:8px 0}
+.form-row label{color:var(--muted);font-size:12px;padding-top:6px}
+.form-row input,.form-row textarea,.form-row select{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:14px}
+.form-row textarea{min-height:96px;resize:vertical}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;background:#f1f5f9;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--muted)}
+
+
+/* === Overlay split layout === */
+.ov-body .ov-split{ display:flex; gap:16px; }
+.ov-body .ov-left{ flex: 1.3; min-width: 0; }
+.ov-body .ov-right{ flex: 0.7; min-width: 240px; max-width: 460px; border-left: 1px solid #e5e7eb; padding-left: 12px; }
+.ov-right h4{ margin: 0 0 8px 0; font-size: 14px; font-weight: 700; color: #374151; }
+
+/* === Tree (chain) styling === */
+.tree, .tree ul{ list-style: none; margin:0; padding-left: 14px; position: relative; }
+.tree ul:before{ content:''; position:absolute; left:6px; top:0; bottom:0; border-left:1px solid #d1d5db; }
+.tree li{ position: relative; margin:0; padding: 8px 0 0 12px; }
+.tree li:before{ content:''; position:absolute; left:6px; top:18px; width:10px; border-top:1px solid #d1d5db; }
+.node{ display:inline-block; padding:6px 10px; border:1px solid #cbd5e1; border-radius:10px; background:#fff; font-weight:600; font-size:12px; box-shadow:0 1px 0 rgba(0,0,0,.04); }
+.node.goal{ background:#eef2ff; border-color:#c7d2fe; }
+.node.risk{ background:#fef3c7; border-color:#fde68a; }
+.node.issue{ background:#fee2e2; border-color:#fecaca; }
+.node.plan{ background:#dcfce7; border-color:#bbf7d0; }
+.node.question{ background:#e0f2fe; border-color:#bae6fd; }
+.node.suggestion{ background:#f3e8ff; border-color:#e9d5ff; }
+.node small{ font-weight:500; color:#6b7280; margin-left:6px; }
+
+/* === Modern node design & current highlight === */
+.node{ display:inline-flex; align-items:center; gap:8px; padding:8px 12px; border:1px solid #cbd5e1; 
+  border-radius:14px; background:linear-gradient(180deg,#fff, #f9fafb); 
+  font-weight:600; font-size:12px; box-shadow:0 2px 6px rgba(0,0,0,.06); 
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease; cursor:pointer; }
+.node:hover{ transform:translateY(-1px); box-shadow:0 6px 14px rgba(0,0,0,.08); }
+.node.current{ transform:scale(1.06); border-color:#6366f1; box-shadow:0 8px 18px rgba(99,102,241,.20); }
+.node .id{ font-size:13px; letter-spacing:.2px; }
+.node .type{ font-size:11px; color:#475569; background:#f1f5f9; border-radius:999px; padding:2px 8px; font-weight:600; }
+.node .time{ font-size:11px; color:#6b7280; }
+
+/* Overlay +New button colors aligned to tree nodes */
+#ovAddRisk{ background:#fef3c7 !important; border-color:#fde68a !important; color:#111827; }
+#ovAddIssue{ background:#fee2e2 !important; border-color:#fecaca !important; color:#111827; }
+#ovAddPlan{ background:#dcfce7 !important; border-color:#bbf7d0 !important; color:#111827; }
+#ovAddQuestion{ background:#e0f2fe !important; border-color:#bae6fd !important; color:#111827; }
+#ovAddSuggestion{ background:#f3e8ff !important; border-color:#e9d5ff !important; color:#111827; }
+#ovAddRisk:hover, #ovAddIssue:hover, #ovAddPlan:hover, #ovAddQuestion:hover, #ovAddSuggestion:hover{
+  filter: saturate(1.05) brightness(0.98);
+}
+
+/* --- Grey theming for overlay action buttons --- */
+#ovSave.btn{ background:#e5e7eb !important; border-color:#9ca3af !important; color:#111827 !important; }
+#ovSave.btn:disabled{ opacity:.55; cursor:not-allowed; }
+#ovDelete.btn{ background:#111827 !important; border-color:#111827 !important; color:#ffffff !important; }
+#ovDelete.btn:hover{ filter: brightness(1.06); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+      <div>
+        <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <div class="leftbar">
+      <button id="btnLoad" class="btn">Load Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
+    </div>
+
+    <div class="rightbar">
+      <input id="fullName" class="input" placeholder="full name *" />
+      <input id="email" class="input" type="email" placeholder="email (required for editors)" />
+      <input id="org" class="input" placeholder="organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Admin</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="password *" />
+      <button id="btnSignup" class="btn">register</button>
+      <button id="btnSignin" class="btn primary">login</button>
+      <button id="btnSignout" class="btn" style="display:none">logout</button>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+    <button class="push-right" data-tab="questions">Q – Questions</button>
+    <button data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="notifications">N – Notifications</button>
+  </nav>
+
+  <!-- Goals -->
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right"><button class="btn" id="addGoalBtn" disabled>+ New Goal</button></div>
+      </div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Goal (SMART)</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th>Notes</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="gSearch" class="input" placeholder="search goal/notes" /></th>
+            <th><select id="gOwner" class="input"></select></th>
+            <th><input type="date" id="gStartFrom" class="input" /></th>
+            <th><input type="date" id="gEndTo" class="input" /></th>
+            <th><select id="gStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="gReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Risks -->
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right"><button class="btn" id="addRiskBtn" disabled>+ New Risk</button></div>
+      </div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Likelihood</th>
+            <th style="width:120px">Impact</th>
+            <th style="width:140px">Status</th>
+            <th>Mitigation</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="rSearch" class="input" placeholder="search description/mitigation" /></th>
+            <th><select id="rOwner" class="input"></select></th>
+            <th><select id="rLikelihood" class="input"></select></th>
+            <th><select id="rImpact" class="input"></select></th>
+            <th><select id="rStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="rReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Issues -->
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right"><button class="btn" id="addIssueBtn" disabled>+ New Issue</button></div>
+      </div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:120px">Severity</th>
+            <th style="width:140px">Status</th>
+            <th>Resolution</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="iSearch" class="input" placeholder="search description/resolution" /></th>
+            <th><select id="iOwner" class="input"></select></th>
+            <th><select id="iSeverity" class="input"></select></th>
+            <th><select id="iStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="iReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Plans -->
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right"><button class="btn" id="addPlanBtn" disabled>+ New Plan</button></div>
+      </div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:160px">Owner</th>
+            <th>Goal Link</th>
+            <th style="width:130px">Start</th>
+            <th style="width:130px">End</th>
+            <th style="width:140px">Status</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="pSearch" class="input" placeholder="search description" /></th>
+            <th><select id="pOwner" class="input"></select></th>
+            <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
+            <th></th>
+            <th></th>
+            <th><select id="pStatus" class="input"></select></th>
+            <th><button id="pReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Questions -->
+  <section id="questions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Questions</h2></div>
+        <div class="right">
+          <span id="questionsUser" class="user-info"></span>
+          <button class="btn" id="addQuestionBtn">+ New Question</button>
+        </div>
+      </div>
+      <table id="tblQuestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Submitted</th>
+            <th style="width:130px">Status</th>
+            <th style="width:160px">Reviewer Role</th>
+            <th style="width:130px">Reviewed</th>
+            <th>Comments</th>
+            <th class="col-stars" style="width:120px">Stars</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="qSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="qSubject" class="input"></select></th>
+            <th><select id="qOwner" class="input"></select></th>
+            <th><input type="date" id="qSubmitted" class="input" /></th>
+            <th><select id="qStatus" class="input"></select></th>
+            <th><select id="qReviewerRole" class="input"></select></th>
+            <th><input type="date" id="qReviewed" class="input" /></th>
+            <th></th>
+            <th></th>
+            <th><button id="qReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Suggestions -->
+  <section id="suggestions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right">
+          <span id="suggestionsUser" class="user-info"></span>
+          <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
+        </div>
+      </div>
+      <table id="tblSuggestions">
+        <thead>
+          <tr class="labels">
+            <th style="width:70px">ID</th>
+            <th>Description</th>
+            <th style="width:150px">Subject</th>
+            <th style="width:160px">Owner</th>
+            <th style="width:130px">Submitted</th>
+            <th style="width:130px">Status</th>
+            <th style="width:160px">Reviewer Role</th>
+            <th style="width:130px">Reviewed</th>
+            <th>Comments</th>
+            <th class="col-stars" style="width:120px">Stars</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="sSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="sSubject" class="input"></select></th>
+            <th><select id="sOwner" class="input"></select></th>
+            <th><input type="date" id="sSubmitted" class="input" /></th>
+            <th><select id="sStatus" class="input"></select></th>
+            <th><select id="sReviewerRole" class="input"></select></th>
+            <th><input type="date" id="sReviewed" class="input" /></th>
+            <th></th>
+            <th></th>
+            <th><button id="sReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Notifications -->
+  <section id="notifications" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Notifications</h2></div>
+        <div class="right"><span id="notificationsUser" class="user-info"></span></div>
+      </div>
+      <table id="tblNotifications">
+        <thead>
+          <tr class="labels">
+            <th>ID</th>
+            <th>Description</th>
+            <th style="width:160px">Subject</th>
+            <th style="width:140px">Status</th>
+            <th style="width:160px">Role</th>
+            <th style="width:140px">Date</th>
+            <th>Comments</th>
+            <th style="width:110px">Actions</th>
+          </tr>
+          <tr class="filters">
+            <th><input type="text" id="nId" class="input" placeholder="G1/R2/..."/></th>
+            <th><input type="text" id="nSearch" class="input" placeholder="search description/comments"/></th>
+            <th><select id="nSubject" class="input"></select></th>
+            <th><select id="nStatus" class="input"></select></th>
+            <th><select id="nRole" class="input"></select></th>
+            <th><input type="date" id="nFrom" class="input"/> – <input type="date" id="nTo" class="input"/></th>
+            <th></th>
+            <th><button id="nReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="help">Only <strong>Admin</strong> can edit or delete rows in this logbook.</p>
+    </div>
+  </section>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+    import { getFirestore, collection, doc, getDoc, setDoc, updateDoc, addDoc, deleteDoc, query, where, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+      authDomain: "griplog.firebaseapp.com",
+      projectId: "griplog",
+      storageBucket: "griplog.appspot.com",
+      messagingSenderId: "1097061844582",
+      appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    
+    // Data readiness gate: block creating new items until initial data is loaded
+    let DATA_READY = false;
+    function disableNewButtons(disabled=true){
+      ['addGoalBtn','addRiskBtn','addIssueBtn','addPlanBtn','addSuggestionBtn','addQuestionBtn'].forEach(id=>{
+        const el = document.getElementById(id);
+        if(el) el.disabled = disabled;
+      });
+    }
+    disableNewButtons(true);
+const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+
+    
+    // ---- Auth helpers ----
+    function showAuthError(msg){
+      try{
+        const bar=document.getElementById('errBar')||document.createElement('div');
+        bar.id='errBar';
+        Object.assign(bar.style,{position:'fixed',top:'0',left:'0',right:'0',padding:'8px 12px',background:'#fee2e2',color:'#7f1d1d',zIndex:9999,borderBottom:'1px solid #fecaca',fontSize:'12px'});
+        bar.textContent='Auth: '+msg;
+        document.body.appendChild(bar);
+        console.warn('[AUTH]', msg);
+      }catch(e){ console.warn('Auth error (ui)', msg); }
+    }
+
+    async function ensureUserProfile(user){
+      const uid = user?.uid;
+      if(!uid){ showAuthError('Geen user UID'); return null; }
+      const uref = doc(db, 'users', uid);
+      try{
+        const snap = await getDoc(uref);
+        if(!snap.exists()){
+          // probeer zelf aan te maken (self-provision)
+          try{
+            await setDoc(uref, {
+              role: 'Viewer',
+              name: user.displayName || (document.getElementById('fullName')?.value || ''),
+              email: user.email || (document.getElementById('email')?.value || ''),
+              createdAt: (typeof serverTimestamp==='function'? serverTimestamp() : new Date().toISOString())
+            }, {merge:true});
+          }catch(e){
+            showAuthError('Kan user-profiel niet aanmaken (users/'+uid+'): '+(e.code||e.message||e));
+            return null;
+          }
+        }
+        const data = (await getDoc(uref)).data()||{};
+        CURRENT_ROLE = data.role || 'Viewer';
+        CURRENT_NAME = data.name || user.displayName || '';
+        CAN_EDIT = (CURRENT_ROLE==='Editor' || CURRENT_ROLE==='Admin');
+        return data;
+      }catch(e){
+        showAuthError('Geen toegang tot users/'+uid+': '+(e.code||e.message||e));
+        return null;
+      }
+    }
+
+    // ---- Global error & reject handlers to avoid 'hang' without feedback ----
+    window.addEventListener('error', (e)=>{ const bar=document.getElementById('errBar')||document.createElement('div');
+      bar.id='errBar'; Object.assign(bar.style,{position:'fixed',top:'0',left:'0',right:'0',padding:'8px 12px',background:'#fee2e2',color:'#7f1d1d',zIndex:9999,borderBottom:'1px solid #fecaca',fontSize:'12px'});
+      bar.textContent = 'Error: '+ (e?.message||'unknown'); document.body.appendChild(bar); });
+    window.addEventListener('unhandledrejection', (e)=>{ const bar=document.getElementById('errBar')||document.createElement('div');
+      bar.id='errBar'; Object.assign(bar.style,{position:'fixed',top:'0',left:'0',right:'0',padding:'8px 12px',background:'#fee2e2',color:'#7f1d1d',zIndex:9999,borderBottom:'1px solid #fecaca',fontSize:'12px'});
+      bar.textContent = 'Unhandled promise: '+ (e?.reason?.message||e?.reason||'unknown'); document.body.appendChild(bar); });
+
+    $('#yr').textContent = new Date().getFullYear();
+
+    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+    const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
+    const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+    const tri=["","Low","Medium","High"];
+
+    const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
+    const suggestionStatus   = ["","Approved","Pending","Dismissed"];
+    const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+
+    const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
+    const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
+    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+
+    let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
+
+    // ---- Remember login fields in localStorage ----
+    function loadLoginPrefs(){
+      try{
+        const g = k => localStorage.getItem('grip.'+k) || '';
+        const setIf = id => { const el = document.getElementById(id); if(el) el.value = g(id); };
+        ['fullName','email','org'].forEach(setIf);
+        const role = localStorage.getItem('grip.role') || 'Viewer';
+        const roleEl = document.getElementById('role'); if(roleEl) roleEl.value = role;
+      }catch{}
+    }
+    function bindLoginPrefs(){
+      const bind = id => {
+        const el = document.getElementById(id);
+        if(el) el.addEventListener('input', ()=>{ try{ localStorage.setItem('grip.'+id, el.value); }catch{} });
+      };
+      ['fullName','email','org','role'].forEach(bind);
+    }
+    loadLoginPrefs(); bindLoginPrefs();
+
+
+    let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
+    let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[]};
+
+    function slugEmailFromName(name){ return name.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local"; }
+    async function upsertUserDoc(uid, data){ const ref=doc(db,'users',uid); const snap=await getDoc(ref); await setDoc(ref, snap.exists()? {...snap.data(), ...data} : data, {merge:true}); }
+
+    // Auth
+    $('#btnSignup').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!org||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(role) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await createUserWithEmailAndPassword(auth, used, pass);
+        await updateProfile(cred.user,{displayName:fullName});
+        await upsertUserDoc(cred.user.uid,{ fullName, email: email||'', org, role, createdAt: serverTimestamp() });
+        alert('registered. please login.');
+        await signOut(auth);
+      }catch(e){ alert(e.code==='auth/email-already-in-use' ? 'account exists. login.' : e.message); }
+    };
+    $('#btnSignin').onclick=async ()=>{
+      const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value;
+      if(!fullName||!pass){ alert('fill required fields'); return; }
+      if(EDIT_ROLES.has(rolePick) && !email){ alert('email required for editors'); return; }
+      const used=email||slugEmailFromName(fullName);
+      try{
+        const cred=await signInWithEmailAndPassword(auth, used, pass);
+        if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
+      }catch(e){ alert('login failed: '+e.message); }
+    };
+    $('#btnSignout').onclick=()=>signOut(auth);
+
+      // ---- Anonymous login (if rules allow) ----
+      (function addAnonButton(){
+        try{
+          const anchor = document.getElementById('btnSignin') || document.getElementById('btnSignup');
+          if(!anchor) return;
+          const btn = document.createElement('button');
+          btn.id='btnAnon'; btn.className=anchor.className||''; btn.style.marginLeft='8px';
+          btn.textContent='Anon login';
+          anchor.insertAdjacentElement('afterend', btn);
+          btn.onclick = async ()=>{
+            try{ await signInAnonymously(auth); }catch(e){ alert('Anon login failed: '+(e?.message||e)); }
+          };
+        }catch{}
+      })();
+
+
+    onAuthStateChanged(auth, async (user) => {
+      try{ if(user){ await ensureUserProfile(user); } }catch(e){ showAuthError('init profile: '+(e?.message||e)); }
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
+
+      let role='Viewer', full=user.displayName||user.email||'';
+      try{
+        const snap=await getDoc(doc(db,'users',user.uid));
+        if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
+        else{ await upsertUserDoc(user.uid,{ fullName: full, email: user.email||'', role: 'Viewer' }); }
+      }catch(err){ console.warn('role load failed', err); }
+
+      CURRENT_ROLE=role; CURRENT_NAME=full;
+      const isEditor = EDIT_ROLES.has(role) && !!user.email;
+      authTxt.textContent = isEditor? 'editor' : 'viewer';
+      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      syncSectionUserLabels();
+      setEditMode(isEditor);
+      await loadAll();
+    });
+
+    function syncSectionUserLabels(){
+      const label = CURRENT_NAME ? `${CURRENT_NAME.toLowerCase()} – ${CURRENT_ROLE.toLowerCase()}` : '';
+      $('#suggestionsUser').textContent = label;
+      $('#questionsUser').textContent = label;
+      $('#notificationsUser').textContent = label;
+    }
+
+    function setEditMode(can){
+      CAN_EDIT=!!can;
+      $('#btnSaveAll').disabled=!CAN_EDIT;
+      $('#addGoalBtn').disabled=!CAN_EDIT;
+      $('#addRiskBtn').disabled=!CAN_EDIT;
+      $('#addIssueBtn').disabled=!CAN_EDIT;
+      $('#addPlanBtn').disabled=!CAN_EDIT;
+      renderAll();
+    }
+
+    // Tabs
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+      renderTab(tab);
+    }));
+
+    // Notification helpers
+    function makeNote({subject,status,relatedId,description,comments='',snapshot=null,coll=null}) {
+      return {
+        id: relatedId,
+        description: description||'',
+        subject, status,
+        role: (typeof CURRENT_ROLE!=='undefined'?CURRENT_ROLE:'Viewer'),
+        date: new Date().toISOString().slice(0,10),
+        comments,
+        snapshot,
+        coll
+      };
+    }
+    function pickDesc(label,row){
+      if(label==='Goal') return row.goal||'';
+      if(label==='Risk') return row.description||'';
+      if(label==='Issue') return row.description||'';
+      if(label==='Plan') return row.description||'';
+      if(label==='Suggestion') return row.description||'';
+      if(label==='Question') return row.description||'';
+      return '';
+    }
+
+    // Load / Save
+    async function loadAll(){
+      const [g,r,i,p,s,q,n] = await Promise.all([
+        getDocs(collection(db,'goals')),
+        getDocs(collection(db,'risks')),
+        getDocs(collection(db,'issues')),
+        getDocs(collection(db,'plans')),
+        getDocs(collection(db,'suggestions')),
+        getDocs(collection(db,'questions')),
+        getDocs(collection(db,'notifications')),
+      ]);
+
+      prevCache = JSON.parse(JSON.stringify(cache));
+
+      cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+      cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+      cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+      cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+      cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+      cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
+      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
+
+      buildFilterOptions();
+      renderAll();
+      openFromHash();
+    
+  DATA_READY = true; disableNewButtons(false);
+}
+
+    async function saveAll(){
+      if(!CAN_EDIT){ alert('no edit rights'); return; }
+      const tasks=[]; const notes=[];
+
+      const newGoals = rowsFromTable('goals');
+      const newRisks = rowsFromTable('risks');
+      const newIssues= rowsFromTable('issues');
+      const newPlans = rowsFromTable('plans');
+
+      const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
+      const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
+
+      function upserts(prevArr, nextArr, coll, label){
+        const prevMap = byId(prevArr);
+        nextArr.forEach(row=>{
+          tasks.push(setDoc(doc(db,coll,row.id), row));
+          if(!prevMap[row.id]){
+            notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
+          } else if(changed(prevMap[row.id], row)){
+            notes.push(makeNote({subject: \1, status:'Edited', relatedId: row.id, description: pickDesc(\1,row), snapshot: JSON.parse(JSON.stringify(row)), coll }));
+          }
+        });
+        prevArr.forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
+          notes.push(makeNote({subject: \1, status:'Deleted', relatedId: prev.id, description: pickDesc(\1,prev), snapshot: JSON.parse(JSON.stringify(prev)), coll }));
+        }});
+      }
+
+      upserts(prevCache.goals, newGoals, 'goals', 'Goal');
+      upserts(prevCache.risks, newRisks, 'risks', 'Risk');
+      upserts(prevCache.issues,newIssues,'issues','Issue');
+      upserts(prevCache.plans, newPlans, 'plans', 'Plan');
+
+      await Promise.all(tasks);
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
+      alert('saved to firestore');
+      await loadAll();
+    }
+    $('#btnLoad').onclick=loadAll;
+    $('#btnSaveAll').onclick=saveAll;
+
+    // Helpers
+    function num(id){ const n=parseInt(String(id).replace(/\\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+
+    // ----- ID helpers: sort by digit count, then numeric value -----
+    function idNum(id){ const n=parseInt(String(id||'').replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+    function idDigits(n){ n=Math.abs(parseInt(n,10)||0); return String(n).length; }
+    function idCompare(a,b){
+      const na=idNum(a.id), nb=idNum(b.id);
+      const da=idDigits(na), db=idDigits(nb);
+      if(da!==db) return da-db;
+      return na-nb;
+    }
+    
+
+function actionsCell(coll){
+  return `<div class="row-actions">
+    <button class="btn" data-menu="${coll}">Menu</button>
+  </div>`;
+}
+
+    // Filter selects
+    function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+    function buildFilterOptions(){
+      fillSelect('#gOwner', owners, 'Owner'); fillSelect('#gStatus', statuses.goals, 'Status');
+      fillSelect('#rOwner', owners, 'Owner'); fillSelect('#rLikelihood', tri, 'Likelihood'); fillSelect('#rImpact', tri, 'Impact'); fillSelect('#rStatus', statuses.risks, 'Status');
+      fillSelect('#iOwner', owners, 'Owner'); fillSelect('#iSeverity', tri, 'Severity'); fillSelect('#iStatus', statuses.issues, 'Status');
+      fillSelect('#pOwner', owners, 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
+
+      // Suggestions filters
+      fillSelect('#sSubject', suggestionSubjects, 'Subject');
+      fillSelect('#sOwner', [''].concat(ownerRoles), 'Owner');
+      fillSelect('#sStatus', suggestionStatus, 'Status');
+      fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
+
+      // Questions filters
+      fillSelect('#qSubject', suggestionSubjects, 'Subject');
+      fillSelect('#qOwner', [''].concat(ownerRoles), 'Owner');
+      fillSelect('#qStatus', suggestionStatus, 'Status');
+      fillSelect('#qReviewerRole', suggestionReviewer, 'Reviewer Role');
+
+      // Notifications filters
+      fillSelect('#nSubject', noteSubjects, 'Subject');
+      fillSelect('#nStatus', noteStatus, 'Status');
+      fillSelect('#nRole', noteRoles, 'Role');
+
+    
+      ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
+      ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
+      ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
+      ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
+
+      ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
+      ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderQuestions));
+
+      ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(id=> $('#'+id)?.addEventListener('input', ()=>renderNotifications(cache.notifications)));
+
+      $('#gReset')?.addEventListener('click', ()=>{ ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(i=>$('#'+i).value=''); renderGoals(); });
+      $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
+      $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
+      $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pGoalId','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
+      $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
+      $('#qReset')?.addEventListener('click', ()=>{ ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
+      $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
+    }
+
+    // ---------- Row renderers: behave like Suggestions/Questions (disabled controls) ----------
+    function rowGoal(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel = `<select disabled>${statuses.goals.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.goal||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.notes||'')}</div></td>
+        <td>${actionsCell('goals')}</td>`;
+    }
+    function rowRisk(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const likeSel  = `<select disabled>${tri.map(v=>`<option ${v===(r.likelihood||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const impSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.impact||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.risks.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${likeSel}</td>
+        <td>${impSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.mitigation||'')}</div></td>
+        <td>${actionsCell('risks')}</td>`;
+    }
+    function rowIssue(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const sevSel   = `<select disabled>${tri.map(v=>`<option ${v===(r.severity||'')?'selected':''}>${v}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.issues.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td>${sevSel}</td>
+        <td>${statusSel}</td>
+        <td><div class="cell-text">${escapeHtml(r.resolution||'')}</div></td>
+        <td>${actionsCell('issues')}</td>`;
+    }
+    function rowPlan(r){
+      const ownerSel = `<select disabled>${owners.map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel= `<select disabled>${statuses.plans.map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')}</select>`;
+      const start = `<input type="date" value="${r.start||''}" disabled />`;
+      const end   = `<input type="date" value="${r.end||''}" disabled />`;
+      return `<td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${ownerSel}</td>
+        <td><input type="text" value="${escapeHtml(r.goalId||'')}" disabled /></td>
+        <td>${start}</td>
+        <td>${end}</td>
+        <td>${statusSel}</td>
+        <td>${actionsCell('plans')}</td>`;
+    }
+
+    // Renderers (with filters)
+    function renderGoals(){ const tbody=$('#tblGoals tbody'); tbody.innerHTML=''; let rows=[...cache.goals];
+      const fOwner=$('#gOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fStatus=$('#gStatus').value; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+      const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+      const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+      rows.sort(idCompare);
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
+    }
+    function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
+      const fOwner=$('#rOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fL=$('#rLikelihood').value; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+      const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+      const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+      rows.sort(idCompare);
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
+    }
+    function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
+      const fOwner=$('#iOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+      const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+      rows.sort(idCompare);
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
+    }
+    function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
+      const fOwner=$('#pOwner').value; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+      const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+      const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+      rows.sort(idCompare);
+      rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
+    }
+
+    // Suggestions (read-only; star allowed)
+    function rowSuggestion(r){
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+      const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
+      const starBtn = `<button class="btn ghost" data-star-sug ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
+      const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
+      const actions = actionsCell('suggestions');
+      return `
+        <td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td><div class="cell-text">${escapeHtml(r.comments||'')}</div></td>
+        <td class="col-stars">${starBtn} ${starCnt}</td>
+        <td>${actions}</td>`;
+    }
+    function renderSuggestions(){
+      const tbody=$('#tblSuggestions tbody'); tbody.innerHTML='';
+      let rows=[...cache.suggestions];
+      const q=$('#sSearch').value?.toLowerCase()||'';
+      const fSub=$('#sSubject').value; const fOwner=$('#sOwner').value; const fSubm=$('#sSubmitted').value; const fStatus=$('#sStatus').value; const fRevRole=$('#sReviewerRole').value; const fRevDate=$('#sReviewed').value;
+      if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+      if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+      if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+      if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+      rows.sort(idCompare);
+      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
+    }
+
+    // Questions
+    function rowQuestion(r){
+      const subjectSel = `<select disabled>${["","New Goal","New Risk","New Issue","New Plan"].map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')}</select>`;
+      const ownerSel   = `<select disabled>${[''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']).map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')}</select>`;
+      const statusSel  = `<select disabled>${["","Approved","Pending","Dismissed"].map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select>`;
+      const revRoleSel = `<select disabled>${["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"].map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')}</select>`;
+      const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+      const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+      const already = !!(r.starredBy && CURRENT_UID && r.starredBy[CURRENT_UID]);
+      const starBtn = `<button class="btn ghost" data-star-q ${!CURRENT_UID||already?'disabled':''}>⭐</button>`;
+      const starCnt = `<span data-star-count>${r.stars || 0}</span>`;
+      const actions = actionsCell('questions');
+      return `
+        <td>${escapeHtml(r.id||'')}</td>
+        <td><div class="cell-text">${escapeHtml(r.description||'')}</div></td>
+        <td>${subjectSel}</td>
+        <td>${ownerSel}</td>
+        <td>${subDate}</td>
+        <td>${statusSel}</td>
+        <td>${revRoleSel}</td>
+        <td>${revDate}</td>
+        <td><div class="cell-text">${escapeHtml(r.comments||'')}</div></td>
+        <td class="col-stars">${starBtn} ${starCnt}</td>
+        <td>${actions}</td>`;
+    }
+    function renderQuestions(){
+      const tbody=$('#tblQuestions tbody'); tbody.innerHTML='';
+      let rows=[...cache.questions];
+      const q=$('#qSearch').value?.toLowerCase()||'';
+      const fSub=$('#qSubject').value; const fOwner=$('#qOwner').value; const fSubm=$('#qSubmitted').value; const fStatus=$('#qStatus').value; const fRevRole=$('#qReviewerRole').value; const fRevDate=$('#qReviewed').value;
+      if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+      if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+      if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+      if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+      if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+      if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+      rows.sort(idCompare);
+      rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.qid=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
+    }
+
+    // Notifications
+    function renderNotifications(rows){
+      const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
+      let list=[...rows];
+      const idf=$('#nId').value?.trim(); const q=$('#nSearch').value?.toLowerCase()||''; const sub=$('#nSubject').value; const st=$('#nStatus').value; const rl=$('#nRole').value; const from=$('#nFrom').value; const to=$('#nTo').value;
+      if(idf) list=list.filter(r=> (r.id||'').toLowerCase().includes(idf.toLowerCase()));
+      if(q) list=list.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+      if(sub) list=list.filter(r=> (r.subject||'')===sub);
+      if(st) list=list.filter(r=> (r.status||'')===st);
+      if(rl) list=list.filter(r=> (r.role||'')===rl);
+      if(from) list=list.filter(r=> (r.date||'')>=from);
+      if(to) list=list.filter(r=> (r.date||'')<=to);
+      list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+      list.forEach(r=>{
+        const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
+        const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
+        tr.innerHTML = `
+          <td>${escapeHtml(r.id||'')}</td>
+          <td>${escapeHtml(r.description||'')}</td>
+          <td>${escapeHtml(r.subject||'')}</td>
+          <td>${escapeHtml(r.status||'')}</td>
+          <td>${escapeHtml(r.role||'')}</td>
+          <td>${escapeHtml(r.date||'')}</td>
+          <td>${escapeHtml(r.comments||'')}</td>
+          <td>${actions}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Add via prompt (like Suggestions/Questions)
+    
+
+// === Unique ID (online + cache) ===
+async function docExists(coll, id){
+  try{ const snap = await getDoc(doc(db, coll, id)); return snap.exists(); }
+  catch(_e){ return false; }
+}
+async function nextUniqueId(coll, prefix){
+  let arr = cache[coll] || [];
+  if(!arr || arr.length===0){
+    try{
+      const snap = await getDocs(collection(db, coll));
+      arr = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    }catch(_e){ arr = []; }
+  }
+  const num = (id)=> parseInt(String(id||'').replace(/\D+/g,'')||'0',10);
+  const used = new Set(arr.map(x=> String(x.id||'').trim()));
+  let m = 0; arr.forEach(x=>{ const n=num(x.id); if(n>m) m=n; });
+  let cand;
+  do { m += 1; cand = prefix + m; } while(used.has(cand) || await docExists(coll, cand));
+  return cand;
+}
+function nextId(arr, prefix){
+      let m=0; arr.forEach(x=>{
+        const n=parseInt(String(x.id||'').replace(/\\D+/g,'')||'0',10); if(n>m) m=n;
+      });
+      return prefix + (m+1);
+    }
+
+    $('#addGoalBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = await nextUniqueId('goals','G');
+      let goal = (prompt('Goal (SMART):','')||'').trim();
+      if(!goal){ alert('goal required'); return; }
+      const row = { id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
+      await setDoc(doc(db,'goals', id), row);
+      if(opts.source==='manual'){
+      await addDoc(collection(db,'notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
+    }
+cache.goals.push(row); renderGoals();
+    };
+    $('#addRiskBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = await nextUniqueId('risks','R');
+      let description = (prompt('Risk description:','')||'').trim();
+      if(!description){ alert('description required'); return; }
+      const row = { id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
+      await setDoc(doc(db,'risks', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject: 'New \1', status:'Added', relatedId:\2, description: (typeof description!=='undefined'?description: (typeof row!=='undefined'?pickDesc('\1',row):'')), snapshot: (typeof row!=='undefined'?JSON.parse(JSON.stringify(row)): (typeof suggestion!=='undefined'?JSON.parse(JSON.stringify(suggestion)): (typeof qdoc!=='undefined'?JSON.parse(JSON.stringify(qdoc)):null))), coll: (typeof coll!=='undefined'?coll:null) }));
+      cache.risks.push(row); renderRisks();
+    };
+    $('#addIssueBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = await nextUniqueId('issues','I');
+      let description = (prompt('Issue description:','')||'').trim();
+      if(!description){ alert('description required'); return; }
+      const row = { id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
+      await setDoc(doc(db,'issues', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject: 'New \1', status:'Added', relatedId:\2, description: (typeof description!=='undefined'?description: (typeof row!=='undefined'?pickDesc('\1',row):'')), snapshot: (typeof row!=='undefined'?JSON.parse(JSON.stringify(row)): (typeof suggestion!=='undefined'?JSON.parse(JSON.stringify(suggestion)): (typeof qdoc!=='undefined'?JSON.parse(JSON.stringify(qdoc)):null))), coll: (typeof coll!=='undefined'?coll:null) }));
+      cache.issues.push(row); renderIssues();
+    };
+    $('#addPlanBtn').onclick = async ()=>{
+      if(!CAN_EDIT) return;
+      const id = await nextUniqueId('plans','P');
+      let description = (prompt('Plan description:','')||'').trim();
+      if(!description){ alert('description required'); return; }
+      const row = { id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
+      await setDoc(doc(db,'plans', id), row);
+      await addDoc(collection(db,'notifications'), makeNote({subject: 'New \1', status:'Added', relatedId:\2, description: (typeof description!=='undefined'?description: (typeof row!=='undefined'?pickDesc('\1',row):'')), snapshot: (typeof row!=='undefined'?JSON.parse(JSON.stringify(row)): (typeof suggestion!=='undefined'?JSON.parse(JSON.stringify(suggestion)): (typeof qdoc!=='undefined'?JSON.parse(JSON.stringify(qdoc)):null))), coll: (typeof coll!=='undefined'?coll:null) }));
+      cache.plans.push(row); renderPlans();
+    };
+
+    // Click handlers
+    document.addEventListener('click', async (e)=>{
+      const starBtn = e.target.closest('[data-star-sug]');
+      if(starBtn){
+        if(!CURRENT_UID){ alert('Please login to star.'); return; }
+        const tr = starBtn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
+        starBtn.disabled = true;
+        try{
+          const ref = doc(db,'suggestions', sugId);
+          const cntEl = tr.querySelector('[data-star-count]');
+          const current = parseInt(cntEl?.textContent||'0',10) || 0;
+          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
+          cntEl.textContent = String(current+1);
+        }catch(err){ alert('Star failed: '+err.message); starBtn.disabled=false; }
+      }
+      const starQBtn = e.target.closest('[data-star-q]');
+      if(starQBtn){
+        if(!CURRENT_UID){ alert('Please login to star.'); return; }
+        const tr = starQBtn.closest('tr'); const qid = tr?.dataset.qid; if(!qid) return;
+        starQBtn.disabled = true;
+        try{
+          const ref = doc(db,'questions', qid);
+          const cntEl = tr.querySelector('[data-star-count]');
+          const current = parseInt(cntEl?.textContent||'0',10) || 0;
+          await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
+          cntEl.textContent = String(current+1);
+        }catch(err){ alert('Star failed: '+err.message); starQBtn.disabled=false; }
+      }
+const editBtn = e.target.closest('button[data-edit]');
+if(editBtn){
+  if(!CAN_EDIT){ alert('no edit rights'); return; }
+  const coll = editBtn.dataset.edit;
+  const tr = editBtn.closest('tr');
+  const id = tr?.querySelector('td:first-child')?.innerText.trim();
+  if(!coll || !id) return;
+
+  const list = cache[coll] || [];
+  const row = list.find(x => String(x.id).trim() === id);
+  if(!row){ alert('row not found'); return; }
+
+  let updates = {};
+  if(coll==='goals'){
+    const goal  = prompt('Edit goal (SMART):', row.goal||'');        if(goal===null) return;
+    const notes = prompt('Edit notes:', row.notes||'');              if(notes===null) return;
+    updates = { goal, notes };
+  } else if(coll==='risks'){
+    const description = prompt('Edit risk description:', row.description||''); if(description===null) return;
+    const mitigation  = prompt('Edit mitigation:', row.mitigation||'');       if(mitigation===null) return;
+    updates = { description, mitigation };
+  } else if(coll==='issues'){
+    const description = prompt('Edit issue description:', row.description||''); if(description===null) return;
+    const resolution  = prompt('Edit resolution:', row.resolution||'');        if(resolution===null) return;
+    updates = { description, resolution };
+  } else if(coll==='plans'){
+    const description = prompt('Edit plan description:', row.description||''); if(description===null) return;
+    const goalId      = prompt('Link to Goal ID (e.g., G1):', row.goalId||''); if(goalId===null) return;
+    updates = { description, goalId };
+  } else if(coll==='suggestions' || coll==='questions'){
+    const singular = coll.slice(0,-1);
+    const description = prompt(`Edit ${singular} description:`, row.description||''); if(description===null) return;
+    const comments    = prompt('Edit comments:', row.comments||'');            if(comments===null) return;
+    updates = { description, comments };
+  }
+
+  try{
+    await updateDoc(doc(db, coll, id), updates);
+    Object.assign(row, updates);
+    // herteken huidig tabblad
+    renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
+    // note aan Notifications
+    const subj = (coll==='suggestions')?'Suggestion' : (coll==='questions')?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1);
+    await addDoc(collection(db,'notifications'), makeNote({ subject: subj, status:'Edited', relatedId:id, description: pickDesc(subj,row), snapshot: JSON.parse(JSON.stringify(row)), coll }));
+    // refresh notifications cache
+    const listSnap = await getDocs(collection(db,'notifications'));
+    cache.notifications = listSnap.docs.map(d=>({__id:d.id, ...d.data()}));
+  }catch(err){ alert('edit failed: '+err.message); }
+}
+      const delBtn = e.target.closest('button[data-del]');
+      if(delBtn){
+        const table = delBtn.dataset.del; 
+        if(!CAN_EDIT){ alert('no edit rights'); return; }
+        const tr = delBtn.closest('tr'); const id = tr?.querySelector('td:first-child')?.innerText.trim();
+        const collMap = {goals:'goals', risks:'risks', issues:'issues', plans:'plans', suggestions:'suggestions', questions:'questions'}; 
+        const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
+        if(!confirm(`Delete ${id} from ${coll}?`)) return;
+        try{ 
+          const deletedRow = getRow(coll, id);
+          await deleteDoc(doc(db, coll, id)); 
+          tr.remove(); 
+          const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
+          await addDoc(collection(db,'notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:'', snapshot: JSON.parse(JSON.stringify(deletedRow)), coll }));
+          const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
+        }catch(err){ alert('delete failed: '+err.message); }
+      }
+
+      const delNoteBtn = e.target.closest('[data-del-note]');
+      if(delNoteBtn){
+        if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
+        const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
+        if(!confirm('Delete this notification?')) return;
+        await deleteDoc(doc(db,'notifications',id));
+        const list = await getDocs(collection(db,'notifications'));
+        cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
+        renderNotifications(cache.notifications);
+      }
+    });
+
+    // Add suggestion / question (via prompt)
+    $('#addSuggestionBtn').onclick = async ()=>{ const id = await nextUniqueId('suggestions','S');
+      let description = (prompt('Describe your suggestion (required):','')||'').trim();
+      if(!description){ alert('description required'); return; }
+      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+      const owner = CURRENT_ROLE || 'Viewer';
+      const today = new Date().toISOString().slice(0,10);
+      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      try{
+        await setDoc(doc(db,'suggestions', id), suggestion);
+        await addDoc(collection(db,'notifications'), makeNote({subject: 'New \1', status:'Added', relatedId:\2, description: (typeof description!=='undefined'?description: (typeof row!=='undefined'?pickDesc('\1',row):'')), snapshot: (typeof row!=='undefined'?JSON.parse(JSON.stringify(row)): (typeof suggestion!=='undefined'?JSON.parse(JSON.stringify(suggestion)): (typeof qdoc!=='undefined'?JSON.parse(JSON.stringify(qdoc)):null))), coll: (typeof coll!=='undefined'?coll:null) }));
+        cache.suggestions.push(suggestion);
+        renderSuggestions();
+      }catch(err){ alert('Could not add: '+err.message); }
+    };
+    $('#addQuestionBtn').onclick = async ()=>{ const id = await nextUniqueId('questions','Q');
+      let description = (prompt('Describe your question (required):','')||'').trim();
+      if(!description){ alert('description required'); return; }
+      const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
+      const owner = CURRENT_ROLE || 'Viewer';
+      const today = new Date().toISOString().slice(0,10);
+      const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      try{
+        await setDoc(doc(db,'questions', id), qdoc);
+        await addDoc(collection(db,'notifications'), makeNote({subject: 'New \1', status:'Added', relatedId:\2, description: (typeof description!=='undefined'?description: (typeof row!=='undefined'?pickDesc('\1',row):'')), snapshot: (typeof row!=='undefined'?JSON.parse(JSON.stringify(row)): (typeof suggestion!=='undefined'?JSON.parse(JSON.stringify(suggestion)): (typeof qdoc!=='undefined'?JSON.parse(JSON.stringify(qdoc)):null))), coll: (typeof coll!=='undefined'?coll:null) }));
+        cache.questions.push(qdoc);
+        renderQuestions();
+      }catch(err){ alert('Could not add: '+err.message); }
+    };
+
+    // Extractors (read disabled controls' values)
+    function rowsFromTable(kind){
+      if(kind!=='suggestions' && kind!=='questions'){
+        const map = {goals:'#tblGoals', risks:'#tblRisks', issues:'#tblIssues', plans:'#tblPlans'}[kind];
+        return Array.from(document.querySelectorAll(`${map} tbody tr`)).map(tr=>{
+          const tds = Array.from(tr.querySelectorAll('td'));
+          if(kind==='goals')  return { id:tds[0].innerText.trim(), goal:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', start:tds[3].querySelector('input')?.value||'', end:tds[4].querySelector('input')?.value||'', status:tds[5].querySelector('select')?.value||'', notes:tds[6].innerText.trim() };
+          if(kind==='risks')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', likelihood:tds[3].querySelector('select')?.value||'', impact:tds[4].querySelector('select')?.value||'', status:tds[5].querySelector('select')?.value||'', mitigation:tds[6].innerText.trim() };
+          if(kind==='issues') return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', severity:tds[3].querySelector('select')?.value||'', status:tds[4].querySelector('select')?.value||'', resolution:tds[5].innerText.trim() };
+          if(kind==='plans')  return { id:tds[0].innerText.trim(), description:tds[1].innerText.trim(), owner:tds[2].querySelector('select')?.value||'', goalId:tds[3].querySelector('input')?.value.trim()||'', start:tds[4].querySelector('input')?.value||'', end:tds[5].querySelector('input')?.value||'', status:tds[6].querySelector('select')?.value||'' };
+        }).filter(x=>x && x.id);
+      }
+      return [];
+    }
+
+    function renderAll(){
+      const active = document.querySelector('nav.tabs button.active')?.dataset.tab || 'goals';
+      renderTab(active);
+      $('#btnSaveAll').disabled = !CAN_EDIT;
+    }
+    function renderTab(kind){
+      if(kind==='goals') renderGoals();
+      else if(kind==='risks') renderRisks();
+      else if(kind==='issues') renderIssues();
+      else if(kind==='plans') renderPlans();
+      else if(kind==='questions') renderQuestions();
+      else if(kind==='suggestions') renderSuggestions();
+      else renderNotifications(cache.notifications||[]);
+    }
+
+    
+
+// ===== Overlay & Deep-link, Shortcuts, Autosave =====
+
+const PREFIX = {goals:'G',risks:'R',issues:'I',plans:'P',questions:'Q',suggestions:'S'};
+
+// field configs for overlay
+const FIELDSETS = {
+  goals: [
+    ['goal','textarea','Goal (SMART)','content'],
+    ['notes','textarea','Notes','content'],
+    ['owner','select','Owner', owners,'meta'],
+    ['status','select','Status', statuses.goals,'meta'],
+    ['start','date','Start','dates'],
+    ['end','date','End','dates']
+  ],
+  risks: [
+    ['description','textarea','Description','content'],
+    ['mitigation','textarea','Mitigation','content'],
+    ['owner','select','Owner', owners,'meta'],
+    ['likelihood','select','Likelihood', tri,'meta'],
+    ['impact','select','Impact', tri,'meta'],
+    ['status','select','Status', statuses.risks,'meta']
+  ],
+  issues: [
+    ['description','textarea','Description','content'],
+    ['resolution','textarea','Resolution','content'],
+    ['owner','select','Owner', owners,'meta'],
+    ['severity','select','Severity', tri,'meta'],
+    ['status','select','Status', statuses.issues,'meta']
+  ],
+  plans: [
+    ['description','textarea','Description','content'],
+    ['goalId','text','Goal Link (e.g., G1)','meta'],
+    ['owner','select','Owner', owners,'meta'],
+    ['status','select','Status', statuses.plans,'meta'],
+    ['start','date','Start','dates'],
+    ['end','date','End','dates']
+  ],
+  suggestions: [
+    ['description','textarea','Description','content'],
+    ['comments','textarea','Comments','content'],
+    ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
+    ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
+    ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
+    ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
+    ['submitted','date','Submitted','dates'],
+    ['reviewed','date','Reviewed','dates']
+  ],
+  questions: [
+    ['description','textarea','Description','content'],
+    ['comments','textarea','Comments','content'],
+    ['subject','select','Subject', ["","New Goal","New Risk","New Issue","New Plan"],'meta'],
+    ['owner','select','Owner', [''].concat(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor']),'meta'],
+    ['status','select','Status', ["","Approved","Pending","Dismissed"],'meta'],
+    ['reviewerRole','select','Reviewer Role', ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"],'meta'],
+    ['submitted','date','Submitted','dates'],
+    ['reviewed','date','Reviewed','dates']
+  ],
+};
+
+let OV = { coll:null, id:null, row:null, edit:false };
+let _autosaveTimer = null;
+
+function getRow(coll,id){
+  const list = cache[coll]||[];
+  return list.find(x => String(x.id).trim() === String(id).trim());
+}
+function sectionWrap(title,inner){
+  return `<div class="block"><details open><summary>${title}</summary>${inner}</details></div>`;
+}
+function inputHtml(name,type,label,opts,value,disabled){
+  const dis = disabled?'disabled':'';
+  if(type==='textarea'){
+    return `<div class="form-row"><label for="f_${name}">${label}</label><textarea id="f_${name}" name="${name}" ${dis}>${(value||'')}</textarea></div>`;
+  }
+  if(type==='select'){
+    const options = (opts||[]).map(v=>`<option ${String(v)===(value||'')?'selected':''}>${v}</option>`).join('');
+    return `<div class="form-row"><label for="f_${name}">${label}</label><select id="f_${name}" name="${name}" ${dis}>${options}</select></div>`;
+  }
+  return `<div class="form-row"><label for="f_${name}">${label}</label><input id="f_${name}" name="${name}" type="${type}" value="${value||''}" ${dis} /></div>`;
+}
+function collectOverlayUpdates(){
+  const cfg = FIELDSETS[OV.coll]||[];
+  const updates = {};
+  cfg.forEach(f=>{
+    const name = f[0]; const el = document.querySelector(`#ovBody [name="${name}"]`);
+    if(!el) return;
+    const val = el.value;
+    if(String(val)!==String(OV.row[name]||'')) updates[name]=val;
+  });
+  return updates;
+}
+async function saveOverlay(updates, opts={}){
+  if(!CAN_EDIT){ alert('no edit rights'); return; }
+  if(!OV.coll || !OV.id) return;
+  // validation
+  if(OV.coll==='goals' && 'goal' in updates && (updates.goal||'').trim()===''){ alert('Goal is required'); return; }
+  if(OV.coll==='plans' && 'goalId' in updates && updates.goalId && !/^G\d+$/.test(String(updates.goalId).trim())){ alert('Goal Link must look like G1, G2, ...'); return; }
+  try{
+    if(Object.keys(updates).length){
+      await updateDoc(doc(db, OV.coll, OV.id), updates);
+      Object.assign(getRow(OV.coll,OV.id), updates);
+      // Always notify on manual saves (not autosave), and only for the current item ID
+      if(opts.source==='manual'){
+        const label = OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1));
+        const updatedRow = getRow(OV.coll, OV.id);
+        await addDoc(collection(db,'notifications'), makeNote({
+          subject: label, status:'Edited', relatedId:OV.id,
+          description: pickDesc(label, updatedRow),
+          snapshot: JSON.parse(JSON.stringify(updatedRow)), coll: OV.coll
+        }));
+      }
+      renderTab));
+      }
+renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
+    }
+    setOverlayEdit(false);
+  }catch(err){ alert('save failed: '+err.message); }
+}
+function renderHistory(id){
+  let list = (cache.notifications||[]).filter(n=> String(n.relatedId||n.id||'')===String(id));
+  list.sort((a,b)=> String(a.date||'').localeCompare(String(b.date||'')));
+  if(!list.length) return '';
+  const items = list.slice(-10).map(n=>`<div class="form-row"><label>${n.date||''}</label><div>${escapeHtml(n.subject||'')} – ${escapeHtml(n.status||'')}</div></div>`).join('');
+  return sectionWrap('History (last 10)', items);
+}
+
+// Build and render the chain graph for the current overlay item
+
+// Build and render the chain graph for the current overlay item
+function renderLinkGraph(){
+  const mount = $('#ovGraph'); if(!mount) return;
+  const hasOV = (typeof OV !== 'undefined' && OV && OV.id && OV.coll);
+  const nodes = {};
+  ['goals','risks','issues','plans','questions','suggestions'].forEach(k=>{
+    (cache[k]||[]).forEach(x=>{ nodes[x.id] = { id:x.id, coll:k, parentId:x.parentId||'', goalId:x.goalId||'', data:x }; });
+  });
+
+  const typeClass = (k)=> ({goals:'goal',risks:'risk',issues:'issue',plans:'plan',questions:'question',suggestions:'suggestion'}[k]||'');
+  const label = (n)=> n.id;
+  const pickTime = (d)=> d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.timestamp || '';
+  const fmtDate = (v)=>{ if(!v) return ''; try{ if(/^\d{4}-\d{2}-\d{2}/.test(v)) return v; const dt=new Date(v); if(!isNaN(dt)) return dt.toISOString().slice(0,10);}catch(e){} return String(v); };
+
+  // find root (goal)
+  let rootId = '';
+  if(hasOV && OV.coll==='goals'){ rootId = OV.id; }
+  else if(hasOV){
+    const n = nodes[OV.id];
+    rootId = (n && n.goalId) ? n.goalId : '';
+    // fallback: climb via parentId until a goal is found
+    let cur = n; const seen = new Set();
+    while(cur && !rootId && !seen.has(cur.id)){
+      seen.add(cur.id);
+      if(cur.coll==='goals'){ rootId = cur.id; break; }
+      cur = nodes[cur.parentId||''];
+    }
+  }
+  if(!rootId){
+    mount.innerHTML = '<div class="node">Geen koppelingen gevonden</div>';
+    return;
+  }
+
+  // Build adjacency
+  const children = {};
+  Object.values(nodes).forEach(n=>{
+    const p = n.parentId || (n.coll!=='goals' && n.goalId ? n.goalId : '');
+    if(!p) return;
+    if(!children[p]) children[p] = [];
+    children[p].push(n);
+  });
+  const num = (id)=> parseInt(String(id).replace(/\D+/g,''))||0;
+  Object.keys(children).forEach(k=> children[k].sort((a,b)=> num(a.id)-num(b.id)));
+
+  function nodeHtml(n){
+    const isCurrent = hasOV && n.id===OV.id && n.coll===OV.coll;
+    const t = fmtDate(pickTime(n.data));
+    const cls = `node ${typeClass(n.coll)}${isCurrent?' current':''}`;
+    let timeHtml = t ? `<span class="time">• ${t}</span>` : '';
+    return `<div class="${cls}" data-id="${n.id}" data-coll="${n.coll}" tabindex="0"><span class="type">${n.coll.slice(0,-1)}</span><span class="id">${label(n)}</span>${timeHtml}</div>`;
+  }
+
+  function liHtml(n){
+    const kids = children[n.id]||[];
+    const block = nodeHtml(n);
+    if(!kids.length) return `<li>${block}</li>`;
+    return `<li>${block}<ul>${kids.map(liHtml).join('')}</ul></li>`;
+  }
+
+  const root = nodes[rootId] || {id:rootId, coll:'goals', data:{}};
+  const html = `<ul class="tree">${liHtml(root)}</ul>`;
+  mount.innerHTML = html;
+
+  // Clickable nodes → open overlay for that item
+  mount.querySelectorAll('.node').forEach(el=>{
+    el.addEventListener('click', (ev)=>{
+      const id = el.getAttribute('data-id'); const coll = el.getAttribute('data-coll');
+      if(id && coll){ renderOverlay(coll, id); }
+    });
+    el.addEventListener('keydown', (ev)=>{
+      if(ev.key==='Enter' || ev.key===' '){
+        ev.preventDefault();
+        const id = el.getAttribute('data-id'); const coll = el.getAttribute('data-coll');
+        if(id && coll){ renderOverlay(coll, id); }
+      }
+    });
+  });
+}
+
+
+
+// ---- Overlay: show next ID hint on + New buttons (no math, only result) ----
+async function annotateOverlayNextIds(){
+  const pairs = [
+    ['ovAddRisk','risks','Risk'],
+    ['ovAddIssue','issues','Issue'],
+    ['ovAddPlan','plans','Plan'],
+    ['ovAddQuestion','questions','Question'],
+    ['ovAddSuggestion','suggestions','Suggestion'],
+  ];
+  for(const [btnId, coll, label] of pairs){
+    const btn = document.getElementById(btnId);
+    if(!btn) continue;
+    try{
+      const cand = await nextUniqueId(coll, PREFIX[coll]);
+      btn.textContent = `+ New ${label} (${cand})`;
+      btn.title = `Volgende ID: ${cand}`;
+      btn.dataset.nextId = cand;
+    }catch(e){
+      // leave default text on failure
+    }
+  }
+}
+function renderOverlay(coll,id){
+  const row = getRow(coll,id);
+  if(!row){ alert('Item not found'); return;}
+  OV = { coll, id, row: JSON.parse(JSON.stringify(row)), edit:false };
+  $('#ovTitle').textContent = `${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)} – ${id}`;
+  $('#ovSub').textContent = `Type: ${coll} • ID: ${id}`;
+  $('#ovMeta').textContent = CAN_EDIT? 'editor' : 'viewer';
+
+  const cfg = FIELDSETS[coll]||[];
+  const pieces = {content:'',meta:'',dates:''};
+  cfg.forEach(f=>{
+    const [name,type,label,optsOrGroup,maybeGroup] = f;
+    const group = (maybeGroup||optsOrGroup||'content');
+    const opts  = Array.isArray(optsOrGroup)? optsOrGroup : (Array.isArray(maybeGroup)? maybeGroup : null);
+    pieces[group] += inputHtml(name,type,label,opts,row[name]||'', !OV.edit);
+  });
+
+  let html = '';
+  if(pieces.content) html += sectionWrap('Content', pieces.content);
+  if(pieces.meta)    html += sectionWrap('Meta', pieces.meta);
+  if(pieces.dates)   html += sectionWrap('Dates / Links', pieces.dates);
+  html += renderHistory(id);
+
+  $('#ovBody').innerHTML = `<div class="ov-split"><div class="ov-left"><div class="ov-grid">${html}</div></div><div class="ov-right"><h4>Koppelingen</h4><div id="ovGraph" class="tree"></div></div></div>`;
+  $('#overlay').classList.add('show');
+  try{ annotateOverlayNextIds(); }catch(_e){}
+  try{ renderLinkGraph(); }catch(_e){}
+  $('#ovSave').disabled = true;
+  try{ setHash(Object.assign(parseHash(), {tab: coll, item: id})); }catch(_e){}
+}
+function closeOverlay(){ $('#overlay').classList.remove('show'); OV={coll:null,id:null,row:null,edit:false}; try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){} }
+function setOverlayEdit(on){
+  OV.edit = !!on;
+  $$('#ovBody [name]').forEach(el=>{ el.disabled = !OV.edit; });
+  $('#ovSave').disabled = !OV.edit;
+}
+document.addEventListener('click', (e)=>{
+  const menuBtn = e.target.closest('[data-menu]');
+  if(menuBtn){
+    const coll = menuBtn.dataset.menu;
+    const tr = menuBtn.closest('tr');
+    const id = tr?.querySelector('td:first-child')?.innerText.trim();
+    if(coll && id) renderOverlay(coll,id);
+  }
+});
+$('#ovClose')?.addEventListener('click', closeOverlay);
+$('#overlay')?.addEventListener('click', (e)=>{ if(e.target.classList.contains('ov-backdrop')) closeOverlay(); });
+$('#ovEdit')?.addEventListener('click', ()=> setOverlayEdit(true));
+$('#ovSave')?.addEventListener('click', async ()=>{
+  const updates = collectOverlayUpdates();
+  await saveOverlay(updates, {source:'manual'});
+});
+$('#ovDelete')?.addEventListener('click', async ()=>{
+  if(!CAN_EDIT){ alert('no edit rights'); return; }
+  const coll = OV.coll, id = OV.id;
+  if(!confirm(`Delete ${id}?`)) return;
+  try{
+    const deletedRow = getRow(coll,id);
+    await deleteDoc(doc(db, coll, id));
+    cache[coll] = (cache[coll]||[]).filter(x=>x.id!==id);
+    await addDoc(collection(db,'notifications'), makeNote({
+      subject: coll==='suggestions'?'Suggestion' : (coll==='questions'?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1)),
+      status:'Deleted', relatedId:id, description:''
+    , snapshot: JSON.parse(JSON.stringify(deletedRow)), coll }));
+    renderTab(coll==='suggestions'?'suggestions': (coll==='questions'?'questions': document.querySelector('nav.tabs button.active')?.dataset.tab));
+    closeOverlay();
+  }catch(err){ alert('delete failed: '+err.message); }
+});
+// autosave debounce
+$('#ovBody')?.addEventListener('input', ()=>{
+  if(!OV.edit) return;
+  clearTimeout(_autosaveTimer);
+  _autosaveTimer = setTimeout(()=>{ const updates = collectOverlayUpdates(); if(Object.keys(updates).length) saveOverlay(updates, {source:'auto'}); }, 120000);
+});
+// keyboard shortcuts in overlay
+// Add New from overlay header
+async function addNew(coll, forcedId){
+  if(!DATA_READY){ alert('Data wordt geladen. Probeer zo nogmaals.'); return; }
+
+  if(!CAN_EDIT){ alert('no edit rights'); return; }
+  const prefix = PREFIX[coll];
+  const id = (forcedId && String(forcedId).trim()) || nextId(cache[coll]||[], prefix);
+  const defaults = {
+    goals:       (id)=>({id, goal:'', owner:'', start:'', end:'', status:'Open', notes:'', parentId:''}),
+    risks:       (id)=>({id, description:'', owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'', parentId:'', goalId:''}),
+    issues:      (id)=>({id, description:'', owner:'', severity:'Medium', status:'Open', resolution:'', parentId:'', goalId:''}),
+    plans:       (id)=>({id, description:'', owner:'', goalId:'', start:'', end:'', status:'Open', parentId:''}),
+    questions:   (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
+    suggestions: (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
+  };
+  const row = defaults[coll](id);
+  if(OV && OV.id){ row.parentId = OV.id; }
+  if(OV && OV.coll==='goals' && coll!=='goals'){ row.goalId = OV.id; }
+  await setDoc(doc(db, coll, id), row);
+  await addDoc(collection(db,'notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row), snapshot: JSON.parse(JSON.stringify(row)), coll }));
+  cache[coll].push(row);
+  renderTab(coll);
+  renderOverlay(coll,id);
+}
+$('#ovAddRisk')?.addEventListener('click', ()=>{ const cand=$('#ovAddRisk')?.dataset?.nextId; addNew('risks', cand); });
+$('#ovAddIssue')?.addEventListener('click', ()=>{ const cand=$('#ovAddIssue')?.dataset?.nextId; addNew('issues', cand); });
+$('#ovAddPlan')?.addEventListener('click', ()=>{ const cand=$('#ovAddPlan')?.dataset?.nextId; addNew('plans', cand); });
+$('#ovAddQuestion')?.addEventListener('click', ()=>{ const cand=$('#ovAddQuestion')?.dataset?.nextId; addNew('questions', cand); });
+$('#ovAddSuggestion')?.addEventListener('click', ()=>{ const cand=$('#ovAddSuggestion')?.dataset?.nextId; addNew('suggestions', cand); });
+
+// === Hash & Query deep linking ===
+function parseHash(){ const h=location.hash.replace(/^#/,''), sp=new URLSearchParams(h); const o={}; for(const [k,v] of sp) o[k]=v; return o; }
+function setHash(obj){ const h=new URLSearchParams(obj).toString(); history.replaceState(null,'', '#'+h); }
+function openFromHash(){
+  const h = parseHash();
+  if(h.tab){
+    const btn = document.querySelector(`.tabs button[data-tab="${h.tab}"]`);
+    if(btn){ btn.click(); }
+  }
+  const urlItem = new URL(location.href).searchParams.get('item');
+  if(!h.item && urlItem){ h.item = urlItem; }
+  if(h.item){
+    const id = h.item.trim();
+    const prefix = id[0].toUpperCase();
+    const coll = {G:'goals',R:'risks',I:'issues',P:'plans',Q:'questions',S:'suggestions'}[prefix];
+    if(coll){ renderOverlay(coll,id); }
+  }
+}
+// update hash when switching tabs
+$$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+  setHash(Object.assign(parseHash(), {tab: btn.dataset.tab}));
+}));
+
+// after load, honor hash
+
+// Initial
+    buildFilterOptions();
+    renderAll();
+  </script>
+
+<div id="overlay" aria-hidden="true">
+  <div class="ov-backdrop"></div>
+  <div class="ov-panel" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+    <div class="ov-header">
+      <div>
+        <div id="ovTitle" class="ov-title">Item</div>
+        <div id="ovSub" class="ov-sub"></div>
+      </div>
+      <div class="ov-actions">
+<button id="ovAddRisk" class="btn">+ New Risk</button>
+        <button id="ovAddIssue" class="btn">+ New Issue</button>
+        <button id="ovAddPlan" class="btn">+ New Plan</button>
+        <button id="ovAddQuestion" class="btn">+ New Question</button>
+        <button id="ovAddSuggestion" class="btn">+ New Suggestion</button>
+        <button id="ovClose" class="btn">Close</button>
+      </div>
+    </div>
+    <div id="ovBody" class="ov-body"></div>
+    <div class="ov-footer">
+      <div class="ov-actions">
+        <button id="ovEdit" class="btn">Edit</button>
+        <button id="ovSave" class="btn primary" disabled>Save</button>
+        <button id="ovDelete" class="btn danger">Delete</button>
+      </div>
+      <span class="badge" id="ovMeta"></span>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
