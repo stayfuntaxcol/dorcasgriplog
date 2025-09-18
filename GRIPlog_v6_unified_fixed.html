@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRIPlog – Honey Value Chain • Unified Tabs + Invulkaart (Fixed)</title>
+  <link rel="icon" href="assets/dorcas-logo.svg" />
+  <style>
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --ink:#111827; --muted:#6b7280; --line:#e5e7eb;
+      --brand:#0ea5a3; --danger:#ef4444; --ok:#10b981;
+      --w-id:70px; --w-desc:520px; --w-owner:160px; --w-actions:110px; --w-date:130px; --w-status:140px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial,sans-serif}
+
+    header{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:20}
+    header img{height:34px;width:auto}
+    .title{font-weight:800;font-size:18px}
+    .sub{color:var(--muted);font-size:12px}
+    .header-left{display:flex;gap:12px;align-items:center}
+    .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+    .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+    .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
+    .ok{background:var(--ok)}
+    .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
+
+    .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line);position:sticky;top:60px;z-index:15}
+    .leftbar{display:flex;gap:8px;align-items:center}
+    .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+    .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
+    .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
+    .btn.danger{background:#111827;color:#fff;border-color:#111827}
+    .btn.ghost{background:transparent}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .input, select, input[type="text"], input[type="password"], input[type="email"], input[type="date"], textarea{
+      border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px;width:100%;
+    }
+    textarea{min-height:96px;resize:vertical}
+    nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:106px;z-index:10}
+    nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
+    nav.tabs button.active{background:#0ea5a3;color:#fff}
+    nav.tabs .push-right{margin-left:auto}
+
+    section{display:none;padding:14px 16px}
+    section.active{display:block}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+    h2{margin:0 0 6px 0;font-size:18px}
+    p.help{margin:8px 0 0 0;color:var(--muted);font-size:12px}
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar .left{display:flex;gap:8px;align-items:center}
+    .sectionbar .right{display:flex;gap:8px;align-items:center}
+
+    table{width:100%;border-collapse:collapse}
+    th, td{border:1px solid var(--line);padding:6px 8px;vertical-align:top;font-size:14px;background:#fff}
+    th{background:#f9fbfb;text-align:left}
+    thead tr.filters th{background:#fff}
+
+    /* Goals */
+    #tblGoals th:nth-child(1), #tblGoals td:nth-child(1){width:var(--w-id)}
+    #tblGoals th:nth-child(2), #tblGoals td:nth-child(2){width:var(--w-desc)}
+    #tblGoals th:nth-child(3), #tblGoals td:nth-child(3){width:var(--w-owner)}
+    #tblGoals th:nth-child(8), #tblGoals td:nth-child(8){width:var(--w-actions)}
+    #tblGoals th:nth-child(4), #tblGoals td:nth-child(4),
+    #tblGoals th:nth-child(5), #tblGoals td:nth-child(5){width:var(--w-date)}
+    #tblGoals th:nth-child(6), #tblGoals td:nth-child(6){width:var(--w-status)}
+
+    /* Risks */
+    #tblRisks th:nth-child(1), #tblRisks td:nth-child(1){width:var(--w-id)}
+    #tblRisks th:nth-child(2), #tblRisks td:nth-child(2){width:var(--w-desc)}
+    #tblRisks th:nth-child(3), #tblRisks td:nth-child(3){width:var(--w-owner)}
+    #tblRisks th:nth-child(8), #tblRisks td:nth-child(8){width:var(--w-actions)}
+
+    /* Issues */
+    #tblIssues th:nth-child(1), #tblIssues td:nth-child(1){width:var(--w-id)}
+    #tblIssues th:nth-child(2), #tblIssues td:nth-child(2){width:var(--w-desc)}
+    #tblIssues th:nth-child(3), #tblIssues td:nth-child(3){width:var(--w-owner)}
+    #tblIssues th:nth-child(7), #tblIssues td:nth-child(7){width:var(--w-actions)}
+
+    /* Plans */
+    #tblPlans th:nth-child(1), #tblPlans td:nth-child(1){width:var(--w-id)}
+    #tblPlans th:nth-child(2), #tblPlans td:nth-child(2){width:var(--w-desc)}
+    #tblPlans th:nth-child(3), #tblPlans td:nth-child(3){width:var(--w-owner)}
+    #tblPlans th:nth-child(8), #tblPlans td:nth-child(8){width:var(--w-actions)}
+    #tblPlans th:nth-child(5), #tblPlans td:nth-child(5),
+    #tblPlans th:nth-child(6), #tblPlans td:nth-child(6){width:var(--w-date)}
+    #tblPlans th:nth-child(7), #tblPlans td:nth-child(7){width:var(--w-status)}
+
+    /* Questions – hide Subject & Comments columns */
+    #tblQuestions th:nth-child(1), #tblQuestions td:nth-child(1){width:var(--w-id)}
+    #tblQuestions th:nth-child(2), #tblQuestions td:nth-child(2){width:var(--w-desc)}
+    #tblQuestions th:nth-child(3), #tblQuestions td:nth-child(3),
+    #tblQuestions thead tr.filters th:nth-child(3){display:none}
+    #tblQuestions th:nth-child(4), #tblQuestions td:nth-child(4){width:var(--w-owner)}
+    #tblQuestions th:nth-child(9), #tblQuestions td:nth-child(9),
+    #tblQuestions thead tr.filters th:nth-child(9){display:none}
+    #tblQuestions th:nth-child(11), #tblQuestions td:nth-child(11){width:var(--w-actions)}
+
+    /* Suggestions – hide Subject & Comments columns */
+    #tblSuggestions th:nth-child(1), #tblSuggestions td:nth-child(1){width:var(--w-id)}
+    #tblSuggestions th:nth-child(2), #tblSuggestions td:nth-child(2){width:var(--w-desc)}
+    #tblSuggestions th:nth-child(3), #tblSuggestions td:nth-child(3),
+    #tblSuggestions thead tr.filters th:nth-child(3){display:none}
+    #tblSuggestions th:nth-child(4), #tblSuggestions td:nth-child(4){width:var(--w-owner)}
+    #tblSuggestions th:nth-child(9), #tblSuggestions td:nth-child(9),
+    #tblSuggestions thead tr.filters th:nth-child(9){display:none}
+    #tblSuggestions th:nth-child(11), #tblSuggestions td:nth-child(11){width:var(--w-actions)}
+
+    /* Notifications */
+    #tblNotifications th:nth-child(1), #tblNotifications td:nth-child(1){width:var(--w-id)}
+    #tblNotifications th:nth-child(8), #tblNotifications td:nth-child(8){width:var(--w-actions)}
+
+    .cell-text{white-space:pre-wrap}
+    footer{padding:16px;color:var(--muted);font-size:12px}
+
+    /* Overlay Invulkaart */
+    #overlay{position:fixed;inset:0;display:none;z-index:1000}
+    #overlay.show{display:block}
+    .ov-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+    .ov-panel{position:absolute;inset:24px;display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+    .ov-header{display:flex;gap:12px;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc)}
+    .ov-title{font-weight:800;font-size:16px}
+    .ov-body{padding:12px 16px;overflow:auto;display:grid;grid-template-columns:1.2fr .8fr;gap:16px}
+    .ov-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
+    .form-row{display:grid;grid-template-columns:160px 1fr;gap:10px;margin:8px 0}
+    .form-row label{color:var(--muted);font-size:12px;padding-top:6px}
+    .hint{color:var(--muted);font-size:12px}
+    .readonly-note{font-size:12px;color:#7f1d1d;background:#fee2e2;border:1px solid #fecaca;padding:6px 8px;border-radius:8px}
+    .ov-desc textarea{max-width:var(--w-desc)}
+
+    #ovSave{background:#e5e7eb;color:#111827;border-color:#9ca3af}
+    #ovDelete{background:#111827;color:#fff;border-color:#111827}
+
+    /* Init error banner */
+    #initError{display:none;margin:10px 16px;padding:12px;border:1px solid #fecaca;background:#fff1f2;color:#7f1d1d;border-radius:10px}
+    #initError.show{display:block}
+    #initError code{background:#fee2e2;padding:2px 6px;border-radius:6px}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-left">
+      <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+      <div>
+        <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+        <div class="sub">Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userInfo" class="user-info"></span>
+    </div>
+  </header>
+
+  <div id="initError" role="alert"></div>
+
+  <div class="toolbar">
+    <div class="leftbar">
+      <button id="btnLoad" class="btn">Load Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
+    </div>
+    <div class="rightbar">
+      <input id="fullName" class="input" placeholder="full name *" />
+      <input id="email" class="input" type="email" placeholder="email (required for editors)" />
+      <input id="org" class="input" placeholder="organization *" />
+      <select id="role" class="input">
+        <option value="Viewer" selected>Viewer (read-only)</option>
+        <option>Admin</option>
+        <option>Projectmanager</option>
+        <option>Strategic Program Advisor</option>
+        <option>Thematic Expert</option>
+      </select>
+      <input id="password" class="input" type="password" placeholder="password *" />
+      <button id="btnSignup" class="btn">register</button>
+      <button id="btnSignin" class="btn primary">login</button>
+      <button id="btnSignout" class="btn" style="display:none">logout</button>
+    </div>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button class="active" data-tab="goals">G – Goals</button>
+    <button data-tab="risks">R – Risks</button>
+    <button data-tab="issues">I – Issues</button>
+    <button data-tab="plans">P – Plans</button>
+    <button class="push-right" data-tab="questions">Q – Questions</button>
+    <button data-tab="suggestions">S – Suggestions</button>
+    <button data-tab="notifications">N – Notifications</button>
+  </nav>
+
+  <section id="goals" class="active" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Goals</h2></div>
+        <div class="right"><button class="btn" id="addGoalBtn" disabled>+ New Goal</button></div>
+      </div>
+      <table id="tblGoals">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Goal (SMART)</th><th>Owner</th><th>Start</th><th>End</th><th>Status</th><th>Notes</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="gSearch" class="input" placeholder="search goal/notes" /></th>
+            <th><select id="gOwner" class="input"></select></th>
+            <th><input type="date" id="gStartFrom" class="input" /></th>
+            <th><input type="date" id="gEndTo" class="input" /></th>
+            <th><select id="gStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="gReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="risks" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Risks</h2></div>
+        <div class="right"><button class="btn" id="addRiskBtn" disabled>+ New Risk</button></div>
+      </div>
+      <table id="tblRisks">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Owner</th><th>Likelihood</th><th>Impact</th><th>Status</th><th>Mitigation</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="rSearch" class="input" placeholder="search description/mitigation" /></th>
+            <th><select id="rOwner" class="input"></select></th>
+            <th><select id="rLikelihood" class="input"></select></th>
+            <th><select id="rImpact" class="input"></select></th>
+            <th><select id="rStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="rReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="issues" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Issues</h2></div>
+        <div class="right"><button class="btn" id="addIssueBtn" disabled>+ New Issue</button></div>
+      </div>
+      <table id="tblIssues">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Owner</th><th>Severity</th><th>Status</th><th>Resolution</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="iSearch" class="input" placeholder="search description/resolution" /></th>
+            <th><select id="iOwner" class="input"></select></th>
+            <th><select id="iSeverity" class="input"></select></th>
+            <th><select id="iStatus" class="input"></select></th>
+            <th></th>
+            <th><button id="iReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="plans" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Plans</h2></div>
+        <div class="right"><button class="btn" id="addPlanBtn" disabled>+ New Plan</button></div>
+      </div>
+      <table id="tblPlans">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Owner</th><th>Goal Link</th><th>Start</th><th>End</th><th>Status</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="pSearch" class="input" placeholder="search description" /></th>
+            <th><select id="pOwner" class="input"></select></th>
+            <th><input type="text" id="pGoalId" class="input" placeholder="G1, G2…" /></th>
+            <th></th><th></th>
+            <th><select id="pStatus" class="input"></select></th>
+            <th><button id="pReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="questions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Questions</h2></div>
+        <div class="right">
+          <span id="questionsUser" class="user-info"></span>
+          <button class="btn" id="addQuestionBtn">+ New Question</button>
+        </div>
+      </div>
+      <table id="tblQuestions">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Subject</th><th>Owner</th><th>Submitted</th><th>Status</th><th>Reviewer Role</th><th>Reviewed</th><th>Comments</th><th>Stars</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="qSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="qSubject" class="input"></select></th>
+            <th><select id="qOwner" class="input"></select></th>
+            <th><input type="date" id="qSubmitted" class="input" /></th>
+            <th><select id="qStatus" class="input"></select></th>
+            <th><select id="qReviewerRole" class="input"></select></th>
+            <th><input type="date" id="qReviewed" class="input" /></th>
+            <th></th><th></th>
+            <th><button id="qReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="suggestions" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Suggestions</h2></div>
+        <div class="right">
+          <span id="suggestionsUser" class="user-info"></span>
+          <button class="btn" id="addSuggestionBtn">+ New Suggestion</button>
+        </div>
+      </div>
+      <table id="tblSuggestions">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Subject</th><th>Owner</th><th>Submitted</th><th>Status</th><th>Reviewer Role</th><th>Reviewed</th><th>Comments</th><th>Stars</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th></th>
+            <th><input type="text" id="sSearch" class="input" placeholder="search description/comments" /></th>
+            <th><select id="sSubject" class="input"></select></th>
+            <th><select id="sOwner" class="input"></select></th>
+            <th><input type="date" id="sSubmitted" class="input" /></th>
+            <th><select id="sStatus" class="input"></select></th>
+            <th><select id="sReviewerRole" class="input"></select></th>
+            <th><input type="date" id="sReviewed" class="input" /></th>
+            <th></th><th></th>
+            <th><button id="sReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="notifications" role="tabpanel">
+    <div class="card">
+      <div class="sectionbar">
+        <div class="left"><h2>Notifications</h2></div>
+        <div class="right"><span id="notificationsUser" class="user-info"></span></div>
+      </div>
+      <table id="tblNotifications">
+        <thead>
+          <tr class="labels">
+            <th>ID</th><th>Description</th><th>Subject</th><th>Status</th><th>Role</th><th>Date</th><th>Comments</th><th>Actions</th>
+          </tr>
+          <tr class="filters">
+            <th><input type="text" id="nId" class="input" placeholder="G1/R2/..."/></th>
+            <th><input type="text" id="nSearch" class="input" placeholder="search description/comments"/></th>
+            <th><select id="nSubject" class="input"></select></th>
+            <th><select id="nStatus" class="input"></select></th>
+            <th><select id="nRole" class="input"></select></th>
+            <th><input type="date" id="nFrom" class="input"/> – <input type="date" id="nTo" class="input"/></th>
+            <th></th>
+            <th><button id="nReset" class="btn">Reset</button></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <p class="help">Only <strong>Admin</strong> can edit or delete rows in this logbook.</p>
+    </div>
+  </section>
+
+  <div id="overlay" aria-hidden="true">
+    <div class="ov-backdrop"></div>
+    <div class="ov-panel" role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+      <div class="ov-header">
+        <div class="ov-title" id="ovTitle">New Item</div>
+        <div class="ov-actions"><button id="ovClose" class="btn">Close</button></div>
+      </div>
+      <div class="ov-body">
+        <div>
+          <div id="ovReadOnlyWarn" class="readonly-note" style="display:none">Je hebt geen schrijfrechten. De velden zijn alleen-lezen.</div>
+          <div id="ovForm"></div>
+        </div>
+        <div>
+          <div class="hint"><strong>Meta</strong></div>
+          <div class="form-row"><label>Collection</label><div id="ovMetaColl"></div></div>
+          <div class="form-row"><label>Item ID</label><div id="ovMetaId"></div></div>
+          <div class="form-row"><label>Mode</label><div id="ovMetaMode"></div></div>
+        </div>
+      </div>
+      <div class="ov-footer">
+        <div class="hint">Wijzigingen worden pas opgeslagen na <strong>Save</strong>.</div>
+        <div>
+          <button id="ovDelete" class="btn danger" style="display:none">Delete</button>
+          <button id="ovSave" class="btn" disabled>Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>© <span id="yr"></span> Dorcas / GRIPlog – role-based viewer/editor.</footer>
+
+  <script type="module">
+    // ---- Lightweight DOM helpers, visible even if Firebase init fails ----
+    const $ = (q,root=document)=>root.querySelector(q);
+    const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
+    $('#yr').textContent = new Date().getFullYear();
+
+    // Show an error banner
+    function showInitError(msg){
+      const el = $('#initError');
+      el.innerHTML = msg;
+      el.classList.add('show');
+    }
+
+    // Early tabs hookup so UI doesn't feel frozen
+    $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
+      $$('.tabs button').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+      const tab=btn.dataset.tab; $$('section').forEach(s=>s.classList.remove('active')); $('#'+tab).classList.add('active');
+    }));
+
+    // ---- Bootstrapped (dynamic) Firebase init + app logic ----
+    (async () => {
+      // Guard: local files cannot import ES modules from https:// due to CORS
+      if(location.protocol === 'file:'){
+        showInitError('Je opent dit bestand via <code>file://</code>. Voor Firebase-modules is een lokale webserver nodig. Start b.v. <code>python -m http.server 8000</code> in de map en open <code>http://localhost:8000/</code>. De UI blijft wel bruikbaar zonder data.');
+      }
+      let firebaseApp, firebaseAuth, firebaseDb;
+      let initializeApp, getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, signInAnonymously;
+      let getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc, serverTimestamp;
+
+      try{
+        const modApp  = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js');
+        const modAuth = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js');
+        const modDb   = await import('https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js');
+        ({ initializeApp } = modApp);
+        ({ getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile, signInAnonymously } = modAuth);
+        ({ getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, deleteDoc, serverTimestamp } = modDb);
+      }catch(e){
+        showInitError('Kon Firebase-modules niet laden. Controleer je internetverbinding of open via een webserver. Fout: <code>'+String(e?.message||e)+'</code>');
+        // Continue with a no-op datastore so UI still works
+        getFirestore = ()=>({}); collection=doc=getDoc=getDocs=setDoc=updateDoc=addDoc=deleteDoc=serverTimestamp=()=>{ throw new Error('DB unavailable'); };
+        getAuth = ()=>({}); onAuthStateChanged = ()=>{}; signInWithEmailAndPassword = createUserWithEmailAndPassword = signOut = updateProfile = signInAnonymously = async()=>{ throw new Error('Auth unavailable'); };
+      }
+
+      const firebaseConfig = {
+        apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
+        authDomain: "griplog.firebaseapp.com",
+        projectId: "griplog",
+        storageBucket: "griplog.appspot.com",
+        messagingSenderId: "1097061844582",
+        appId: "1:1097061844582:web:5fc1c25e320af9c9384fa7"
+      };
+
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const db = getFirestore(app);
+
+      // --- Role / lists ---
+      const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+      const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+      const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
+      const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+      const tri=["","Low","Medium","High"];
+
+      const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
+      const suggestionStatus   = ["","Approved","Pending","Dismissed"];
+      const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+
+      const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
+      const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
+      const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+
+      let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
+
+      // Save/restore login prefs
+      function loadLoginPrefs(){
+        try{
+          const g = k => localStorage.getItem('grip.'+k) || '';
+          ['fullName','email','org'].forEach(id => { const el = document.getElementById(id); if(el) el.value = g(id); });
+          const role = localStorage.getItem('grip.role') || 'Viewer';
+          const roleEl = document.getElementById('role'); if(roleEl) roleEl.value = role;
+        }catch{}
+      }
+      function bindLoginPrefs(){
+        const bind = id => {
+          const el = document.getElementById(id);
+          if(el) el.addEventListener('input', ()=>{ try{ localStorage.setItem('grip.'+id, el.value); }catch{} });
+        };
+        ['fullName','email','org','role'].forEach(bind);
+      }
+      loadLoginPrefs(); bindLoginPrefs();
+
+      function syncSectionUserLabels(){
+        const label = CURRENT_NAME ? `${(CURRENT_NAME||'').toLowerCase()} – ${CURRENT_ROLE.toLowerCase()}` : '';
+        $('#suggestionsUser').textContent = label;
+        $('#questionsUser').textContent = label;
+        $('#notificationsUser').textContent = label;
+      }
+      function setEditMode(can){
+        CAN_EDIT=!!can;
+        $('#btnSaveAll').disabled=!CAN_EDIT;
+        ['addGoalBtn','addRiskBtn','addIssueBtn','addPlanBtn'].forEach(id=>{ const el=document.getElementById(id); if(el) el.disabled=!CAN_EDIT; });
+      }
+
+      // Auth buttons
+      $('#btnSignup').onclick=async ()=>{
+        const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const org=$('#org').value.trim(); const role=$('#role').value; const pass=$('#password').value;
+        if(!fullName||!org||!pass){ alert('fill required fields'); return; }
+        if(EDIT_ROLES.has(role) && !email){ alert('email required for editors'); return; }
+        const used=email || fullName.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local";
+        try{
+          const cred=await createUserWithEmailAndPassword(auth, used, pass);
+          await updateProfile(cred.user,{displayName:fullName});
+          await setDoc(doc(db,'users',cred.user.uid),{ fullName, email: email||'', org, role, createdAt: serverTimestamp() }, {merge:true});
+          alert('registered. please login.'); await signOut(auth);
+        }catch(e){ alert(e.message); }
+      };
+      $('#btnSignin').onclick=async ()=>{
+        const fullName=$('#fullName').value.trim(); const email=($('#email').value||'').trim(); const rolePick=$('#role').value; const pass=$('#password').value;
+        if(!fullName||!pass){ alert('fill required fields'); return; }
+        if(EDIT_ROLES.has(rolePick) && !email){ alert('email required for editors'); return; }
+        const used=email || fullName.trim().toLowerCase().replace(/[^a-z0-9]+/g,'').slice(0,40)+"@griplog.local";
+        try{
+          const cred=await signInWithEmailAndPassword(auth, used, pass);
+          if(EDIT_ROLES.has(rolePick) && email){ await setDoc(doc(db,'users',cred.user.uid),{ role: rolePick, email, fullName }, {merge:true}); }
+        }catch(e){ alert('login failed: '+e.message); }
+      };
+      $('#btnSignout').onclick=()=>signOut(auth);
+      (function addAnonButton(){
+        try{
+          const anchor = document.getElementById('btnSignin') || document.getElementById('btnSignup');
+          if(!anchor) return;
+          const btn = document.createElement('button');
+          btn.id='btnAnon'; btn.className=anchor.className||''; btn.style.marginLeft='8px'; btn.textContent='Anon login';
+          anchor.insertAdjacentElement('afterend', btn);
+          btn.onclick = async ()=>{ try{ await signInAnonymously(auth); }catch(e){ alert('Anon login failed: '+(e?.message||e)); } };
+        }catch{}
+      })();
+
+      onAuthStateChanged(auth, async (user) => {
+        const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
+        if(!user){
+          authDot?.classList.remove('ok'); if(authTxt) authTxt.textContent='not signed in'; if(userInfo) userInfo.textContent='';
+          $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
+          return;
+        }
+        $('#btnSignout').style.display='inline-block'; authDot?.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
+        let role='Viewer', full=user.displayName||user.email||'';
+        try{
+          const snap=await getDoc(doc(db,'users',user.uid));
+          if(snap.exists()){ const d=snap.data(); role=d.role||role; full=d.fullName||full; if(EDIT_ROLES.has(role) && !(user.email&&user.email.length)) role='Viewer'; }
+          else{ await setDoc(doc(db,'users',user.uid),{ fullName: full, email: user.email||'', role: 'Viewer' }, {merge:true}); }
+        }catch(err){ console.warn('role load failed', err); }
+        CURRENT_ROLE=role; CURRENT_NAME=full;
+        const isEditor = EDIT_ROLES.has(role) && !!user.email;
+        if(authTxt) authTxt.textContent = isEditor? 'editor' : 'viewer';
+        if(userInfo) userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+        syncSectionUserLabels();
+        setEditMode(isEditor);
+        await loadAll();
+      });
+
+      // Data cache
+      let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
+
+      async function loadAll(){
+        try{
+          const [g,r,i,p,s,q,n] = await Promise.all([
+            getDocs(collection(db,'goals')),
+            getDocs(collection(db,'risks')),
+            getDocs(collection(db,'issues')),
+            getDocs(collection(db,'plans')),
+            getDocs(collection(db,'suggestions')),
+            getDocs(collection(db,'questions')),
+            getDocs(collection(db,'notifications')),
+          ]);
+          cache.goals = g.docs.map(d=>({id:d.id,...d.data()}));
+          cache.risks = r.docs.map(d=>({id:d.id,...d.data()}));
+          cache.issues= i.docs.map(d=>({id:d.id,...d.data()}));
+          cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
+          cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
+          cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
+          cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
+          buildFilterOptions();
+          renderAll();
+        }catch(e){
+          showInitError('Kon gegevens niet laden uit Firestore. Fout: <code>'+String(e?.message||e)+'</code>');
+        }
+      }
+      $('#btnLoad').onclick=loadAll;
+      $('#btnSaveAll').onclick=()=>alert('Items worden direct via de Invulkaart opgeslagen. Geen bulk-save nodig.');
+
+      // Helpers
+      function idNum(id){ const n=parseInt(String(id||'').replace(/\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+      function idCompare(a,b){ return idNum(a.id) - idNum(b.id); }
+      function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+      function isoToday(){ return new Date().toISOString().slice(0,10); }
+
+      // Filters
+      function fillSelect(sel, arr, ph){ const el=$(sel); if(!el) return; el.innerHTML = arr.map((v,i)=>`<option value="${v}">${i===0? (ph||'Any') : v}</option>`).join(''); }
+      function buildFilterOptions(){
+        const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+        const tri=["","Low","Medium","High"];
+        const ownerRoles = ['','Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+        fillSelect('#gOwner', ["",...owners], 'Owner'); fillSelect('#gStatus', statuses.goals, 'Status');
+        fillSelect('#rOwner', ["",...owners], 'Owner'); fillSelect('#rLikelihood', tri, 'Likelihood'); fillSelect('#rImpact', tri, 'Impact'); fillSelect('#rStatus', statuses.risks, 'Status');
+        fillSelect('#iOwner', ["",...owners], 'Owner'); fillSelect('#iSeverity', tri, 'Severity'); fillSelect('#iStatus', statuses.issues, 'Status');
+        fillSelect('#pOwner', ["",...owners], 'Owner'); fillSelect('#pStatus', statuses.plans, 'Status');
+        const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
+        const suggestionStatus   = ["","Approved","Pending","Dismissed"];
+        const suggestionReviewer = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+        fillSelect('#sSubject', suggestionSubjects, 'Subject'); fillSelect('#sOwner', ownerRoles, 'Owner'); fillSelect('#sStatus', suggestionStatus, 'Status'); fillSelect('#sReviewerRole', suggestionReviewer, 'Reviewer Role');
+        fillSelect('#qSubject', suggestionSubjects, 'Subject'); fillSelect('#qOwner', ownerRoles, 'Owner'); fillSelect('#qStatus', suggestionStatus, 'Status'); fillSelect('#qReviewerRole', suggestionReviewer, 'Reviewer Role');
+        const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
+        const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
+        const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+        fillSelect('#nSubject', noteSubjects, 'Subject'); fillSelect('#nStatus', noteStatus, 'Status'); fillSelect('#nRole', noteRoles, 'Role');
+
+        ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderGoals));
+        ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderRisks));
+        ['iOwner','iSeverity','iStatus','iSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderIssues));
+        ['pOwner','pStatus','pGoalId','pSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderPlans));
+        ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderSuggestions));
+        ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(id=> $('#'+id)?.addEventListener('input', renderQuestions));
+        ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(id=> $('#'+id)?.addEventListener('input', ()=>renderNotifications(cache.notifications)));
+        $('#gReset')?.addEventListener('click', ()=>{ ['gOwner','gStatus','gStartFrom','gEndTo','gSearch'].forEach(i=>$('#'+i).value=''); renderGoals(); });
+        $('#rReset')?.addEventListener('click', ()=>{ ['rOwner','rLikelihood','rImpact','rStatus','rSearch'].forEach(i=>$('#'+i).value=''); renderRisks(); });
+        $('#iReset')?.addEventListener('click', ()=>{ ['iOwner','iSeverity','iStatus','iSearch'].forEach(i=>$('#'+i).value=''); renderIssues(); });
+        $('#pReset')?.addEventListener('click', ()=>{ ['pOwner','pStatus','pGoalId','pSearch'].forEach(i=>$('#'+i).value=''); renderPlans(); });
+        $('#sReset')?.addEventListener('click', ()=>{ ['sSubject','sOwner','sSubmitted','sStatus','sReviewerRole','sReviewed','sSearch'].forEach(i=>$('#'+i).value=''); renderSuggestions(); });
+        $('#qReset')?.addEventListener('click', ()=>{ ['qSubject','qOwner','qSubmitted','qStatus','qReviewerRole','qReviewed','qSearch'].forEach(i=>$('#'+i).value=''); renderQuestions(); });
+        $('#nReset')?.addEventListener('click', ()=>{ ['nId','nSearch','nSubject','nStatus','nRole','nFrom','nTo'].forEach(i=>$('#'+i).value=''); renderNotifications(cache.notifications); });
+      }
+
+      function actionsCell(){ return '<div class="row-actions"><button class="btn" data-menu>Menu</button></div>'; }
+      function rowGoal(r){
+        const ownerSel = '<select disabled>'+["",...owners].map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')+'</select>';
+        const statusSel = '<select disabled>'+["","Open","In progress","Done"].map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')+'</select>';
+        const start = `<input type="date" value="${r.start||''}" disabled />`;
+        const end   = `<input type="date" value="${r.end||''}" disabled />`;
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.goal||'')}</div></td>
+          <td>${ownerSel}</td>
+          <td>${start}</td>
+          <td>${end}</td>
+          <td>${statusSel}</td>
+          <td><div class="cell-text">${(r.notes||'')}</div></td>
+          <td>${actionsCell()}</td>`;
+      }
+      function rowRisk(r){
+        const ownerSel = '<select disabled>'+["",...owners].map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')+'</select>';
+        const tri=["","Low","Medium","High"];
+        const likeSel  = '<select disabled>'+tri.map(v=>`<option ${v===(r.likelihood||'')?'selected':''}>${v}</option>`).join('')+'</select>';
+        const impSel   = '<select disabled>'+tri.map(v=>`<option ${v===(r.impact||'')?'selected':''}>${v}</option>`).join('')+'</select>';
+        const statusSel= '<select disabled>'+["","Open","In progress","Done"].map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')+'</select>';
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.description||'')}</div></td>
+          <td>${ownerSel}</td>
+          <td>${likeSel}</td>
+          <td>${impSel}</td>
+          <td>${statusSel}</td>
+          <td><div class="cell-text">${(r.mitigation||'')}</div></td>
+          <td>${actionsCell()}</td>`;
+      }
+      function rowIssue(r){
+        const ownerSel = '<select disabled>'+["",...owners].map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')+'</select>';
+        const tri=["","Low","Medium","High"];
+        const sevSel   = '<select disabled>'+tri.map(v=>`<option ${v===(r.severity||'')?'selected':''}>${v}</option>`).join('')+'</select>';
+        const statusSel= '<select disabled>'+["","Open","In progress","Blocked","Done"].map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')+'</select>';
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.description||'')}</div></td>
+          <td>${ownerSel}</td>
+          <td>${sevSel}</td>
+          <td>${statusSel}</td>
+          <td><div class="cell-text">${(r.resolution||'')}</div></td>
+          <td>${actionsCell()}</td>`;
+      }
+      function rowPlan(r){
+        const ownerSel = '<select disabled>'+["",...owners].map(o=>`<option ${o===(r.owner||'')?'selected':''}>${o}</option>`).join('')+'</select>';
+        const statusSel= '<select disabled>'+["","Open","In progress","Done"].map(s=>`<option ${s===(r.status||'')?'selected':''}>${s}</option>`).join('')+'</select>';
+        const start = `<input type="date" value="${r.start||''}" disabled />`;
+        const end   = `<input type="date" value="${r.end||''}" disabled />`;
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.description||'')}</div></td>
+          <td>${ownerSel}</td>
+          <td><input type="text" value="${(r.goalId||'')}" disabled /></td>
+          <td>${start}</td>
+          <td>${end}</td>
+          <td>${statusSel}</td>
+          <td>${actionsCell()}</td>`;
+      }
+      function rowSuggestion(r){
+        const subjects = ["","New Goal","New Risk","New Issue","New Plan"];
+        const ownerRoles = ['','Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+        const status  = ["","Approved","Pending","Dismissed"];
+        const revRole = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+        const subjectSel = '<select disabled>'+subjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')+'</select>';
+        const ownerSel   = '<select disabled>'+ownerRoles.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')+'</select>';
+        const statusSel  = '<select disabled>'+status.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')+'</select>';
+        const revRoleSel = '<select disabled>'+revRole.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')+'</select>';
+        const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+        const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+        const starBtn    = '<button class="btn ghost" data-star-sug>⭐</button>';
+        const starCnt    = `<span data-star-count>${r.stars||0}</span>`;
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.description||'')}</div></td>
+          <td>${subjectSel}</td>
+          <td>${ownerSel}</td>
+          <td>${subDate}</td>
+          <td>${statusSel}</td>
+          <td>${revRoleSel}</td>
+          <td>${revDate}</td>
+          <td><div class="cell-text">${(r.comments||'')}</div></td>
+          <td class="col-stars">${starBtn} ${starCnt}</td>
+          <td>${actionsCell()}</td>`;
+      }
+      function rowQuestion(r){
+        const subjects = ["","New Goal","New Risk","New Issue","New Plan"];
+        const ownerRoles = ['','Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+        const status  = ["","Approved","Pending","Dismissed"];
+        const revRole = ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"];
+        const subjectSel = '<select disabled>'+subjects.map(s=>`<option ${s===r.subject?'selected':''}>${s}</option>`).join('')+'</select>';
+        const ownerSel   = '<select disabled>'+ownerRoles.map(o=>`<option ${o===r.owner?'selected':''}>${o}</option>`).join('')+'</select>';
+        const statusSel  = '<select disabled>'+status.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')+'</select>';
+        const revRoleSel = '<select disabled>'+revRole.map(o=>`<option ${o===r.reviewerRole?'selected':''}>${o}</option>`).join('')+'</select>';
+        const subDate    = `<input type="date" value="${r.submitted||''}" disabled />`;
+        const revDate    = `<input type="date" value="${r.reviewed||''}" disabled />`;
+        const starBtn    = '<button class="btn ghost" data-star-q>⭐</button>';
+        const starCnt    = `<span data-star-count>${r.stars||0}</span>`;
+        return `<td>${(r.id||'')}</td>
+          <td><div class="cell-text">${(r.description||'')}</div></td>
+          <td>${subjectSel}</td>
+          <td>${ownerSel}</td>
+          <td>${subDate}</td>
+          <td>${statusSel}</td>
+          <td>${revRoleSel}</td>
+          <td>${revDate}</td>
+          <td><div class="cell-text">${(r.comments||'')}</div></td>
+          <td class="col-stars">${starBtn} ${starCnt}</td>
+          <td>${actionsCell()}</td>`;
+      }
+
+      function renderGoals(){ const tbody=$('#tblGoals tbody'); if(!tbody) return; tbody.innerHTML=''; let rows=[...cache.goals];
+        const fOwner=$('#gOwner')?.value||''; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        const fStatus=$('#gStatus')?.value||''; if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+        const fStart=$('#gStartFrom')?.value||''; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
+        const fEnd=$('#gEndTo')?.value||''; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
+        const q=$('#gSearch')?.value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
+        rows.sort(idCompare);
+        rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tr.dataset.coll='goals'; tr.dataset.id=r.id; tbody.appendChild(tr); });
+      }
+      function renderRisks(){ const tbody=$('#tblRisks tbody'); if(!tbody) return; tbody.innerHTML=''; let rows=[...cache.risks];
+        const fOwner=$('#rOwner')?.value||''; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        const fL=$('#rLikelihood')?.value||''; if(fL) rows=rows.filter(r=> (r.likelihood||'')===fL);
+        const fI=$('#rImpact')?.value||''; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
+        const fS=$('#rStatus')?.value||''; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+        const q=$('#rSearch')?.value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
+        rows.sort(idCompare);
+        rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tr.dataset.coll='risks'; tr.dataset.id=r.id; tbody.appendChild(tr); });
+      }
+      function renderIssues(){ const tbody=$('#tblIssues tbody'); if(!tbody) return; tbody.innerHTML=''; let rows=[...cache.issues];
+        const fOwner=$('#iOwner')?.value||''; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        const fV=$('#iSeverity')?.value||''; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
+        const fS=$('#iStatus')?.value||''; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+        const q=$('#iSearch')?.value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
+        rows.sort(idCompare);
+        rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tr.dataset.coll='issues'; tr.dataset.id=r.id; tbody.appendChild(tr); });
+      }
+      function renderPlans(){ const tbody=$('#tblPlans tbody'); if(!tbody) return; tbody.innerHTML=''; let rows=[...cache.plans];
+        const fOwner=$('#pOwner')?.value||''; if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        const fS=$('#pStatus')?.value||''; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
+        const fG=$('#pGoalId')?.value?.trim().toLowerCase()||''; if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
+        const q=$('#pSearch')?.value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
+        rows.sort(idCompare);
+        rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tr.dataset.coll='plans'; tr.dataset.id=r.id; tbody.appendChild(tr); });
+      }
+      function renderSuggestions(){
+        const tbody=$('#tblSuggestions tbody'); if(!tbody) return; tbody.innerHTML='';
+        let rows=[...cache.suggestions];
+        const q=$('#sSearch')?.value?.toLowerCase()||'';
+        const fSub=$('#sSubject')?.value||''; const fOwner=$('#sOwner')?.value||''; const fSubm=$('#sSubmitted')?.value||''; const fStatus=$('#sStatus')?.value||''; const fRevRole=$('#sReviewerRole')?.value||''; const fRevDate=$('#sReviewed')?.value||'';
+        if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+        if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+        if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+        if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+        if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+        if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+        rows.sort(idCompare);
+        rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.coll='suggestions'; tr.dataset.id=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
+      }
+      function renderQuestions(){
+        const tbody=$('#tblQuestions tbody'); if(!tbody) return; tbody.innerHTML='';
+        let rows=[...cache.questions];
+        const q=$('#qSearch')?.value?.toLowerCase()||'';
+        const fSub=$('#qSubject')?.value||''; const fOwner=$('#qOwner')?.value||''; const fSubm=$('#qSubmitted')?.value||''; const fStatus=$('#qStatus')?.value||''; const fRevRole=$('#qReviewerRole')?.value||''; const fRevDate=$('#qReviewed')?.value||'';
+        if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+        if(fSub) rows=rows.filter(r=> (r.subject||'')===fSub);
+        if(fOwner) rows=rows.filter(r=> (r.owner||'')===fOwner);
+        if(fSubm) rows=rows.filter(r=> (r.submitted||'')>=fSubm);
+        if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
+        if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
+        if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
+        rows.sort(idCompare);
+        rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.coll='questions'; tr.dataset.id=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
+      }
+      function renderNotifications(rows){
+        const tbody=$('#tblNotifications tbody'); if(!tbody) return; tbody.innerHTML='';
+        let list=[...rows];
+        const idf=$('#nId')?.value?.trim()||''; const q=$('#nSearch')?.value?.toLowerCase()||''; const sub=$('#nSubject')?.value||''; const st=$('#nStatus')?.value||''; const rl=$('#nRole')?.value||''; const from=$('#nFrom')?.value||''; const to=$('#nTo')?.value||'';
+        if(idf) list=list.filter(r=> (r.id||'').toLowerCase().includes(idf.toLowerCase()));
+        if(q) list=list.filter(r=> ((r.description||'')+' '+(r.comments||'')).toLowerCase().includes(q));
+        if(sub) list=list.filter(r=> (r.subject||'')===sub);
+        if(st) list=list.filter(r=> (r.status||'')===st);
+        if(rl) list=list.filter(r=> (r.role||'')===rl);
+        if(from) list=list.filter(r=> (r.date||'')>=from);
+        if(to) list=list.filter(r=> (r.date||'')<=to);
+        list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+        list.forEach(r=>{
+          const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
+          const actions = (CURRENT_ROLE==='Admin')? '<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>' : '—';
+          tr.innerHTML = `
+            <td>${(r.id||'')}</td>
+            <td>${(r.description||'')}</td>
+            <td>${(r.subject||'')}</td>
+            <td>${(r.status||'')}</td>
+            <td>${(r.role||'')}</td>
+            <td>${(r.date||'')}</td>
+            <td>${(r.comments||'')}</td>
+            <td>${actions}</td>`;
+          tbody.appendChild(tr);
+        });
+      }
+
+      function renderAll(){ renderGoals(); renderRisks(); renderIssues(); renderPlans(); renderSuggestions(); renderQuestions(); renderNotifications(cache.notifications); }
+
+      // Overlay Invulkaart
+      const SCHEMA = {
+        goals: [
+          {key:'goal', label:'Goal (SMART)', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: owners},
+          {key:'start', label:'Start', type:'date'},
+          {key:'end', label:'End', type:'date'},
+          {key:'status', label:'Status', type:'select', options: ["","Open","In progress","Done"]},
+          {key:'notes', label:'Notes', type:'textarea'}
+        ],
+        risks: [
+          {key:'description', label:'Description', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: owners},
+          {key:'likelihood', label:'Likelihood', type:'select', options: ["","Low","Medium","High"]},
+          {key:'impact', label:'Impact', type:'select', options: ["","Low","Medium","High"]},
+          {key:'status', label:'Status', type:'select', options: ["","Open","In progress","Done"]},
+          {key:'mitigation', label:'Mitigation', type:'textarea'}
+        ],
+        issues: [
+          {key:'description', label:'Description', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: owners},
+          {key:'severity', label:'Severity', type:'select', options: ["","Low","Medium","High"]},
+          {key:'status', label:'Status', type:'select', options: ["","Open","In progress","Blocked","Done"]},
+          {key:'resolution', label:'Resolution', type:'textarea'}
+        ],
+        plans: [
+          {key:'description', label:'Description', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: owners},
+          {key:'goalId', label:'Goal Link', type:'text'},
+          {key:'start', label:'Start', type:'date'},
+          {key:'end', label:'End', type:'date'},
+          {key:'status', label:'Status', type:'select', options: ["","Open","In progress","Done"]}
+        ],
+        suggestions: [
+          {key:'description', label:'Description', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: [''].concat([...new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'])])},
+          {key:'subject', label:'Subject', type:'select', options: ["","New Goal","New Risk","New Issue","New Plan"]},
+          {key:'submitted', label:'Submitted', type:'date', default: ()=>isoToday()},
+          {key:'status', label:'Status', type:'select', options: ["","Approved","Pending","Dismissed"], default: ()=>"Pending"},
+          {key:'reviewerRole', label:'Reviewer Role', type:'select', options: ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"]},
+          {key:'reviewed', label:'Reviewed', type:'date'},
+          {key:'comments', label:'Comments', type:'textarea'}
+        ],
+        questions: [
+          {key:'description', label:'Description', type:'textarea', required:true, desc:true},
+          {key:'owner', label:'Owner', type:'select', options: [''].concat([...new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'])])},
+          {key:'subject', label:'Subject', type:'select', options: ["","New Goal","New Risk","New Issue","New Plan"]},
+          {key:'submitted', label:'Submitted', type:'date', default: ()=>isoToday()},
+          {key:'status', label:'Status', type:'select', options: ["","Approved","Pending","Dismissed"], default: ()=>"Pending"},
+          {key:'reviewerRole', label:'Reviewer Role', type:'select', options: ["","Admin","Strategic Program Advisor","Thematic Expert","Projectmanager"]},
+          {key:'reviewed', label:'Reviewed', type:'date'},
+          {key:'comments', label:'Comments', type:'textarea'}
+        ]
+      };
+
+      const OV = { coll:null, mode:'new', id:null, data:{} };
+      const overlay = $('#overlay'), ovTitle=$('#ovTitle'), ovForm=$('#ovForm'), ovSave=$('#ovSave'), ovClose=$('#ovClose'), ovDelete=$('#ovDelete'), ovWarn=$('#ovReadOnlyWarn');
+
+      function formFieldHTML(field, value, disabled){
+        const val = (value ?? (typeof field.default==='function'? field.default() : field.default ?? ''));
+        let ctrl='';
+        const dis = disabled ? 'disabled' : '';
+        if(field.type==='textarea') ctrl = `<textarea ${dis} data-key="${field.key}">${(val??'')}</textarea>`;
+        else if(field.type==='select') ctrl = `<select ${dis} data-key="${field.key}">${(field.options||[]).map(v=>`<option ${v===val?'selected':''}>${v}</option>`).join('')}</select>`;
+        else if(field.type==='date') ctrl = `<input type="date" ${dis} data-key="${field.key}" value="${val||''}" />`;
+        else ctrl = `<input type="text" ${dis} data-key="${field.key}" value="${(val??'')}" />`;
+        const extra = field.desc ? ' ov-desc' : '';
+        return `<div class="form-row${extra}"><label>${field.label}${field.required? ' *':''}</label><div>${ctrl}</div></div>`;
+      }
+
+      function openOverlay({coll, mode='new', id=null, data={}}){
+        OV.coll=coll; OV.mode=mode; OV.id=id; OV.data={...data};
+        const schema = SCHEMA[coll]||[];
+        const disabled = !CAN_EDIT;
+        ovWarn.style.display = disabled ? '' : 'none';
+        ovTitle.textContent = (mode==='new' ? 'New ' : 'Edit ') + coll.slice(0,1).toUpperCase()+coll.slice(1,-1);
+        ovForm.innerHTML = schema.map(f=> formFieldHTML(f, data[f.key], disabled)).join('');
+        $('#ovMetaColl').textContent = coll;
+        $('#ovMetaId').textContent = id || '(new)';
+        $('#ovMetaMode').textContent = mode;
+        ovDelete.style.display = (mode==='edit' && CAN_EDIT) ? '' : 'none';
+        ovSave.disabled = !CAN_EDIT;
+        overlay.classList.add('show');
+      }
+      function closeOverlay(){ overlay.classList.remove('show'); }
+
+      ovClose.onclick = closeOverlay;
+      ovDelete.onclick = async ()=>{
+        if(!CAN_EDIT || !OV.coll || !OV.id) return;
+        if(!confirm('Delete '+OV.id+' ?')) return;
+        await deleteDoc(doc(db, OV.coll, OV.id));
+        cache[OV.coll] = cache[OV.coll].filter(x=>x.id!==OV.id);
+        renderTab(OV.coll);
+        closeOverlay();
+      };
+      ovSave.onclick = async ()=>{
+        if(!CAN_EDIT || !OV.coll) return;
+        const schema = SCHEMA[OV.coll]||[];
+        const payload = {...OV.data};
+        schema.forEach(f=>{
+          const el = ovForm.querySelector('[data-key="'+f.key+'"]');
+          if(!el) return;
+          payload[f.key] = el.value;
+        });
+        for(const f of schema){ if(f.required && !String(payload[f.key]||'').trim()){ alert(f.label+' is required'); return; } }
+        let id = OV.id;
+        if(!id){ id = await nextUniqueId(OV.coll, OV.coll.slice(0,1).toUpperCase()); }
+        payload.id = id;
+        await setDoc(doc(db, OV.coll, id), payload);
+        const arr = cache[OV.coll];
+        const idx = arr.findIndex(x=>x.id===id);
+        if(idx>=0) arr[idx]=payload; else arr.push(payload);
+        renderTab(OV.coll);
+        closeOverlay();
+      };
+
+      async function docExists(coll, id){ try{ const snap = await getDoc(doc(db, coll, id)); return snap.exists(); }catch(_e){ return false; } }
+      async function nextUniqueId(coll, prefix){
+        let arr = cache[coll] || [];
+        const used = new Set(arr.map(x=>String(x.id||'').trim()));
+        let m = 0; arr.forEach(x=>{ const n=idNum(x.id); if(n>m) m=n; });
+        let cand;
+        do { m += 1; cand = prefix + m; } while(used.has(cand) || await docExists(coll, cand));
+        return cand;
+      }
+
+      // + New Item
+      $('#addGoalBtn').onclick = ()=>{ if(!CAN_EDIT) return; openOverlay({coll:'goals', mode:'new'}); };
+      $('#addRiskBtn').onclick = ()=>{ if(!CAN_EDIT) return; openOverlay({coll:'risks', mode:'new'}); };
+      $('#addIssueBtn').onclick = ()=>{ if(!CAN_EDIT) return; openOverlay({coll:'issues', mode:'new'}); };
+      $('#addPlanBtn').onclick  = ()=>{ if(!CAN_EDIT) return; openOverlay({coll:'plans', mode:'new'}); };
+
+      // Row menu -> edit
+      document.body.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-menu]');
+        if(btn){
+          const tr = btn.closest('tr'); if(!tr) return;
+          const coll = tr.dataset.coll; const id = tr.dataset.id;
+          if(!coll || !id) return;
+          const row = (cache[coll]||[]).find(x=>x.id===id) || {};
+          openOverlay({coll, mode:'edit', id, data: row});
+        }
+      });
+
+      // Stars
+      document.body.addEventListener('click', async (e)=>{
+        if(e.target && e.target.hasAttribute('data-star-sug')){
+          const tr = e.target.closest('tr'); const id=tr?.dataset.id; if(!id) return;
+          const ref = doc(db,'suggestions', id); const snap = await getDoc(ref); const d=snap.data()||{};
+          const stars = (d.stars||0)+1; await updateDoc(ref,{stars}); (cache.suggestions.find(x=>x.id===id)||{}).stars=stars;
+          renderSuggestions();
+        }else if(e.target && e.target.hasAttribute('data-star-q')){
+          const tr = e.target.closest('tr'); const id=tr?.dataset.id; if(!id) return;
+          const ref = doc(db,'questions', id); const snap = await getDoc(ref); const d=snap.data()||{};
+          const stars = (d.stars||0)+1; await updateDoc(ref,{stars}); (cache.questions.find(x=>x.id===id)||{}).stars=stars;
+          renderQuestions();
+        }
+      });
+
+      // Notifications delete
+      document.body.addEventListener('click', async (e)=>{
+        const btn = e.target.closest('button[data-del-note]'); if(!btn) return;
+        if(CURRENT_ROLE!=='Admin') return;
+        const tr = btn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
+        if(!confirm('Delete notification '+id+' ?')) return;
+        await deleteDoc(doc(db,'notifications', id));
+        cache.notifications = cache.notifications.filter(x=>x.__id!==id);
+        renderNotifications(cache.notifications);
+      });
+
+      function renderTab(tab){
+        if(tab==='goals') renderGoals();
+        else if(tab==='risks') renderRisks();
+        else if(tab==='issues') renderIssues();
+        else if(tab==='plans') renderPlans();
+        else if(tab==='suggestions') renderSuggestions();
+        else if(tab==='questions') renderQuestions();
+        else if(tab==='notifications') renderNotifications(cache.notifications);
+      }
+
+      function renderAll(){ renderGoals(); renderRisks(); renderIssues(); renderPlans(); renderSuggestions(); renderQuestions(); renderNotifications(cache.notifications); }
+      // First paint (empty tables visible in UI)
+      renderAll();
+    })();
+  </script>
+</body>
+</html>
