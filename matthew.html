@@ -280,8 +280,23 @@
 #tblNotifications th:nth-child(8), #tblNotifications td:nth-child(8){
   width:var(--w-actions) !important;
 }
+/* === Description uniform maken (en 70ch-limiet overrulen) === */
+:root{ --w-desc: 420px; } /* pas aan naar smaak: 360–520px werkt goed */
 
-/* Description blijft flexibel maar begrensd (heb je al) */
+#tblGoals th:nth-child(2), #tblGoals td:nth-child(2),
+#tblRisks th:nth-child(2), #tblRisks td:nth-child(2),
+#tblIssues th:nth-child(2), #tblIssues td:nth-child(2),
+#tblPlans th:nth-child(2), #tblPlans td:nth-child(2),
+#tblQuestions th:nth-child(2), #tblQuestions td:nth-child(2),
+#tblSuggestions th:nth-child(2), #tblSuggestions td:nth-child(2),
+#tblNotifications th:nth-child(2), #tblNotifications td:nth-child(2){
+  width: var(--w-desc) !important;
+  min-width: var(--w-desc) !important;
+  max-width: var(--w-desc) !important;
+  white-space: normal !important;
+  overflow-wrap: break-word !important; /* lange woorden breken */
+  text-overflow: clip !important;       /* geen ellipsen */
+}
 
 </style>
 </head>
