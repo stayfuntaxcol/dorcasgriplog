@@ -179,6 +179,107 @@
 #tblSuggestions thead tr.labels th:nth-child(9),
 #tblSuggestions thead tr.filters th:nth-child(9),
 #tblSuggestions tbody td:nth-child(9){ display:none !important; }
+/* === Unified column widths (overrides) === */
+:root{
+  --w-id: 70px;
+  --w-owner: 160px;
+  --w-date: 130px;
+  --w-status: 140px;
+  --w-subject: 150px;
+  --w-role: 160px;      /* reviewer role / role */
+  --w-stars: 120px;
+  --w-actions: 110px;
+  --w-level: 120px;     /* likelihood/impact/severity */
+  --w-goallink: 100px;  /* was 100px in your CSS */
+}
+
+/* helper: apply width to both header + cells */
+#tblGoals  th:nth-child(1),  #tblGoals  td:nth-child(1),
+#tblRisks  th:nth-child(1),  #tblRisks  td:nth-child(1),
+#tblIssues th:nth-child(1),  #tblIssues td:nth-child(1),
+#tblPlans  th:nth-child(1),  #tblPlans  td:nth-child(1),
+#tblQuestions th:nth-child(1),#tblQuestions td:nth-child(1),
+#tblSuggestions th:nth-child(1),#tblSuggestions td:nth-child(1),
+#tblNotifications th:nth-child(1),#tblNotifications td:nth-child(1){
+  width:var(--w-id) !important;
+}
+
+/* Owner */
+#tblGoals  th:nth-child(3),  #tblGoals  td:nth-child(3),
+#tblRisks  th:nth-child(3),  #tblRisks  td:nth-child(3),
+#tblIssues th:nth-child(3),  #tblIssues td:nth-child(3),
+#tblPlans  th:nth-child(3),  #tblPlans  td:nth-child(3),
+#tblQuestions th:nth-child(4),#tblQuestions td:nth-child(4),
+#tblSuggestions th:nth-child(4),#tblSuggestions td:nth-child(4){
+  width:var(--w-owner) !important;
+}
+
+/* Dates (Start/End/Submitted/Reviewed/Date) */
+#tblGoals th:nth-child(4), #tblGoals td:nth-child(4),
+#tblGoals th:nth-child(5), #tblGoals td:nth-child(5),
+#tblPlans th:nth-child(5), #tblPlans td:nth-child(5),
+#tblPlans th:nth-child(6), #tblPlans td:nth-child(6),
+#tblQuestions th:nth-child(5), #tblQuestions td:nth-child(5),
+#tblQuestions th:nth-child(8), #tblQuestions td:nth-child(8),
+#tblSuggestions th:nth-child(5), #tblSuggestions td:nth-child(5),
+#tblSuggestions th:nth-child(8), #tblSuggestions td:nth-child(8),
+#tblNotifications th:nth-child(6), #tblNotifications td:nth-child(6){
+  width:var(--w-date) !important;
+}
+
+/* Status */
+#tblGoals th:nth-child(6), #tblGoals td:nth-child(6),
+#tblRisks th:nth-child(6), #tblRisks td:nth-child(6),
+#tblIssues th:nth-child(5), #tblIssues td:nth-child(5),
+#tblPlans th:nth-child(7), #tblPlans td:nth-child(7),
+#tblQuestions th:nth-child(6), #tblQuestions td:nth-child(6),
+#tblSuggestions th:nth-child(6), #tblSuggestions td:nth-child(6),
+#tblNotifications th:nth-child(4), #tblNotifications td:nth-child(4){
+  width:var(--w-status) !important;
+}
+
+/* Subject (Q/S) */
+#tblQuestions th:nth-child(3), #tblQuestions td:nth-child(3),
+#tblSuggestions th:nth-child(3), #tblSuggestions td:nth-child(3),
+#tblNotifications th:nth-child(3), #tblNotifications td:nth-child(3){
+  width:var(--w-subject) !important;
+}
+
+/* Reviewer Role / Role */
+#tblQuestions th:nth-child(7), #tblQuestions td:nth-child(7),
+#tblSuggestions th:nth-child(7), #tblSuggestions td:nth-child(7),
+#tblNotifications th:nth-child(5), #tblNotifications td:nth-child(5){
+  width:var(--w-role) !important;
+}
+
+/* Stars (Q/S) */
+#tblQuestions th:nth-child(10), #tblQuestions td:nth-child(10),
+#tblSuggestions th:nth-child(10), #tblSuggestions td:nth-child(10){
+  width:var(--w-stars) !important;
+}
+
+/* Likelihood / Impact / Severity */
+#tblRisks th:nth-child(4), #tblRisks td:nth-child(4),
+#tblRisks th:nth-child(5), #tblRisks td:nth-child(5),
+#tblIssues th:nth-child(4), #tblIssues td:nth-child(4){
+  width:var(--w-level) !important;
+}
+
+/* Goal Link (Plans) */
+#tblPlans th:nth-child(4), #tblPlans td:nth-child(4){
+  width:var(--w-goallink) !important;
+}
+
+/* Actions (laatste kolom per tabel) */
+#tblGoals th:nth-child(8), #tblGoals td:nth-child(8),
+#tblRisks th:nth-child(8), #tblRisks td:nth-child(8),
+#tblIssues th:nth-child(7), #tblIssues td:nth-child(7),
+#tblPlans th:nth-child(8), #tblPlans td:nth-child(8),
+#tblQuestions th:nth-child(11), #tblQuestions td:nth-child(11),
+#tblSuggestions th:nth-child(11), #tblSuggestions td:nth-child(11),
+#tblNotifications th:nth-child(8), #tblNotifications td:nth-child(8){
+  width:var(--w-actions) !important;
+}
 
 </style>
 </head>
