@@ -317,11 +317,23 @@
     outline:none;
     box-shadow:0 0 0 2px rgba(26,115,232,.35), 0 0 0 6px rgba(26,115,232,.15);
   }
+/* Verberg Google Translate UI zonder 'm te disablen */
+.goog-te-banner-frame,
+.goog-te-balloon-frame,
+#goog-gt-tt { display: none !important; }  /* banner mag weg */
+body { top: 0 !important; }
 
-  /* Verberg Google Translate UI zodat je layout strak blijft */
-  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  .goog-te-gadget { display:none !important; }
-  body { top:0 !important; }
+/* GADGET NIET display:none geven; zet 'm buiten beeld */
+#google_translate_element,
+.goog-te-gadget {
+  position: absolute !important;
+  left: -9999px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  overflow: hidden !important;
+  /* BELANGRIJK: GEEN display:none hier */
+}
 </style>
 
 </head>
@@ -2195,7 +2207,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 <script>
 /* Auto-start + header-bump integratie met je bestaande translateToDutch() */
 (function(){
-  const AUTO_START = true;  // ← zet op false als je NIET automatisch wil starten
+  const AUTO_START = false;  // ← zet op false als je NIET automatisch wil starten
 
   function setHeaderBump(active){
     document.body.classList.toggle('gt-on', !!active);
@@ -2229,5 +2241,31 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   });
 })();
 </script>
+  <!-- Zet de GT-widget UIT HET ZICHT i.p.v. display:none -->
+<style>
+  /* Verplaats de container en gadget buiten beeld, maar laat ze renderen */
+  #google_translate_element {
+    position: absolute !important;
+    left: -9999px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+  }
+  .goog-te-gadget {
+    position: absolute !important;
+    left: -9999px !important;
+    top: auto !important;
+    width: 1px !important;
+    height: 1px !important;
+    overflow: hidden !important;
+    /* BELANGRIJK: GEEN display:none hier! */
+  }
+
+  /* Je mag de banner blijven verbergen (we bumpen je header al netjes) */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display: none !important; }
+  body { top: 0 !important; }
+</style>
+
 </body>
 </html>
