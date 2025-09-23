@@ -1793,330 +1793,72 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div>
-<!-- 1) (Optioneel) markeer je user-meta container -->
-<!-- Voorbeeld: -->
-<div class="user-meta" data-user-meta>
-  <!-- jouw "username: role en rechten" komt hier al te staan -->
-</div>
-
-<!-- 2) Globe + i18n (plaats dit vlak vóór </body>) -->
-<style>
-  /* Minimalistisch knopje, behoudt je strakke opmaak */
-  .i18n-globe-btn {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:22px; height:22px; margin-left:.5rem; border:0; padding:0;
-    background:transparent; cursor:pointer; opacity:.8; vertical-align:middle;
-  }
-  .i18n-globe-btn:hover { opacity:1; }
-  .i18n-globe-btn svg { width:100%; height:100%; }
-</style>
-
-<script>
-(() => {
-  "use strict";
-
-  // === 0) Waar het globe-icoon moet komen ===
-  // Gebruik één van deze: [data-user-meta], #userMeta, .user-meta
-  const USER_META_SELECTOR = "[data-user-meta], #userMeta, .user-meta";
-
-  // === 1) Mini i18n woordenboek (vul gerust aan) ===
-  // Sleutel = exact zichtbaar Engels label/woord in de UI (hoofdlettergevoelig wordt genegeerd).
-  // Tip: staan jouw labels al in NL? Dan gebeurt er gewoon niets (idempotent).
-  const DICT_NL = new Map(Object.entries({
-    // Algemeen UI
-    "save": "Opslaan",
-    "edit": "Bewerken",
-    "delete": "Verwijderen",
-    "close": "Sluiten",
-    "open": "Openen",
-    "new": "Nieuw",
-    "add": "Toevoegen",
-    "remove": "Verwijderen",
-    "update": "Bijwerken",
-    "cancel": "Annuleren",
-    "confirm": "Bevestigen",
-    "search": "Zoeken",
-    "filter": "Filteren",
-    "download": "Downloaden",
-    "upload": "Uploaden",
-    "settings": "Instellingen",
-    "options": "Opties",
-    "actions": "Acties",
-    "details": "Details",
-    "back": "Terug",
-    "next": "Volgende",
-    "previous": "Vorige",
-    "yes": "Ja",
-    "no": "Nee",
-
-    // Navigatie / tabbladen (GRIP/TRAID)
-    "goal": "Doel",
-    "goals": "Doelen",
-    "risk": "Risico",
-    "risks": "Risico’s",
-    "issue": "Probleem",
-    "issues": "Problemen",
-    "plan": "Plan",
-    "plans": "Plannen",
-    "questions": "Vragen",
-    "suggestions": "Suggesties",
-    "notifications": "Meldingen",
-    "description": "Beschrijving",
-    "submitted": "Ingediend",
-    "status": "Status",
-    "owner": "Eigenaar",
-    "owners": "Eigenaren",
-    "id": "ID",
-    "date": "Datum",
-
-    // Buttons/labels die vaak voorkomen
-    "new goal": "Nieuw doel",
-    "new risk": "Nieuw risico",
-    "new issue": "Nieuw probleem",
-    "new plan": "Nieuw plan",
-    "save changes": "Wijzigingen opslaan",
-    "edit item": "Item bewerken",
-    "delete item": "Item verwijderen",
-    "close panel": "Paneel sluiten",
-
-    // Login / gebruikersinfo
-    "login": "Inloggen",
-    "logout": "Uitloggen",
-    "username": "Gebruikersnaam",
-    "password": "Wachtwoord",
-    "role": "Rol",
-    "permissions": "Rechten",
-
-    // Travel Planner velden
-    "traveler name": "Naam reiziger",
-    "department": "Afdeling",
-    "departments": "Afdelingen",
-    "purpose of travel": "Doel van de reis",
-    "deliverables": "Op te leveren resultaten",
-    "country of destination": "Land van bestemming",
-    "date of arrival": "Aankomstdatum",
-    "date of departure": "Vertrekdatum",
-    "trip": "Reis",
-    "trips": "Reizen",
-
-    // Kalender/agenda
-    "calendar": "Agenda",
-    "group calendar": "Groepsagenda",
-    "event": "Gebeurtenis",
-    "events": "Gebeurtenissen",
-    "members": "Leden",
-
-    // Tabelkolommen (algemeen)
-    "title": "Titel",
-    "name": "Naam",
-    "type": "Type",
-    "created": "Aangemaakt",
-    "modified": "Gewijzigd",
-
-    // Dagen/maanden (handig als je ze los toont)
-    "monday": "maandag","tuesday": "dinsdag","wednesday": "woensdag","thursday": "donderdag","friday": "vrijdag","saturday": "zaterdag","sunday": "zondag",
-    "january": "januari","february": "februari","march": "maart","april": "april","may": "mei","june": "juni","july": "juli","august": "augustus","september": "september","october": "oktober","november": "november","december": "december"
-  }));
-
-  // === 2) Normalisatie helper ===
-  const norm = (s) => (s || "")
-    .replace(/\s+/g, " ")
-    .replace(/\s*[:;,.]$/,"") // trailing : ; , .
-    .trim()
-    .toLowerCase();
-
-  // Snelle lookup met fallback (geen wijziging als we niets vinden)
-  const t = (text) => {
-    const key = norm(text);
-    return DICT_NL.get(key) || text;
-  };
-
-  // === 3) Vertaal één element: tekst-node(s) + veelgebruikte attributen ===
-  function translateElement(el) {
-    if (!el || el.nodeType !== 1) return;
-
-    // Tekstnoden direct onder dit element (geen diepe replace van losse woorden -> behoudt lay-out)
-    for (const node of el.childNodes) {
-      if (node.nodeType === 3) { // Text
-        const original = node.nodeValue;
-        const trimmed = original.trim();
-        if (trimmed) {
-          const translated = preservePunctuation(original, t(trimmed));
-          if (translated !== original) node.nodeValue = translated;
-        }
-      }
-    }
-
-    // Veelgebruikte attributen waar labels in zitten
-    for (const attr of ["placeholder","title","aria-label"]) {
-      if (el.hasAttribute(attr)) {
-        const val = el.getAttribute(attr);
-        const translated = t(val);
-        if (translated !== val) el.setAttribute(attr, translated);
-      }
-    }
-  }
-
-  // Behoudt eindpunt, dubbele punt, etc. als die er al stonden (cosmetisch netjes)
-  function preservePunctuation(original, translatedCore) {
-    // leading/trailing spaties behouden
-    const leading = original.match(/^\s*/)[0];
-    const trailing = original.match(/\s*$/)[0];
-    // trailing leestekens (.:;,) meenemen
-    const trailPunct = (original.trim().match(/[:;,.]+$/) || [""])[0];
-    return leading + translatedCore + (trailPunct ? trailPunct : "") + trailing;
-  }
-
-  // === 4) Vertaal de hele pagina (alle zichtbare blokken) ===
-  function translatePageToDutch(root=document.body) {
-    if (document.body.dataset.i18nApplied === "nl") return; // al gedaan
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
-      acceptNode: (node) => {
-        // Niet in scripts/styles/templates
-        const tag = node.tagName;
-        if (/^(SCRIPT|STYLE|TEMPLATE)$/i.test(tag)) return NodeFilter.FILTER_REJECT;
-        return NodeFilter.FILTER_ACCEPT;
-      }
-    });
-
-    let current = root;
-    do {
-      translateElement(current);
-      current = walker.nextNode();
-    } while (current);
-
-    // Nieuwe content in de toekomst automatisch NL maken
-    ensureObserver();
-    document.body.dataset.i18nApplied = "nl";
-  }
-
-  // === 5) MutationObserver voor dynamische content ===
-  let observerStarted = false;
-  function ensureObserver() {
-    if (observerStarted) return;
-    const mo = new MutationObserver((mutations) => {
-      for (const m of mutations) {
-        for (const node of m.addedNodes) {
-          if (node.nodeType === 1) {
-            translateElement(node);
-            // ook de kinderen
-            node.querySelectorAll("*").forEach(translateElement);
-          }
-        }
-        if (m.type === "attributes") {
-          translateElement(m.target);
-        }
-      }
-    });
-    mo.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["placeholder","title","aria-label"]
-    });
-    observerStarted = true;
-  }
-
-  // === 6) Plaats het wereldbol-icoon netjes rechts naast user meta ===
-  function injectGlobeButton() {
-    const host = document.querySelector(USER_META_SELECTOR);
-    if (!host) return; // als hij je container (nog) niet vindt, doet hij niets (geen fout)
-
-    const btn = document.createElement("button");
-    btn.className = "i18n-globe-btn";
-    btn.type = "button";
-    btn.setAttribute("aria-label", "Zet interface naar Nederlands");
-    btn.setAttribute("title", "Nederlands");
-
-    // Minimalistische globe (inline SVG, geen tekst)
-    btn.innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-        <path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 7.75 6h-3.09a16.7 16.7 0 0 0-2.3-4.61A7.97 7.97 0 0 0 12 4zm-2.36.54A14.7 14.7 0 0 1 11 8H6.34a8.03 8.03 0 0 1 3.3-3.46zM4.25 10H11c.08.65.12 1.31.12 2s-.04 1.35-.12 2H4.25a8.02 8.02 0 0 1 0-4zm2.09 6H11c-.34 1.65-.96 3.14-1.78 4.11A8.03 8.03 0 0 1 6.34 16zM12 20a8 8 0 0 1-1.64-.17c.86-1.08 1.52-2.78 1.86-4.83h3.91A8 8 0 0 1 12 20zm5.09-6h-3.87c.07-.67.11-1.34.11-2s-.04-1.33-.11-2h3.87a14.9 14.9 0 0 1 0 4zm-3.68-6.39A14.8 14.8 0 0 1 16.66 10h3.09A8 8 0 0 0 12 4c.9 0 1.77.16 2.56.45-.48.5-.86 1.22-1.15 2.16z"/>
-      </svg>
-    `;
-
-    btn.addEventListener("click", () => translatePageToDutch());
-    host.appendChild(btn);
-  }
-
-  // === 7) Init ===
-  document.addEventListener("DOMContentLoaded", () => {
-    injectGlobeButton();
-  });
-})();
-</script>
-<!-- ▼▼▼ Dorcas logo triggert Google Translate + nette header bump ▼▼▼ -->
+<!-- GT container moet in BODY staan -->
 <div id="google_translate_element"></div>
 
 <style>
-  /* Laat de widget renderen maar zet 'm uit beeld (géén display:none) */
+  /* Gadget renderbaar houden maar uit beeld (niet display:none) */
   #google_translate_element,
   .goog-te-gadget{
-    position:absolute !important;
-    left:-9999px !important;
-    top:auto !important;
-    width:1px !important;
-    height:1px !important;
-    overflow:hidden !important;
+    position:absolute !important; left:-9999px !important; top:auto !important;
+    width:1px !important; height:1px !important; overflow:hidden !important;
   }
-  /* Banner van Google verbergen, maar page top niet laten verschuiven */
-  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  body { top:0 !important; }
+  /* Eventjes tonen om render te forceren */
+  #google_translate_element.gt-show,
+  .goog-te-gadget.gt-show{
+    position:fixed !important; right:16px !important; bottom:16px !important;
+    left:auto !important; top:auto !important; width:auto !important; height:auto !important;
+    overflow:visible !important; background:#fff; padding:6px 8px; border-radius:8px;
+    box-shadow:0 6px 18px rgba(0,0,0,.18); z-index:9999;
+  }
 
-  /* Header iets “bumpen” zodra vertalen actief is */
-  :root { --gt-bump: 28px; } /* pas gerust aan (20–40px) */
+  /* Google banners weg; page top stabiel */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt{ display:none !important; }
+  body{ top:0 !important; }
+
+  /* Header bump wanneer vertaling actief is */
+  :root{ --gt-bump:28px; }
   body.gt-active header{
     padding-top: calc(12px + var(--gt-bump)) !important;
     min-height: calc(58px + var(--gt-bump)) !important;
   }
-  /* Visuele hint: logo is klikbaar */
-  header .header-left img[aria-role="gt-trigger"]{ cursor:pointer; }
 </style>
 
 <script>
 (function(){
   const TARGET_LANG = 'nl';
-  const CLEAR_COOKIE_ON_LOAD = true; // zet op false als je wél auto-herstel wil bij reload
+  const COOKIE_PERSIST = true;        // na fallback in NL blijven na reload
+  const CLEAR_COOKIE_ON_LOAD = false; // zet true als je nooit auto-resume wilt
 
-  // ---- helpers ----
-  function clearGoogTransCookie(){
-    const past='Thu, 01 Jan 1970 00:00:00 GMT', host=location.hostname;
-    document.cookie='googtrans=; expires='+past+'; path=/';
-    document.cookie='googtrans=; domain='+host+'; expires='+past+'; path=/';
-    if(!host.startsWith('.')) document.cookie='googtrans=; domain=.'+host+'; expires='+past+'; path=/';
-  }
-  function setGoogTransCookie(lang){
-    const exp=new Date(Date.now()+7*24*60*60*1000).toUTCString();
-    const host=location.hostname, val=`/auto/${lang}`;
-    document.cookie=`googtrans=${val}; expires=${exp}; path=/`;
-    document.cookie=`googtrans=${val}; domain=${host}; expires=${exp}; path=/`;
-    if(!host.startsWith('.')) document.cookie=`googtrans=${val}; domain=.${host}; expires=${exp}; path=/`;
-  }
+  // ——— helpers ———
   function ensureContainer(){
-    let el=document.getElementById('google_translate_element');
-    if(!el){ el=document.createElement('div'); el.id='google_translate_element'; document.body.appendChild(el); }
-    // forceer off-screen styles (voor het geval andere CSS overschrijft)
-    Object.assign(el.style,{position:'absolute',left:'-9999px',top:'auto',width:'1px',height:'1px',overflow:'hidden',display:'block'});
+    let el = document.getElementById('google_translate_element');
+    if(!el){ el = document.createElement('div'); el.id='google_translate_element'; document.body.appendChild(el); }
     return el;
   }
   let gtLoading=null;
-  function loadGoogleTranslate(){
+  function loadGT(){
     if(window.google && window.google.translate) return Promise.resolve('ready');
     if(gtLoading) return gtLoading;
     ensureContainer();
-    gtLoading=new Promise((resolve)=>{
+    gtLoading = new Promise((resolve)=>{
       const s=document.createElement('script');
       s.src='https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
       window.googleTranslateElementInit=function(){
-        try{ new google.translate.TranslateElement({pageLanguage:'auto',autoDisplay:false},'google_translate_element'); }catch(e){}
+        try{ new google.translate.TranslateElement({pageLanguage:'auto', autoDisplay:false}, 'google_translate_element'); }catch(e){}
         resolve('ready');
       };
-      s.onerror=function(){ resolve('error'); };
+      s.onerror=()=>resolve('error');
       document.head.appendChild(s);
     });
     return gtLoading;
   }
-  function tryLiveTo(lang){
+  function forceShow(ms=1000){
+    const c=ensureContainer(); c.classList.add('gt-show');
+    const g=document.querySelector('.goog-te-gadget'); if(g) g.classList.add('gt-show');
+    setTimeout(()=>{ c.classList.remove('gt-show'); if(g) g.classList.remove('gt-show'); }, ms);
+  }
+  function tryLive(lang){
     const combo=document.querySelector('select.goog-te-combo');
     if(!combo) return false;
     if(combo.value!==lang){
@@ -2126,55 +1868,127 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     }
     return true;
   }
-  function setHeaderActive(on){ document.body.classList.toggle('gt-active', !!on); }
-  function afterTranslate(){
-    setHeaderActive(true);
-    // hook voor jouw (optionele) woordenboek/overrides
-    if (typeof window.__applyOverridesAfterTranslate === 'function'){
-      window.__applyOverridesAfterTranslate();
+  function setCookie(lang){
+    const exp=new Date(Date.now()+7*24*60*60*1000).toUTCString();
+    const host=location.hostname, v=`/auto/${lang}`;
+    document.cookie=`googtrans=${v}; expires=${exp}; path=/`;
+    document.cookie=`googtrans=${v}; domain=${host}; expires=${exp}; path=/`;
+    if(!host.startsWith('.')) document.cookie=`googtrans=${v}; domain=.${host}; expires=${exp}; path=/`;
+  }
+  function clearCookie(){
+    const past='Thu, 01 Jan 1970 00:00:00 GMT', host=location.hostname;
+    document.cookie=`googtrans=; expires=${past}; path=/`;
+    document.cookie=`googtrans=; domain=${host}; expires=${past}; path=/`;
+    if(!host.startsWith('.')) document.cookie=`googtrans=; domain=.${host}; expires=${past}; path=/`;
+  }
+  function bump(on){ document.body.classList.toggle('gt-active', !!on); }
+
+  // ——— woordenboek / overrides ———
+  const LOCK_EN = new Map([
+    ["goals","Goals"],["risks","Risks"],["issues","Issues"],["plans","Plans"],
+    ["suggestions","Suggestions"],["questions","Questions"],["notifications","Notifications"]
+  ]);
+  const OV = new Map([
+    // Buttons/acties
+    ["save","Opslaan"],["save changes","Wijzigingen opslaan"],["edit","Bewerken"],["delete","Verwijderen"],
+    ["close","Sluiten"],["open","Openen"],["new","Nieuw"],["add","Toevoegen"],["remove","Verwijderen"],
+    ["update","Bijwerken"],["cancel","Annuleren"],["confirm","Bevestigen"],["search","Zoeken"],
+    ["filter","Filteren"],["download","Downloaden"],["upload","Uploaden"],["settings","Instellingen"],
+    ["options","Opties"],["actions","Acties"],["details","Details"],["back","Terug"],["next","Volgende"],
+    ["previous","Vorige"],["yes","Ja"],["no","Nee"],
+    // Kolommen/velden
+    ["title","Titel"],["name","Naam"],["type","Type"],["description","Beschrijving"],
+    ["owner","Eigenaar"],["owners","Eigenaren"],["status","Status"],["submitted","Ingediend"],
+    ["created","Aangemaakt"],["modified","Gewijzigd"],
+    // Travel
+    ["traveler name","Naam reiziger"],["department","Afdeling"],["departments","Afdelingen"],
+    ["purpose of travel","Doel van de reis"],["deliverables","Op te leveren resultaten"],
+    ["country of destination","Land van bestemming"],["date of arrival","Aankomstdatum"],
+    ["date of departure","Vertrekdatum"],["trip","Reis"],["trips","Reizen"],
+    // Corrigeer ongewenste NL varianten terug naar EN indien gewenst
+    ["kennisgevingen","Notifications"],["vragen","Questions"],["suggesties","Suggestions"]
+  ]);
+  const norm = s => (s||"").replace(/\s+/g," ").replace(/\s*[:;,.!?]+$/,"").trim().toLowerCase();
+  const keepPunct = (orig, core) => {
+    const lead=(orig.match(/^\s*/) || [""])[0], trail=(orig.match(/\s*$/) || [""])[0];
+    const endP=(orig.trim().match(/[:;,.!?]+$/) || [""])[0];
+    return lead + core + endP + trail;
+  };
+  function inTabNav(el){ return !!el.closest && !!el.closest('nav.tabs,[role="tablist"]'); }
+
+  function applyOnTextNode(node, parent){
+    const original=node.nodeValue, t=original.trim(); if(!t) return;
+    const key=norm(t);
+    if(LOCK_EN.has(key)){ const rep=LOCK_EN.get(key); if(rep!==t) node.nodeValue=original.replace(t, keepPunct(t,rep)); return; }
+    if(inTabNav(parent)) return;
+    const rep=OV.get(key); if(rep && rep!==t) node.nodeValue=original.replace(t, keepPunct(t,rep));
+  }
+  function applyOnElement(el){
+    if(!el || el.nodeType!==1) return;
+    for(const n of el.childNodes){ if(n.nodeType===3) applyOnTextNode(n, el); }
+    for(const a of ["placeholder","title","aria-label"]){
+      if(!el.hasAttribute(a)) continue;
+      const val=el.getAttribute(a), key=norm(val);
+      if(inTabNav(el)){ const lock=LOCK_EN.get(key); if(lock && lock!==val) el.setAttribute(a, keepPunct(val,lock)); continue; }
+      const lock=LOCK_EN.get(key); if(lock && lock!==val){ el.setAttribute(a, keepPunct(val,lock)); continue; }
+      const rep=OV.get(key); if(rep && rep!==val) el.setAttribute(a, keepPunct(val,rep));
     }
   }
+  function applyOverrides(root=document.body){
+    const walker=document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: n => /^(SCRIPT|STYLE|TEMPLATE)$/i.test(n.tagName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    let cur=root; do{ applyOnElement(cur); cur=walker.nextNode(); }while(cur);
+  }
+  window.__applyOverridesAfterTranslate = function(){
+    // meerdere keren aanroepen (widget is asynchroon)
+    let tries=0; const iv=setInterval(()=>{ applyOverrides(); if(++tries>=40) clearInterval(iv); }, 100);
+  };
 
-  // ---- hoofdactie: door Dorcas-logo klik ----
-  function translateToDutchViaLogo(){
-    setHeaderActive(true);
-    loadGoogleTranslate().then((state)=>{
-      if(state==='error'){ console.warn('Google Translate kon niet laden (CSP/adblock?)'); return; }
+  // ——— hoofdactie (logo of globe) ———
+  function runTranslate(){
+    bump(true);
+    loadGT().then((state)=>{
+      if(state==='error'){ console.warn('GT geblokkeerd (CSP/adblock?)'); return; }
+      // gadget minimaal 1s zichtbaar => render zeker
+      forceShow(1200);
       let waited=0;
-      if(tryLiveTo(TARGET_LANG)){ afterTranslate(); return; }
+      if(tryLive(TARGET_LANG)){ window.__applyOverridesAfterTranslate(); return; }
       const iv=setInterval(()=>{
         waited+=100;
-        if(tryLiveTo(TARGET_LANG)){ clearInterval(iv); afterTranslate(); return; }
-        if(waited>=6000){ // 6s → cookie fallback + reload
+        if(tryLive(TARGET_LANG)){ clearInterval(iv); window.__applyOverridesAfterTranslate(); return; }
+        if(waited>=6000){
           clearInterval(iv);
-          setGoogTransCookie(TARGET_LANG);
-          location.reload();
+          if(COOKIE_PERSIST){ setCookie(TARGET_LANG); location.reload(); }
         }
       },100);
     });
   }
 
-  // ---- bind aan Dorcas-logo ----
+  // ——— bindings ———
   document.addEventListener('DOMContentLoaded', ()=>{
-    if (CLEAR_COOKIE_ON_LOAD) clearGoogTransCookie();
+    if (CLEAR_COOKIE_ON_LOAD) clearCookie();
 
-    // pak specifiek jouw Dorcas-logo in de header
-    const logo = document.querySelector('header .header-left img[src*="dorcas-logo"]') 
+    // Dorcas-logo als trigger
+    const logo = document.querySelector('header .header-left img[src*="dorcas-logo"]')
               || document.querySelector('header .header-left img')
               || document.querySelector('header img');
-    if(logo){
-      logo.setAttribute('aria-role','gt-trigger');
-      logo.setAttribute('title','Vertaal interface naar Nederlands');
-      logo.addEventListener('click', translateToDutchViaLogo);
-      logo.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); translateToDutchViaLogo(); }});
+    if (logo){
+      logo.style.cursor='pointer';
+      logo.title='Klik om naar Nederlands te vertalen';
+      logo.addEventListener('click', runTranslate);
+      logo.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); runTranslate(); }});
+    }
+    // Globe als extra trigger (als aanwezig)
+    const globe = document.getElementById('globeNL');
+    if (globe && !globe.__gtBound){
+      globe.__gtBound=true;
+      globe.addEventListener('click', runTranslate);
+      globe.addEventListener('keydown', e=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); runTranslate(); }});
     }
   });
-
-  // Optioneel: expose voor later gebruik
-  window.translateToDutch = translateToDutchViaLogo;
 })();
 </script>
-<!-- ▲▲▲ End patch ▲▲▲ -->
 
 </body>
 </html>
