@@ -1834,141 +1834,134 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 <div id="google_translate_element" style="display:none;"></div>
 
 <script>
-/* ===== Google Translate: loader + NL switch + cookie-fallback ===== */
+/* ===== Google Translate: load-on-click + robust NL switch ===== */
 (function(){
-  function loadGoogleTranslate(cb){
-    if (window.google && window.google.translate) { cb && cb(); return; }
-    var s = document.createElement("script");
-    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    window.googleTranslateElementInit = function(){
-      try {
-        new google.translate.TranslateElement({ pageLanguage: "auto", autoDisplay: false }, "google_translate_element");
-      } catch(e){}
-      cb && cb();
-    };
-    document.head.appendChild(s);
+  // --- ensure container exists (MUST be in <body>) ---
+  function ensureGtContainer(){
+    var el = document.getElementById('google_translate_element');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'google_translate_element';
+      el.style.display = 'none';
+      document.body.appendChild(el);
+    }
+    return el;
   }
 
+  // --- loader with single-flight guarantee ---
+  var gtLoading = null; // Promise
+  function loadGoogleTranslate(){
+    if (window.google && window.google.translate) return Promise.resolve();
+    if (gtLoading) return gtLoading;
+
+    ensureGtContainer();
+
+    gtLoading = new Promise(function(resolve){
+      var s = document.createElement('script');
+      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      // if another snippet overwrites the callback, we reassign safely
+      window.googleTranslateElementInit = function(){
+        try {
+          new google.translate.TranslateElement(
+            { pageLanguage:'auto', autoDisplay:false },
+            'google_translate_element'
+          );
+        } catch(e) {}
+        resolve();
+      };
+      s.onerror = function(){ gtLoading = null; resolve(); }; // fail soft; fallback will handle
+      document.head.appendChild(s);
+    });
+    return gtLoading;
+  }
+
+  // --- try to set <select.goog-te-combo> to "nl" ---
   function tryLiveToDutch(){
-    var combo = document.querySelector("select.goog-te-combo");
+    var combo = document.querySelector('select.goog-te-combo');
     if (!combo) return false;
-    if (combo.value !== "nl") {
-      combo.value = "nl";
-      combo.dispatchEvent(new Event("change", {bubbles:true}));
-      combo.dispatchEvent(new Event("input",  {bubbles:true}));
+    if (combo.value !== 'nl'){
+      combo.value = 'nl';
+      combo.dispatchEvent(new Event('change', {bubbles:true}));
+      combo.dispatchEvent(new Event('input',  {bubbles:true}));
     }
     return true;
   }
 
+  // --- cookie fallback (covers stubborn cases / adblock delays) ---
   function setGoogTransCookieToDutch(){
     var exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
     var host = location.hostname;
-    document.cookie = "googtrans=/auto/nl; expires="+exp+"; path=/";
-    document.cookie = "googtrans=/auto/nl; domain="+host+"; expires="+exp+"; path=/";
-    if (!host.startsWith(".")) {
-      document.cookie = "googtrans=/auto/nl; domain=."+host+"; expires="+exp+"; path=/";
+    document.cookie = 'googtrans=/auto/nl; expires='+exp+'; path=/';
+    document.cookie = 'googtrans=/auto/nl; domain='+host+'; expires='+exp+'; path=/';
+    if (!host.startsWith('.')) {
+      document.cookie = 'googtrans=/auto/nl; domain=.'+host+'; expires='+exp+'; path=/';
     }
   }
 
-  // Publieke functie voor je globe
-  window.translateToDutch = function(){
-    loadGoogleTranslate(function(){
+  // --- public action (called on globe click) ---
+  function translateToDutchAction(){
+    loadGoogleTranslate().then(function(){
+      // try live for up to 4s; else cookie+reload
       var waited = 0;
       if (tryLiveToDutch()) return;
       var iv = setInterval(function(){
         waited += 100;
-        if (tryLiveToDutch()) { clearInterval(iv); return; }
-        if (waited >= 3000) {
+        if (tryLiveToDutch()){
+          clearInterval(iv);
+          return;
+        }
+        if (waited >= 4000){
           clearInterval(iv);
           setGoogTransCookieToDutch();
           location.reload();
         }
       }, 100);
     });
-  };
+  }
 
-  // Auto-NL bij reload als cookie al gezet is
-  if (document.cookie.includes("googtrans=/auto/nl")) {
-    loadGoogleTranslate(function ensureNL(){
-      if (!tryLiveToDutch()) setTimeout(ensureNL, 150);
+  // expose (if you already call onclick="translateToDutch()")
+  window.translateToDutch = translateToDutchAction;
+
+  // --- bind to #globeNL (even if it appears later) ---
+  function bindGlobe(el){
+    if (!el || el.__gtBound) return;
+    el.__gtBound = true;
+    el.setAttribute('role','button');
+    el.setAttribute('tabindex','0');
+    el.addEventListener('click', translateToDutchAction);
+    el.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); translateToDutchAction(); }
     });
   }
-})();
 
-/* ===== Globe altijd ONDER de tabel van de ACTIEVE tab ===== */
-document.addEventListener('DOMContentLoaded', function () {
-  // Globe element (maak aan als hij ontbreekt)
-  var globe = document.getElementById('globeNL');
-  if (!globe){
-    globe = document.createElement('img');
-    globe.id = 'globeNL';
-    globe.src = 'assets/globe-blue.svg';
-    globe.alt = 'Nederlands';
-    globe.onerror = function(){ this.style.display='none'; };
-    globe.setAttribute('role','button');
-    globe.setAttribute('tabindex','0');
-    globe.addEventListener('click', function(){
-      if (typeof translateToDutch === 'function') translateToDutch();
+  // initial bind if present now
+  document.addEventListener('DOMContentLoaded', function(){
+    var g = document.getElementById('globeNL');
+    if (g) bindGlobe(g);
+
+    // also watch for it if added later
+    var mo = new MutationObserver(function(muts){
+      var el = document.getElementById('globeNL');
+      if (el) bindGlobe(el);
     });
-    globe.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
-    });
-  }
-  globe.classList.remove('globe-fab');
-  globe.classList.add('globe-inline');
+    mo.observe(document.body, {childList:true, subtree:true});
 
-  var TABLE_SELECTORS = [
-    '#goalsTable', '#risksTable', '#issuesTable', '#plansTable',
-    '#questionsTable', '#suggestionsTable', '#notificationsTable',
-    '#tripsTable', '#mainTable',
-    '.data-table', '.rdg', '.ag-root-wrapper', '.grid table',
-    'table'
-  ].join(',');
-
-  function getActiveSection(){
-    return document.querySelector('section.active') || document.body;
-  }
-  function getVisibleTablesIn(container){
-    return Array.from(container.querySelectorAll(TABLE_SELECTORS)).filter(function(el){
-      if (!el.offsetParent) return false;
-      var cs = getComputedStyle(el);
-      return cs.visibility !== 'hidden' && cs.display !== 'none';
-    });
-  }
-  function placeGlobeUnderActive(){
-    var active = getActiveSection();
-    var tables = getVisibleTablesIn(active);
-    var anchor = tables.length ? tables[tables.length - 1] : null;
-    var afterNode = anchor || (active.lastElementChild || active);
-
-    var row = afterNode.nextElementSibling;
-    if (!(row && row.classList && row.classList.contains('globe-row'))) {
-      row = document.createElement('div');
-      row.className = 'globe-row';
-      afterNode.insertAdjacentElement('afterend', row);
+    // auto-apply if cookie is already set to NL (from previous fallback)
+    if (document.cookie.includes('googtrans=/auto/nl')){
+      loadGoogleTranslate().then(function ensureNL(){
+        if (!tryLiveToDutch()) setTimeout(ensureNL, 150);
+      });
     }
-    if (globe.parentElement !== row) row.appendChild(globe);
-  }
-
-  function restartObserver(){
-    if (window.__gtObserver) window.__gtObserver.disconnect();
-    var active = getActiveSection();
-    window.__gtObserver = new MutationObserver(placeGlobeUnderActive);
-    window.__gtObserver.observe(active, {childList:true, subtree:true});
-  }
-
-  // Initial + bij tab-wissel
-  placeGlobeUnderActive();
-  restartObserver();
-  document.querySelectorAll('nav.tabs button, [role="tab"]').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      setTimeout(function(){
-        placeGlobeUnderActive();
-        restartObserver();
-      }, 0);
-    });
   });
-});
+})();
 </script>
+
+<!-- (Optional, but recommended) Keep the UI clean: hide GT banner/gadget -->
+<style>
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
+  .goog-te-gadget { display:none !important; }
+  body { top:0 !important; }
+</style>
+
 </body>
 </html>
