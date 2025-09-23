@@ -18,9 +18,6 @@
     header .sub{color:var(--muted);font-size:12px}
     .header-left{display:flex;gap:12px;align-items:center}
     .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
-    .header-right {display: inline-flex;align-items: center;gap: .5rem;flex-wrap: nowrap;}
-    .globe-nl {width: 22px;height: 22px;cursor: pointer;vertical-align: middle;user-select: none;}
-</style>
 
     .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .leftbar{display:flex;gap:8px;align-items:center}
@@ -300,19 +297,11 @@
   overflow-wrap: break-word !important; /* lange woorden breken */
   text-overflow: clip !important;       /* geen ellipsen */
 }
-    /* Zet de inhoud van #userInfo op één regel met de globe */
-#userInfo.user-info {
-  display: inline-flex;
-  align-items: center;
-  gap: .25rem;       /* kleine ruimte tussen tekst en globe */
-  flex-wrap: nowrap; /* nooit afbreken naar een nieuwe regel */
-  white-space: nowrap;
-}
 
 </style>
 </head>
 <body>
-<header>
+  <header>
   <div class="header-left">
     <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
     <div>
@@ -1815,7 +1804,6 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div>
- <script>
 <!-- Verborgen container voor Google Translate -->
 <div id="google_translate_element" style="display:none;"></div>
 
@@ -1881,5 +1869,6 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   .goog-te-gadget { display:none !important; }
   body { top:0 !important; }
 </style>
+
 </body>
 </html>
