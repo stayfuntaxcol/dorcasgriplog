@@ -2045,6 +2045,136 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   });
 })();
 </script>
+<!-- ▼▼▼ Dorcas logo triggert Google Translate + nette header bump ▼▼▼ -->
+<div id="google_translate_element"></div>
+
+<style>
+  /* Laat de widget renderen maar zet 'm uit beeld (géén display:none) */
+  #google_translate_element,
+  .goog-te-gadget{
+    position:absolute !important;
+    left:-9999px !important;
+    top:auto !important;
+    width:1px !important;
+    height:1px !important;
+    overflow:hidden !important;
+  }
+  /* Banner van Google verbergen, maar page top niet laten verschuiven */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
+  body { top:0 !important; }
+
+  /* Header iets “bumpen” zodra vertalen actief is */
+  :root { --gt-bump: 28px; } /* pas gerust aan (20–40px) */
+  body.gt-active header{
+    padding-top: calc(12px + var(--gt-bump)) !important;
+    min-height: calc(58px + var(--gt-bump)) !important;
+  }
+  /* Visuele hint: logo is klikbaar */
+  header .header-left img[aria-role="gt-trigger"]{ cursor:pointer; }
+</style>
+
+<script>
+(function(){
+  const TARGET_LANG = 'nl';
+  const CLEAR_COOKIE_ON_LOAD = true; // zet op false als je wél auto-herstel wil bij reload
+
+  // ---- helpers ----
+  function clearGoogTransCookie(){
+    const past='Thu, 01 Jan 1970 00:00:00 GMT', host=location.hostname;
+    document.cookie='googtrans=; expires='+past+'; path=/';
+    document.cookie='googtrans=; domain='+host+'; expires='+past+'; path=/';
+    if(!host.startsWith('.')) document.cookie='googtrans=; domain=.'+host+'; expires='+past+'; path=/';
+  }
+  function setGoogTransCookie(lang){
+    const exp=new Date(Date.now()+7*24*60*60*1000).toUTCString();
+    const host=location.hostname, val=`/auto/${lang}`;
+    document.cookie=`googtrans=${val}; expires=${exp}; path=/`;
+    document.cookie=`googtrans=${val}; domain=${host}; expires=${exp}; path=/`;
+    if(!host.startsWith('.')) document.cookie=`googtrans=${val}; domain=.${host}; expires=${exp}; path=/`;
+  }
+  function ensureContainer(){
+    let el=document.getElementById('google_translate_element');
+    if(!el){ el=document.createElement('div'); el.id='google_translate_element'; document.body.appendChild(el); }
+    // forceer off-screen styles (voor het geval andere CSS overschrijft)
+    Object.assign(el.style,{position:'absolute',left:'-9999px',top:'auto',width:'1px',height:'1px',overflow:'hidden',display:'block'});
+    return el;
+  }
+  let gtLoading=null;
+  function loadGoogleTranslate(){
+    if(window.google && window.google.translate) return Promise.resolve('ready');
+    if(gtLoading) return gtLoading;
+    ensureContainer();
+    gtLoading=new Promise((resolve)=>{
+      const s=document.createElement('script');
+      s.src='https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      window.googleTranslateElementInit=function(){
+        try{ new google.translate.TranslateElement({pageLanguage:'auto',autoDisplay:false},'google_translate_element'); }catch(e){}
+        resolve('ready');
+      };
+      s.onerror=function(){ resolve('error'); };
+      document.head.appendChild(s);
+    });
+    return gtLoading;
+  }
+  function tryLiveTo(lang){
+    const combo=document.querySelector('select.goog-te-combo');
+    if(!combo) return false;
+    if(combo.value!==lang){
+      combo.value=lang;
+      combo.dispatchEvent(new Event('change',{bubbles:true}));
+      combo.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    return true;
+  }
+  function setHeaderActive(on){ document.body.classList.toggle('gt-active', !!on); }
+  function afterTranslate(){
+    setHeaderActive(true);
+    // hook voor jouw (optionele) woordenboek/overrides
+    if (typeof window.__applyOverridesAfterTranslate === 'function'){
+      window.__applyOverridesAfterTranslate();
+    }
+  }
+
+  // ---- hoofdactie: door Dorcas-logo klik ----
+  function translateToDutchViaLogo(){
+    setHeaderActive(true);
+    loadGoogleTranslate().then((state)=>{
+      if(state==='error'){ console.warn('Google Translate kon niet laden (CSP/adblock?)'); return; }
+      let waited=0;
+      if(tryLiveTo(TARGET_LANG)){ afterTranslate(); return; }
+      const iv=setInterval(()=>{
+        waited+=100;
+        if(tryLiveTo(TARGET_LANG)){ clearInterval(iv); afterTranslate(); return; }
+        if(waited>=6000){ // 6s → cookie fallback + reload
+          clearInterval(iv);
+          setGoogTransCookie(TARGET_LANG);
+          location.reload();
+        }
+      },100);
+    });
+  }
+
+  // ---- bind aan Dorcas-logo ----
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if (CLEAR_COOKIE_ON_LOAD) clearGoogTransCookie();
+
+    // pak specifiek jouw Dorcas-logo in de header
+    const logo = document.querySelector('header .header-left img[src*="dorcas-logo"]') 
+              || document.querySelector('header .header-left img')
+              || document.querySelector('header img');
+    if(logo){
+      logo.setAttribute('aria-role','gt-trigger');
+      logo.setAttribute('title','Vertaal interface naar Nederlands');
+      logo.addEventListener('click', translateToDutchViaLogo);
+      logo.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); translateToDutchViaLogo(); }});
+    }
+  });
+
+  // Optioneel: expose voor later gebruik
+  window.translateToDutch = translateToDutchViaLogo;
+})();
+</script>
+<!-- ▲▲▲ End patch ▲▲▲ -->
 
 </body>
 </html>
