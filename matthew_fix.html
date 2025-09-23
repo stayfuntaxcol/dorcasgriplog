@@ -1956,56 +1956,6 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   }
 
   // Expose voor onclick of JS-bindingen
-  <script>
-// --- Bind globe to window.translateToDutch and ensure container exists ---
-(function(){
-  // 1) Zorg dat de verborgen container in <body> staat
-  function ensureGtContainer(){
-    var el = document.getElementById('google_translate_element');
-    if (!el) {
-      el = document.createElement('div');
-      el.id = 'google_translate_element';
-      el.style.display = 'none';
-      document.body.appendChild(el);
-    }
-  }
-
-  // 2) Bind één keer aan #globeNL (ook als hij later verschijnt)
-  function bindGlobeOnce(el){
-    if (!el || el.__gtBound) return;
-    el.__gtBound = true;
-    el.setAttribute('role','button');
-    el.setAttribute('tabindex','0');
-    if (!el.id) el.id = 'globeNL'; // safety
-
-    var handler = function(){
-      if (typeof window.translateToDutch === 'function') {
-        ensureGtContainer();
-        window.translateToDutch();
-      } else {
-        console.warn('translateToDutch is not defined yet.');
-      }
-    };
-
-    el.addEventListener('click', handler);
-    el.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handler(); }
-    });
-  }
-
-  // 3) Probeer direct en observeer voor later toegevoegd element
-  document.addEventListener('DOMContentLoaded', function(){
-    bindGlobeOnce(document.getElementById('globeNL'));
-
-    var mo = new MutationObserver(function(){
-      var g = document.getElementById('globeNL');
-      if (g) { bindGlobeOnce(g); }
-    });
-    mo.observe(document.body, { childList: true, subtree: true });
-  });
-})();
-</script>
-
   window.translateToDutch = translateToDutchAction;
 
   // Auto-apply (na cookie fallback)
