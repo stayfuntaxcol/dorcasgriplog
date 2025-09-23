@@ -19,9 +19,6 @@
     .header-left{display:flex;gap:12px;align-items:center}
     .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
 
-    #userInfo.user-info{display: inline-flex;align-items: center;gap: .5rem;white-space: nowrap;}
-    .globe-nl{width: 22px;height: 22px;cursor: pointer;vertical-align: middle;user-select: none}
-
     .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .leftbar{display:flex;gap:8px;align-items:center}
     .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
@@ -1807,57 +1804,74 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div>
-<!-- Verborgen container voor Google Translate -->
-<div id="google_translate_element" style="display:none;"></div>
-
-<!-- Verborgen Google Translate container (mag al aanwezig zijn) -->
-<div id="google_translate_element" style="display:none;"></div>
-<style>
-  /* Vast “floating” knopje rechtsonder */
-  #globeNL.globe-fab {
-    position: fixed;
-    right: 16px;
-    bottom: 16px;
-    width: 36px;
-    height: 36px;
+  <style>
+  /* Rij onder de tabel met rechts uitlijning */
+  .globe-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 8px;       /* kleine ruimte onder je tabel */
+    gap: 8px;
+  }
+  /* Niet-vast, gewoon inline icoon */
+  #globeNL.globe-inline {
+    position: static;      /* override eventuele fixed */
+    width: 24px;
+    height: 24px;
     cursor: pointer;
     user-select: none;
-    z-index: 1000;                 /* boven je tabel/overlays */
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,.18)); /* subtiele schaduw */
+    border-radius: 999px;
+    transition: transform .12s ease, filter .12s ease;
+  }
+  #globeNL.globe-inline:hover { 
+    transform: translateZ(0) scale(1.04);
     filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
   }
-  /* optioneel: verberg standaard focusring, behoud accessibilty via outline bij keyboard focus */
-  #globeNL.globe-fab:focus { outline: 2px solid rgba(26,115,232,.5); outline-offset: 2px; }
+  #globeNL.globe-inline:focus-visible{
+    outline: none;
+    box-shadow:
+      0 0 0 2px rgba(26,115,232,.35),
+      0 0 0 6px rgba(26,115,232,.15);
+  }
 </style>
 
 <script>
-  // Verplaats je bestaande globe naar rechtsonder; maak er een floating knop van
+  // Verplaats de globe onder de (laatste) tabel en maak hem inline
   document.addEventListener('DOMContentLoaded', function () {
     var globe = document.getElementById('globeNL');
+    if (!globe) return;
 
-    // Bestaat er nog geen globe? (veiligheidsnet)
-    if (!globe) {
-      globe = document.createElement('img');
-      globe.id = 'globeNL';
-      globe.src = 'assets/globe-blue.svg';
-      globe.alt = 'Nederlands';
-      globe.role = 'button';
-      globe.tabIndex = 0;
-      globe.onclick = function(){ if (typeof translateToDutch === 'function') translateToDutch(); };
-      globe.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); } };
-      globe.onerror = function(){ this.style.display='none'; };
-    } else {
-      // Zorg dat toetsenbordbediening ook werkt op je bestaande img
-      globe.setAttribute('role','button');
-      globe.setAttribute('tabindex','0');
-      globe.addEventListener('keydown', function(e){
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
-      });
-    }
+    // 1) Haal eventuele "floating" class weg
+    globe.classList.remove('globe-fab');
+    // 2) Zorg dat hij keyboard-klikbaar is
+    globe.setAttribute('role','button');
+    globe.setAttribute('tabindex','0');
+    globe.addEventListener('keydown', function(e){
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
+    });
 
-    // Voeg de floating stijl toe en zet hem aan het einde van <body>
-    globe.classList.add('globe-fab');
-    document.body.appendChild(globe);
+    // 3) Zoek een geschikte tabel om onder te plaatsen:
+    //    - eerst specifieke kandidaten (pas gerust aan je markup aan),
+    //    - anders de laatst voorkomende <table> op de pagina.
+    var candidates = document.querySelectorAll(
+      '#mainTable, .data-table, .grid table, .ag-root-wrapper, .rdg, table'
+    );
+    var anchor = candidates.length ? candidates[candidates.length - 1] : null;
+
+    if (!anchor) return; // geen tabel gevonden: niets verplaatsen
+
+    // 4) Maak (of hergebruik) een rij-container onder de tabel
+    var row = document.createElement('div');
+    row.className = 'globe-row';
+
+    // 5) Plaats de rij net ná de tabel
+    anchor.insertAdjacentElement('afterend', row);
+
+    // 6) Zet de globe in de rij en geef 'inline' styling
+    globe.classList.add('globe-inline');
+    row.appendChild(globe);
   });
 </script>
+
 </body>
 </html>
