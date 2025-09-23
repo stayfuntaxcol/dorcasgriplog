@@ -2184,6 +2184,50 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   .goog-te-gadget { display:none !important; }
   body { top:0 !important; }
 </style>
+  <style>
+  /* Extra ruimte in de header wanneer vertalen actief is */
+  :root { --header-bump: 28px; } /* pas aan naar smaak (20–40px) */
+  body.gt-on header{
+    padding-top: calc(12px + var(--header-bump)) !important;
+    min-height: calc(58px + var(--header-bump)) !important; /* beetje extra hoogte */
+  }
+</style>
+<script>
+/* Auto-start + header-bump integratie met je bestaande translateToDutch() */
+(function(){
+  const AUTO_START = true;  // ← zet op false als je NIET automatisch wil starten
 
+  function setHeaderBump(active){
+    document.body.classList.toggle('gt-on', !!active);
+  }
+
+  // Wikkel je bestaande translateToDutch zodat de header altijd netjes bumped
+  const _origTranslate = window.translateToDutch;
+  window.translateToDutch = function(){
+    setHeaderBump(true);
+    return _origTranslate ? _origTranslate() : undefined;
+  };
+
+  // Start automatisch na paginalaad (indien gewenst)
+  document.addEventListener('DOMContentLoaded', function(){
+    if (!AUTO_START) return;
+
+    // Als translateToDutch al bestaat: direct starten, anders even wachten tot je loader klaar is
+    if (typeof window.translateToDutch === 'function') {
+      window.translateToDutch();
+      return;
+    }
+    let tries = 0;
+    const iv = setInterval(function(){
+      if (typeof window.translateToDutch === 'function') {
+        clearInterval(iv);
+        window.translateToDutch();
+      } else if (++tries > 100) {
+        clearInterval(iv); // ~5s geduld
+      }
+    }, 50);
+  });
+})();
+</script>
 </body>
 </html>
