@@ -1793,82 +1793,84 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div>
-<!-- Verborgen container voor Google Translate -->
+  <!-- Verborgen Google Translate container -->
 <div id="google_translate_element" style="display:none;"></div>
 
 <style>
-  /* Blauwe wereldbol, compact en strak naast #userInfo */
+  /* Zorg dat chip, userInfo en globe op één regel staan */
+  .header-right { display:flex; align-items:center; gap:.5rem; }
+
+  /* Blauwe wereldbol, minimalistisch */
   .i18n-globe-btn {
     display:inline-flex; align-items:center; justify-content:center;
-    width:22px; height:22px; margin-left:.5rem; border:0; padding:0;
+    width:22px; height:22px; margin-left:.25rem; border:0; padding:0;
     background:transparent; cursor:pointer; vertical-align:middle;
-    color:#1a73e8; /* Google-blauw */
-    opacity:.9;
+    color:#1a73e8; opacity:.9;
   }
   .i18n-globe-btn:hover { opacity:1; }
   .i18n-globe-btn svg { width:100%; height:100%; display:block; }
 
-  /* Verberg Google Translate UI/banner zodat je header strak blijft */
+  /* Verberg Google banner/UI */
   .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  body { top:0 !important; }
   .goog-te-gadget { display:none !important; }
+  body { top:0 !important; }
 </style>
 
 <script>
 (() => {
   "use strict";
 
-  // === Jouw userinfo element ===
   const USER_INFO_SEL = "#userInfo";
 
-  // === Google Translate loader ===
+  // --- 0) Opruimen: verwijder eventuele oude globes zodat je er nooit 2 ziet ---
+  document.querySelectorAll(".i18n-globe-btn").forEach(btn => btn.remove());
+
+  // --- 1) Google Translate loader (altijd https gebruiken) ---
   function loadGoogleTranslate(cb){
-    if (window.google && window.google.translate) { cb(); return; }
+    if (window.google?.translate) { cb(); return; }
     const s = document.createElement("script");
-    s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
     window.googleTranslateElementInit = function(){
-      new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element');
+      new google.translate.TranslateElement({ pageLanguage: "auto", autoDisplay: false }, "google_translate_element");
       cb();
     };
     document.head.appendChild(s);
   }
 
-  // Forceer vertaling naar Nederlands
-  function forceToDutch(){
+  // --- 2) Naar NL schakelen ---
+  function switchToDutch(){
     const tryLive = () => {
       const combo = document.querySelector("select.goog-te-combo");
-      if (combo) {
-        if (combo.value !== "nl") {
-          combo.value = "nl";
-          combo.dispatchEvent(new Event("change"));
-        }
-        return true;
+      if (!combo) return false;
+      if (combo.value !== "nl") {
+        combo.value = "nl";
+        combo.dispatchEvent(new Event("change"));
       }
-      return false;
+      return true;
     };
 
+    // Probeer meteen; anders wacht tot de widget klaar is
     if (tryLive()) return;
 
     let waited = 0;
     const iv = setInterval(() => {
       waited += 100;
-      if (tryLive() || waited > 2500) {
+      if (tryLive() || waited > 3000) {
         clearInterval(iv);
-        if (waited > 2500) {
-          // Fallback: cookie zetten + herladen
-          const d = new Date(); d.setTime(d.getTime() + (7*24*60*60*1000));
-          document.cookie = "googtrans=/auto/nl; expires="+ d.toUTCString() +"; path=/";
-          document.cookie = "googtrans=/auto/nl; domain="+location.hostname+"; expires="+ d.toUTCString() +"; path=/";
+        if (waited > 3000) {
+          // Fallback: cookie zetten en herladen (werkt ook zonder domain override)
+          const d = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
+          document.cookie = "googtrans=/auto/nl; expires="+d+"; path=/";
           location.reload();
         }
       }
     }, 100);
   }
 
-  // Plaats de blauwe wereldbol direct rechts naast #userInfo
-  function injectGlobe(){
-    const userInfo = document.querySelector(USER_INFO_SEL);
-    if (!userInfo) return;
+  // --- 3) Plaats de blauwe globe direct naast #userInfo (in dezelfde rij) ---
+  function placeGlobe(){
+    const target = document.querySelector(USER_INFO_SEL);
+    if (!target) return;
 
     const btn = document.createElement("button");
     btn.type = "button";
@@ -1876,153 +1878,36 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     btn.setAttribute("aria-label", "Vertaal naar Nederlands");
     btn.title = "Nederlands";
     btn.innerHTML = `
-      <!-- blauwe globe, geen tekst -->
+      <!-- Blauwe wereldbol, geen tekst -->
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
         <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 7.75 6h-3.09a16.7 16.7 0 0 0-2.3-4.61A7.97 7.97 0 0 0 12 4zm-2.36.54A14.7 14.7 0 0 1 11 8H6.34a8.03 8.03 0 0 1 3.3-3.46zM4.25 10H11c.08.65.12 1.31.12 2s-.04 1.35-.12 2H4.25a8.02 8.02 0 0 1 0-4zm2.09 6H11c-.34 1.65-.96 3.14-1.78 4.11A8.03 8.03 0 0 1 6.34 16zM12 20a8 8 0 0 1-1.64-.17c.86-1.08 1.52-2.78 1.86-4.83h3.91A8 8 0 0 1 12 20zm5.09-6h-3.87c.07-.67.11-1.34.11-2s-.04-1.33-.11-2h3.87a14.9 14.9 0 0 1 0 4zm-3.68-6.39A14.8 14.8 0 0 1 16.66 10h3.09A8 8 0 0 0 12 4c.9 0 1.77.16 2.56.45-.48.5-.86 1.22-1.15 2.16z"/>
       </svg>
     `;
-    btn.addEventListener("click", () => {
-      loadGoogleTranslate(forceToDutch);
-    });
+    btn.addEventListener("click", () => loadGoogleTranslate(switchToDutch));
 
-    // Plaats hem direct ná #userInfo (dus rechts ervan)
-    userInfo.insertAdjacentElement("afterend", btn);
+    // Zet 'm direct achter #userInfo (rechts ernaast)
+    target.insertAdjacentElement("afterend", btn);
   }
 
-  // Init
-  document.addEventListener("DOMContentLoaded", () => {
-    injectGlobe();
+  // --- 4) Auto-NL bij herladen als cookie al gezet is ---
+  function autoDutchIfCookie(){
+    if (!document.cookie.includes("googtrans=/auto/nl")) return;
+    loadGoogleTranslate(() => {
+      const setNL = () => {
+        const combo = document.querySelector("select.goog-te-combo");
+        if (combo) { combo.value = "nl"; combo.dispatchEvent(new Event("change")); }
+        else setTimeout(setNL, 150);
+      };
+      setNL();
+    });
+  }
 
-    // Als cookie al NL is (na fallback), zet direct NL bij laden
-    const hasNL = document.cookie.includes("googtrans=/auto/nl");
-    if (hasNL) {
-      loadGoogleTranslate(() => {
-        const setNL = () => {
-          const combo = document.querySelector("select.goog-te-combo");
-          if (combo) { combo.value = "nl"; combo.dispatchEvent(new Event("change")); }
-          else setTimeout(setNL, 150);
-        };
-        setNL();
-      });
-    }
+  document.addEventListener("DOMContentLoaded", () => {
+    placeGlobe();
+    autoDutchIfCookie();
   });
 })();
 </script>
-<!-- Verborgen container voor Google Translate -->
-<div id="google_translate_element" style="display:none;"></div>
 
-<style>
-  /* Blauwe wereldbol, compact en strak naast #userInfo */
-  .i18n-globe-btn {
-    display:inline-flex; align-items:center; justify-content:center;
-    width:22px; height:22px; margin-left:.5rem; border:0; padding:0;
-    background:transparent; cursor:pointer; vertical-align:middle;
-    color:#1a73e8; /* Google-blauw */
-    opacity:.9;
-  }
-  .i18n-globe-btn:hover { opacity:1; }
-  .i18n-globe-btn svg { width:100%; height:100%; display:block; }
-
-  /* Verberg Google Translate UI/banner zodat je header strak blijft */
-  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  body { top:0 !important; }
-  .goog-te-gadget { display:none !important; }
-</style>
-
-<script>
-(() => {
-  "use strict";
-
-  // === Jouw userinfo element ===
-  const USER_INFO_SEL = "#userInfo";
-
-  // === Google Translate loader ===
-  function loadGoogleTranslate(cb){
-    if (window.google && window.google.translate) { cb(); return; }
-    const s = document.createElement("script");
-    s.src = "//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    window.googleTranslateElementInit = function(){
-      new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element');
-      cb();
-    };
-    document.head.appendChild(s);
-  }
-
-  // Forceer vertaling naar Nederlands
-  function forceToDutch(){
-    const tryLive = () => {
-      const combo = document.querySelector("select.goog-te-combo");
-      if (combo) {
-        if (combo.value !== "nl") {
-          combo.value = "nl";
-          combo.dispatchEvent(new Event("change"));
-        }
-        return true;
-      }
-      return false;
-    };
-
-    if (tryLive()) return;
-
-    let waited = 0;
-    const iv = setInterval(() => {
-      waited += 100;
-      if (tryLive() || waited > 2500) {
-        clearInterval(iv);
-        if (waited > 2500) {
-          // Fallback: cookie zetten + herladen
-          const d = new Date(); d.setTime(d.getTime() + (7*24*60*60*1000));
-          document.cookie = "googtrans=/auto/nl; expires="+ d.toUTCString() +"; path=/";
-          document.cookie = "googtrans=/auto/nl; domain="+location.hostname+"; expires="+ d.toUTCString() +"; path=/";
-          location.reload();
-        }
-      }
-    }, 100);
-  }
-
-  // Plaats de blauwe wereldbol direct rechts naast #userInfo
-  function injectGlobe(){
-    const userInfo = document.querySelector(USER_INFO_SEL);
-    if (!userInfo) return;
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "i18n-globe-btn";
-    btn.setAttribute("aria-label", "Vertaal naar Nederlands");
-    btn.title = "Nederlands";
-    btn.innerHTML = `
-      <!-- blauwe globe, geen tekst -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 7.75 6h-3.09a16.7 16.7 0 0 0-2.3-4.61A7.97 7.97 0 0 0 12 4zm-2.36.54A14.7 14.7 0 0 1 11 8H6.34a8.03 8.03 0 0 1 3.3-3.46zM4.25 10H11c.08.65.12 1.31.12 2s-.04 1.35-.12 2H4.25a8.02 8.02 0 0 1 0-4zm2.09 6H11c-.34 1.65-.96 3.14-1.78 4.11A8.03 8.03 0 0 1 6.34 16zM12 20a8 8 0 0 1-1.64-.17c.86-1.08 1.52-2.78 1.86-4.83h3.91A8 8 0 0 1 12 20zm5.09-6h-3.87c.07-.67.11-1.34.11-2s-.04-1.33-.11-2h3.87a14.9 14.9 0 0 1 0 4zm-3.68-6.39A14.8 14.8 0 0 1 16.66 10h3.09A8 8 0 0 0 12 4c.9 0 1.77.16 2.56.45-.48.5-.86 1.22-1.15 2.16z"/>
-      </svg>
-    `;
-    btn.addEventListener("click", () => {
-      loadGoogleTranslate(forceToDutch);
-    });
-
-    // Plaats hem direct ná #userInfo (dus rechts ervan)
-    userInfo.insertAdjacentElement("afterend", btn);
-  }
-
-  // Init
-  document.addEventListener("DOMContentLoaded", () => {
-    injectGlobe();
-
-    // Als cookie al NL is (na fallback), zet direct NL bij laden
-    const hasNL = document.cookie.includes("googtrans=/auto/nl");
-    if (hasNL) {
-      loadGoogleTranslate(() => {
-        const setNL = () => {
-          const combo = document.querySelector("select.goog-te-combo");
-          if (combo) { combo.value = "nl"; combo.dispatchEvent(new Event("change")); }
-          else setTimeout(setNL, 150);
-        };
-        setNL();
-      });
-    }
-  });
-})();
-</script>
-  
 </body>
 </html>
