@@ -1810,78 +1810,54 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 <!-- Verborgen container voor Google Translate -->
 <div id="google_translate_element" style="display:none;"></div>
 
-<script>
-  // Laad Google Translate (https i.v.m. CSP en mixed content)
-  function loadGoogleTranslate(cb){
-    if (window.google && window.google.translate) { cb && cb(); return; }
-    var s = document.createElement("script");
-    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
-    window.googleTranslateElementInit = function(){
-      new google.translate.TranslateElement({ pageLanguage: "auto", autoDisplay: false }, "google_translate_element");
-      cb && cb();
-    };
-    document.head.appendChild(s);
+<!-- Verborgen Google Translate container (mag al aanwezig zijn) -->
+<div id="google_translate_element" style="display:none;"></div>
+<style>
+  /* Vast “floating” knopje rechtsonder */
+  #globeNL.globe-fab {
+    position: fixed;
+    right: 16px;
+    bottom: 16px;
+    width: 36px;
+    height: 36px;
+    cursor: pointer;
+    user-select: none;
+    z-index: 1000;                 /* boven je tabel/overlays */
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
   }
+  /* optioneel: verberg standaard focusring, behoud accessibilty via outline bij keyboard focus */
+  #globeNL.globe-fab:focus { outline: 2px solid rgba(26,115,232,.5); outline-offset: 2px; }
+</style>
 
-  // Klik-handler van het IMG (zoals bij het Dorcas-logo niets extra’s nodig in HTML)
-  function translateToDutch(){
-    function tryLive(){
-      var combo = document.querySelector("select.goog-te-combo");
-      if (!combo) return false;
-      if (combo.value !== "nl") {
-        combo.value = "nl";
-        combo.dispatchEvent(new Event("change"));
-      }
-      return true;
+<script>
+  // Verplaats je bestaande globe naar rechtsonder; maak er een floating knop van
+  document.addEventListener('DOMContentLoaded', function () {
+    var globe = document.getElementById('globeNL');
+
+    // Bestaat er nog geen globe? (veiligheidsnet)
+    if (!globe) {
+      globe = document.createElement('img');
+      globe.id = 'globeNL';
+      globe.src = 'assets/globe-blue.svg';
+      globe.alt = 'Nederlands';
+      globe.role = 'button';
+      globe.tabIndex = 0;
+      globe.onclick = function(){ if (typeof translateToDutch === 'function') translateToDutch(); };
+      globe.onkeydown = function(e){ if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); } };
+      globe.onerror = function(){ this.style.display='none'; };
+    } else {
+      // Zorg dat toetsenbordbediening ook werkt op je bestaande img
+      globe.setAttribute('role','button');
+      globe.setAttribute('tabindex','0');
+      globe.addEventListener('keydown', function(e){
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
+      });
     }
 
-    loadGoogleTranslate(function(){
-      if (tryLive()) return;
-      var waited = 0, iv = setInterval(function(){
-        waited += 100;
-        if (tryLive() || waited > 3000) {
-          clearInterval(iv);
-          if (waited > 3000) {
-            // Fallback: cookie + herladen (houdt site verder ongemoeid)
-            var exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
-            document.cookie = "googtrans=/auto/nl; expires="+exp+"; path=/";
-            location.reload();
-          }
-        }
-      }, 100);
-    });
-  }
-
-  // Auto-NL als cookie al is gezet (na fallback)
-  (function autoDutchIfCookie(){
-    if (!document.cookie.includes("googtrans=/auto/nl")) return;
-    loadGoogleTranslate(function(){
-      var setNL = function(){
-        var combo = document.querySelector("select.goog-te-combo");
-        if (combo) { combo.value = "nl"; combo.dispatchEvent(new Event("change")); }
-        else setTimeout(setNL, 150);
-      };
-      setNL();
-    });
-  })();
+    // Voeg de floating stijl toe en zet hem aan het einde van <body>
+    globe.classList.add('globe-fab');
+    document.body.appendChild(globe);
+  });
 </script>
-
-<style>
-  /* Zorg dat userInfo en globe op één regel staan */
-  #userInfo.user-info{
-    display: inline-flex;
-    align-items: center;
-    gap: .5rem;
-    white-space: nowrap;
-  }
-  /* Klikbare globe (als je deze nog niet had) */
-  .globe-nl{
-    width: 22px;
-    height: 22px;
-    cursor: pointer;
-    vertical-align: middle;
-    user-select: none;
-  }
-</style>
 </body>
 </html>
