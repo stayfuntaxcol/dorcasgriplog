@@ -19,6 +19,9 @@
     .header-left{display:flex;gap:12px;align-items:center}
     .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
 
+    #userInfo.user-info{display: inline-flex;align-items: center;gap: .5rem;white-space: nowrap;}
+    .globe-nl{width: 22px;height: 22px;cursor: pointer;vertical-align: middle;user-select: none}
+
     .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .leftbar{display:flex;gap:8px;align-items:center}
     .rightbar{display:flex;gap:8px;align-items:center;justify-content:flex-end}
@@ -1864,11 +1867,21 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 </script>
 
 <style>
-  /* Verberg Translate banner/UI zodat je header strak blijft */
-  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  .goog-te-gadget { display:none !important; }
-  body { top:0 !important; }
+  /* Zorg dat userInfo en globe op één regel staan */
+  #userInfo.user-info{
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    white-space: nowrap;
+  }
+  /* Klikbare globe (als je deze nog niet had) */
+  .globe-nl{
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    vertical-align: middle;
+    user-select: none;
+  }
 </style>
-
 </body>
 </html>
