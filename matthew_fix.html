@@ -1804,26 +1804,26 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div>
-  <style>
+
+  <div id="google_translate_element" style="display:none;"></div>
+
+<style>
   /* Rij onder de tabel met rechts uitlijning */
   .globe-row {
     display: flex;
     justify-content: flex-end;
-    margin-top: 8px;       /* kleine ruimte onder je tabel */
     gap: 8px;
+    margin-top: 8px;       /* ruimte onder je tabel */
   }
-  /* Niet-vast, gewoon inline icoon */
+  /* Niet-vast; gewoon inline icoon met duidelijke hover/focus */
   #globeNL.globe-inline {
-    position: static;      /* override eventuele fixed */
-    width: 24px;
-    height: 24px;
-    cursor: pointer;
-    user-select: none;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,.18)); /* subtiele schaduw */
-    border-radius: 999px;
+    position: static;
+    width: 24px; height: 24px;
+    cursor: pointer; user-select: none; border-radius: 999px;
+    filter: drop-shadow(0 1px 3px rgba(0,0,0,.18));
     transition: transform .12s ease, filter .12s ease;
   }
-  #globeNL.globe-inline:hover { 
+  #globeNL.globe-inline:hover {
     transform: translateZ(0) scale(1.04);
     filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
   }
@@ -1833,45 +1833,115 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
       0 0 0 2px rgba(26,115,232,.35),
       0 0 0 6px rgba(26,115,232,.15);
   }
+
+  /* Verberg Google Translate UI zodat je layout strak blijft */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
+  .goog-te-gadget { display:none !important; }
+  body { top:0 !important; }
 </style>
 
 <script>
-  // Verplaats de globe onder de (laatste) tabel en maak hem inline
-  document.addEventListener('DOMContentLoaded', function () {
-    var globe = document.getElementById('globeNL');
-    if (!globe) return;
+/* ===== Robuuste Google Translate + NL switch + cookie-fallback ===== */
+(function(){
+  function loadGoogleTranslate(cb){
+    if (window.google && window.google.translate) { cb && cb(); return; }
+    var s = document.createElement("script");
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    window.googleTranslateElementInit = function(){
+      try {
+        new google.translate.TranslateElement({ pageLanguage: "auto", autoDisplay: false }, "google_translate_element");
+      } catch(e){}
+      cb && cb();
+    };
+    document.head.appendChild(s);
+  }
 
-    // 1) Haal eventuele "floating" class weg
-    globe.classList.remove('globe-fab');
-    // 2) Zorg dat hij keyboard-klikbaar is
+  function tryLiveToDutch(){
+    var combo = document.querySelector("select.goog-te-combo");
+    if (!combo) return false;
+    if (combo.value !== "nl") {
+      combo.value = "nl";
+      combo.dispatchEvent(new Event("change", {bubbles:true}));
+      combo.dispatchEvent(new Event("input",  {bubbles:true}));
+    }
+    return true;
+  }
+
+  function setGoogTransCookieToDutch(){
+    var exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
+    var host = location.hostname;
+    document.cookie = "googtrans=/auto/nl; expires="+exp+"; path=/";
+    document.cookie = "googtrans=/auto/nl; domain="+host+"; expires="+exp+"; path=/";
+    if (!host.startsWith(".")) {
+      document.cookie = "googtrans=/auto/nl; domain=."+host+"; expires="+exp+"; path=/";
+    }
+  }
+
+  // Publieke functie (wordt door de globe aangeroepen)
+  window.translateToDutch = function(){
+    loadGoogleTranslate(function(){
+      var waited = 0;
+      if (tryLiveToDutch()) return;
+      var iv = setInterval(function(){
+        waited += 100;
+        if (tryLiveToDutch()) { clearInterval(iv); return; }
+        if (waited >= 3000) {
+          clearInterval(iv);
+          setGoogTransCookieToDutch();
+          location.reload();
+        }
+      }, 100);
+    });
+  };
+
+  // Auto-toepassen bij laden als de NL-cookie al bestaat
+  if (document.cookie.includes("googtrans=/auto/nl")) {
+    loadGoogleTranslate(function ensureNL(){
+      if (!tryLiveToDutch()) setTimeout(ensureNL, 150);
+    });
+  }
+})();
+
+/* ===== Globe onder tabel, rechts uitgelijnd ===== */
+document.addEventListener('DOMContentLoaded', function () {
+  // 1) Globe element (maak aan als hij weg is)
+  var globe = document.getElementById('globeNL');
+  if (!globe) {
+    globe = document.createElement('img');
+    globe.id = 'globeNL';
+    globe.src = 'assets/globe-blue.svg';   // jouw svg
+    globe.alt = 'Nederlands';
+    globe.onerror = function(){ this.style.display='none'; };
+    globe.addEventListener('click', function(){
+      if (typeof translateToDutch === 'function') translateToDutch();
+    });
     globe.setAttribute('role','button');
     globe.setAttribute('tabindex','0');
     globe.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
     });
+  }
 
-    // 3) Zoek een geschikte tabel om onder te plaatsen:
-    //    - eerst specifieke kandidaten (pas gerust aan je markup aan),
-    //    - anders de laatst voorkomende <table> op de pagina.
-    var candidates = document.querySelectorAll(
-      '#mainTable, .data-table, .grid table, .ag-root-wrapper, .rdg, table'
-    );
-    var anchor = candidates.length ? candidates[candidates.length - 1] : null;
-
-    if (!anchor) return; // geen tabel gevonden: niets verplaatsen
-
-    // 4) Maak (of hergebruik) een rij-container onder de tabel
-    var row = document.createElement('div');
-    row.className = 'globe-row';
-
-    // 5) Plaats de rij net ná de tabel
-    anchor.insertAdjacentElement('afterend', row);
-
-    // 6) Zet de globe in de rij en geef 'inline' styling
+  // 2) Zoek de tabel waar hij onder moet komen
+  var anchor = document.querySelector('#mainTable') ||
+               Array.from(document.querySelectorAll('table')).pop();
+  if (!anchor) { 
+    // geen tabel gevonden: zet hem helemaal onderaan de pagina zodat je hem ziet
     globe.classList.add('globe-inline');
-    row.appendChild(globe);
-  });
-</script>
+    document.body.appendChild(globe);
+    return;
+  }
 
+  // 3) Maak/plaats de rij direct NA de tabel
+  var row = document.createElement('div');
+  row.className = 'globe-row';
+  anchor.insertAdjacentElement('afterend', row);
+
+  // 4) Style en append globe
+  globe.classList.remove('globe-fab');   // voor het geval oude "floating" class nog bestaat
+  globe.classList.add('globe-inline');
+  row.appendChild(globe);
+});
+</script>
 </body>
 </html>
