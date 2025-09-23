@@ -18,6 +18,9 @@
     header .sub{color:var(--muted);font-size:12px}
     .header-left{display:flex;gap:12px;align-items:center}
     .header-right{margin-left:auto;text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end}
+    .header-right {display: inline-flex;align-items: center;gap: .5rem;flex-wrap: nowrap;}
+    .globe-nl {width: 22px;height: 22px;cursor: pointer;vertical-align: middle;user-select: none;}
+</style>
 
     .toolbar{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;padding:10px 16px;background:#f0f5f5;border-bottom:1px solid var(--line)}
     .leftbar{display:flex;gap:8px;align-items:center}
@@ -309,19 +312,30 @@
 </style>
 </head>
 <body>
-  <header>
-    <div class="header-left">
-      <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
-      <div>
-        <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
-        <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
-      </div>
+<header>
+  <div class="header-left">
+    <img src="assets/dorcas-logo.svg" alt="Dorcas" onerror="this.style.display='none'">
+    <div>
+      <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+      <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
     </div>
-    <div class="header-right">
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
-    </div>
-  </header>
+  </div>
+  <div class="header-right">
+    <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+    <span id="userInfo" class="user-info"></span>
+
+    <!-- ► Blauwe wereldbol als IMG, net als Dorcas-logo ◄ -->
+    <img
+      id="globeNL"
+      src="assets/globe-blue.svg"
+      alt="Nederlands"
+      class="globe-nl"
+      onerror="this.style.display='none'"
+      onclick="translateToDutch()"
+    >
+  </div>
+</header>
+
 
   <div class="toolbar">
     <div class="leftbar">
@@ -1802,30 +1816,70 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   </div>
 </div>
  <script>
-  // VERVANG je bestaande placeGlobe() volledig door deze:
-  function placeGlobe(){
-    const userInfo = document.querySelector("#userInfo.user-info, #userInfo");
-    if (!userInfo) return;
+<!-- Verborgen container voor Google Translate -->
+<div id="google_translate_element" style="display:none;"></div>
 
-    // Verwijder oude globes (voor de zekerheid)
-    userInfo.querySelectorAll(".i18n-globe-btn").forEach(b => b.remove());
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "i18n-globe-btn";
-    btn.setAttribute("aria-label", "Vertaal naar Nederlands");
-    btn.title = "Nederlands";
-    btn.innerHTML = `
-      <!-- Blauwe wereldbol, geen tekst -->
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true">
-        <path fill="currentColor" d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2zm0 2a8 8 0 0 1 7.75 6h-3.09a16.7 16.7 0 0 0-2.3-4.61A7.97 7.97 0 0 0 12 4zm-2.36.54A14.7 14.7 0 0 1 11 8H6.34a8.03 8.03 0 0 1 3.3-3.46zM4.25 10H11c.08.65.12 1.31.12 2s-.04 1.35-.12 2H4.25a8.02 8.02 0 0 1 0-4zm2.09 6H11c-.34 1.65-.96 3.14-1.78 4.11A8.03 8.03 0 0 1 6.34 16zM12 20a8 8 0 0 1-1.64-.17c.86-1.08 1.52-2.78 1.86-4.83h3.91A8 8 0 0 1 12 20zm5.09-6h-3.87c.07-.67.11-1.34.11-2s-.04-1.33-.11-2h3.87a14.9 14.9 0 0 1 0 4zm-3.68-6.39A14.8 14.8 0 0 1 16.66 10h3.09A8 8 0 0 0 12 4c.9 0 1.77.16 2.56.45-.48.5-.86 1.22-1.15 2.16z"/>
-      </svg>
-    `;
-
-    // Belangrijk: in #userInfo plaatsen, zodat het altijd netjes aansluit
-    userInfo.appendChild(btn);
+<script>
+  // Laad Google Translate (https i.v.m. CSP en mixed content)
+  function loadGoogleTranslate(cb){
+    if (window.google && window.google.translate) { cb && cb(); return; }
+    var s = document.createElement("script");
+    s.src = "https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit";
+    window.googleTranslateElementInit = function(){
+      new google.translate.TranslateElement({ pageLanguage: "auto", autoDisplay: false }, "google_translate_element");
+      cb && cb();
+    };
+    document.head.appendChild(s);
   }
+
+  // Klik-handler van het IMG (zoals bij het Dorcas-logo niets extra’s nodig in HTML)
+  function translateToDutch(){
+    function tryLive(){
+      var combo = document.querySelector("select.goog-te-combo");
+      if (!combo) return false;
+      if (combo.value !== "nl") {
+        combo.value = "nl";
+        combo.dispatchEvent(new Event("change"));
+      }
+      return true;
+    }
+
+    loadGoogleTranslate(function(){
+      if (tryLive()) return;
+      var waited = 0, iv = setInterval(function(){
+        waited += 100;
+        if (tryLive() || waited > 3000) {
+          clearInterval(iv);
+          if (waited > 3000) {
+            // Fallback: cookie + herladen (houdt site verder ongemoeid)
+            var exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
+            document.cookie = "googtrans=/auto/nl; expires="+exp+"; path=/";
+            location.reload();
+          }
+        }
+      }, 100);
+    });
+  }
+
+  // Auto-NL als cookie al is gezet (na fallback)
+  (function autoDutchIfCookie(){
+    if (!document.cookie.includes("googtrans=/auto/nl")) return;
+    loadGoogleTranslate(function(){
+      var setNL = function(){
+        var combo = document.querySelector("select.goog-te-combo");
+        if (combo) { combo.value = "nl"; combo.dispatchEvent(new Event("change")); }
+        else setTimeout(setNL, 150);
+      };
+      setNL();
+    });
+  })();
 </script>
 
+<style>
+  /* Verberg Translate banner/UI zodat je header strak blijft */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
+  .goog-te-gadget { display:none !important; }
+  body { top:0 !important; }
+</style>
 </body>
 </html>
