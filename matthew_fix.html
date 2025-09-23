@@ -1833,129 +1833,318 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 <!-- Verborgen container moet in de BODY staan -->
 <div id="google_translate_element" style="display:none;"></div>
 
+<style>
+  /* Rij ONDER de tabel, rechts uitgelijnd */
+  .globe-row{
+    display:flex; justify-content:flex-end; gap:8px;
+    margin-top:8px;
+  }
+  /* Normale (niet-floatende) globe */
+  #globeNL.globe-inline{
+    position:static; width:24px; height:24px;
+    cursor:pointer; user-select:none; border-radius:999px;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.18));
+    transition:transform .12s ease, filter .12s ease;
+  }
+  #globeNL.globe-inline:hover{
+    transform:scale(1.04);
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));
+  }
+  #globeNL.globe-inline:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 2px rgba(26,115,232,.35), 0 0 0 6px rgba(26,115,232,.15);
+  }
+</style>
+
 <script>
-/* ===== Google Translate: load-on-click + robust NL switch ===== */
+/* =========================
+   A) GLOBE ONDER DE TABEL
+   ========================= */
 (function(){
-  // --- ensure container exists (MUST be in <body>) ---
-  function ensureGtContainer(){
-    var el = document.getElementById('google_translate_element');
-    if (!el){
-      el = document.createElement('div');
-      el.id = 'google_translate_element';
-      el.style.display = 'none';
-      document.body.appendChild(el);
-    }
-    return el;
+  const TABLE_SELECTORS = [
+    '#goalsTable', '#risksTable', '#issuesTable', '#plansTable',
+    '#questionsTable', '#suggestionsTable', '#notificationsTable',
+    '#tripsTable', '#mainTable',
+    '.data-table', '.rdg', '.ag-root-wrapper', '.grid table',
+    'table'
+  ].join(',');
+
+  function getActiveSection(){
+    return document.querySelector('section.active') || document.body;
   }
-
-  // --- loader with single-flight guarantee ---
-  var gtLoading = null; // Promise
-  function loadGoogleTranslate(){
-    if (window.google && window.google.translate) return Promise.resolve();
-    if (gtLoading) return gtLoading;
-
-    ensureGtContainer();
-
-    gtLoading = new Promise(function(resolve){
-      var s = document.createElement('script');
-      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
-      // if another snippet overwrites the callback, we reassign safely
-      window.googleTranslateElementInit = function(){
-        try {
-          new google.translate.TranslateElement(
-            { pageLanguage:'auto', autoDisplay:false },
-            'google_translate_element'
-          );
-        } catch(e) {}
-        resolve();
-      };
-      s.onerror = function(){ gtLoading = null; resolve(); }; // fail soft; fallback will handle
-      document.head.appendChild(s);
-    });
-    return gtLoading;
-  }
-
-  // --- try to set <select.goog-te-combo> to "nl" ---
-  function tryLiveToDutch(){
-    var combo = document.querySelector('select.goog-te-combo');
-    if (!combo) return false;
-    if (combo.value !== 'nl'){
-      combo.value = 'nl';
-      combo.dispatchEvent(new Event('change', {bubbles:true}));
-      combo.dispatchEvent(new Event('input',  {bubbles:true}));
-    }
-    return true;
-  }
-
-  // --- cookie fallback (covers stubborn cases / adblock delays) ---
-  function setGoogTransCookieToDutch(){
-    var exp = new Date(Date.now() + 7*24*60*60*1000).toUTCString();
-    var host = location.hostname;
-    document.cookie = 'googtrans=/auto/nl; expires='+exp+'; path=/';
-    document.cookie = 'googtrans=/auto/nl; domain='+host+'; expires='+exp+'; path=/';
-    if (!host.startsWith('.')) {
-      document.cookie = 'googtrans=/auto/nl; domain=.'+host+'; expires='+exp+'; path=/';
-    }
-  }
-
-  // --- public action (called on globe click) ---
-  function translateToDutchAction(){
-    loadGoogleTranslate().then(function(){
-      // try live for up to 4s; else cookie+reload
-      var waited = 0;
-      if (tryLiveToDutch()) return;
-      var iv = setInterval(function(){
-        waited += 100;
-        if (tryLiveToDutch()){
-          clearInterval(iv);
-          return;
-        }
-        if (waited >= 4000){
-          clearInterval(iv);
-          setGoogTransCookieToDutch();
-          location.reload();
-        }
-      }, 100);
+  function getVisibleTablesIn(container){
+    return Array.from(container.querySelectorAll(TABLE_SELECTORS)).filter(el=>{
+      if (!el.offsetParent) return false;
+      const cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none';
     });
   }
 
-  // expose (if you already call onclick="translateToDutch()")
-  window.translateToDutch = translateToDutchAction;
-
-  // --- bind to #globeNL (even if it appears later) ---
-  function bindGlobe(el){
-    if (!el || el.__gtBound) return;
-    el.__gtBound = true;
-    el.setAttribute('role','button');
-    el.setAttribute('tabindex','0');
-    el.addEventListener('click', translateToDutchAction);
-    el.addEventListener('keydown', function(e){
-      if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); translateToDutchAction(); }
-    });
+  function ensureGlobe(){
+    let globe = document.getElementById('globeNL');
+    if (!globe){
+      globe = document.createElement('img');
+      globe.id = 'globeNL';
+      globe.src = 'assets/globe-blue.svg';
+      globe.alt = 'Nederlands';
+      globe.onerror = function(){ this.style.display='none'; };
+      globe.setAttribute('role','button');
+      globe.setAttribute('tabindex','0');
+      globe.addEventListener('click', ()=> { if (typeof translateToDutch === 'function') translateToDutch(); });
+      globe.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); globe.click(); }});
+      document.body.appendChild(globe);
+    }
+    globe.classList.remove('globe-fab');
+    globe.classList.add('globe-inline');
+    return globe;
   }
 
-  // initial bind if present now
-  document.addEventListener('DOMContentLoaded', function(){
-    var g = document.getElementById('globeNL');
-    if (g) bindGlobe(g);
+  function placeGlobeUnderActive(){
+    const globe = ensureGlobe();
+    const active = getActiveSection();
+    const tables = getVisibleTablesIn(active);
+    const anchor = tables.length ? tables[tables.length - 1] : (active.lastElementChild || active);
 
-    // also watch for it if added later
-    var mo = new MutationObserver(function(muts){
-      var el = document.getElementById('globeNL');
-      if (el) bindGlobe(el);
-    });
-    mo.observe(document.body, {childList:true, subtree:true});
-
-    // auto-apply if cookie is already set to NL (from previous fallback)
-    if (document.cookie.includes('googtrans=/auto/nl')){
-      loadGoogleTranslate().then(function ensureNL(){
-        if (!tryLiveToDutch()) setTimeout(ensureNL, 150);
-      });
+    // Reuse of maak .globe-row direct NA het anker
+    let row = anchor.nextElementSibling;
+    const needNew = !(row && row.classList && row.classList.contains('globe-row'));
+    if (needNew){
+      row = document.createElement('div');
+      row.className = 'globe-row';
+      anchor.insertAdjacentElement('afterend', row);
     }
+    if (globe.parentElement !== row) row.appendChild(globe);
+  }
+
+  // Init + verplaatsen bij tabwissel en content-mutaties
+  document.addEventListener('DOMContentLoaded', ()=>{
+    placeGlobeUnderActive();
+
+    // Tabknoppen
+    document.querySelectorAll('nav.tabs button, [role="tab"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setTimeout(placeGlobeUnderActive, 0));
+    });
+
+    // Observeer de actieve sectie voor DOM-wijzigingen
+    let mo;
+    function restartObserver(){
+      if (mo) mo.disconnect();
+      const active = getActiveSection();
+      mo = new MutationObserver(()=> placeGlobeUnderActive());
+      mo.observe(active, {childList:true, subtree:true});
+    }
+    restartObserver();
+    document.querySelectorAll('nav.tabs button, [role="tab"]').forEach(btn=>{
+      btn.addEventListener('click', ()=> setTimeout(restartObserver, 0));
+    });
   });
 })();
-</script>
 
+/* =========================
+   B) WOORDENBOEK-OVERRIDES
+   ========================= */
+(function(){
+  // 1) Deze labels moeten in HET ENGELS blijven (nooit vertalen)
+  const LOCK_EN_ENTRIES = [
+    ["goals","Goals"],
+    ["risks","Risks"],
+    ["issues","Issues"],
+    ["plans","Plans"],
+    ["suggestions","Suggestions"],
+    ["questions","Questions"],
+    ["notifications","Notifications"]
+  ];
+
+  // 2) Jouw gewenste NL-terminologie voor overige UI (voeg gerust toe)
+  const OVERRIDE_ENTRIES = [
+    // Buttons/acties
+    ["save", "Opslaan"],
+    ["save changes", "Wijzigingen opslaan"],
+    ["edit", "Bewerken"],
+    ["delete", "Verwijderen"],
+    ["close", "Sluiten"],
+    ["open", "Openen"],
+    ["new", "Nieuw"],
+    ["add", "Toevoegen"],
+    ["remove", "Verwijderen"],
+    ["update", "Bijwerken"],
+    ["cancel", "Annuleren"],
+    ["confirm", "Bevestigen"],
+    ["search", "Zoeken"],
+    ["filter", "Filteren"],
+    ["download", "Downloaden"],
+    ["upload", "Uploaden"],
+    ["settings", "Instellingen"],
+    ["options", "Opties"],
+    ["actions", "Acties"],
+    ["details", "Details"],
+    ["back", "Terug"],
+    ["next", "Volgende"],
+    ["previous", "Vorige"],
+    ["yes", "Ja"],
+    ["no", "Nee"],
+
+    // Kolommen/velden
+    ["title", "Titel"],
+    ["name", "Naam"],
+    ["type", "Type"],
+    ["description", "Beschrijving"],
+    ["owner", "Eigenaar"],
+    ["owners", "Eigenaren"],
+    ["status", "Status"],
+    ["submitted", "Ingediend"],
+    ["created", "Aangemaakt"],
+    ["modified", "Gewijzigd"],
+
+    // Travel planner
+    ["traveler name", "Naam reiziger"],
+    ["department", "Afdeling"],
+    ["departments", "Afdelingen"],
+    ["purpose of travel", "Doel van de reis"],
+    ["deliverables", "Op te leveren resultaten"],
+    ["country of destination", "Land van bestemming"],
+    ["date of arrival", "Aankomstdatum"],
+    ["date of departure", "Vertrekdatum"],
+    ["trip", "Reis"],
+    ["trips", "Reizen"],
+
+    // Corrigeer ongewenste NL varianten (voorbeelden)
+    ["kennisgevingen", "Notifications"], // zet terug naar Engels als GT dit deed
+    ["vragen", "Questions"],
+    ["vermindering", "Mitigation"]
+    ["Ik - Problemen", "I - Issues"]
+    ["G - Doelen ", "G - Goals"]
+    ["P - Plannen", "P - Plans"]
+    ["R - Risico's", "R - Risks"]
+    ["N - Meldingen", "N - Notifications"]
+    
+  ];
+
+  // ——— Helpers ———
+  const norm = s => (s||"")
+    .replace(/\s+/g," ")
+    .replace(/\s*[:;,.!?]+$/,"")
+    .trim()
+    .toLowerCase();
+
+  const LOCK_EN = new Map(LOCK_EN_ENTRIES.map(([k,v])=>[norm(k), v]));
+  const OV = new Map(OVERRIDE_ENTRIES.map(([k,v])=>[norm(k), v]));
+
+  // Bepaal of een element binnen de tab-navigatie zit
+  function inTabNav(el){
+    return !!el.closest && !!el.closest('nav.tabs, [role="tablist"]');
+  }
+
+  function preservePunctuation(original, core){
+    const lead = (original.match(/^\s*/) || [""])[0];
+    const trail = (original.match(/\s*$/) || [""])[0];
+    const endP = (original.trim().match(/[:;,.!?]+$/) || [""])[0];
+    return lead + core + endP + trail;
+  }
+
+  function applyOnTextNode(node, parent){
+    const original = node.nodeValue;
+    const trimmed  = original.trim();
+    if (!trimmed) return;
+
+    const key = norm(trimmed);
+    // 1) Tab-labels die ENGELS moeten blijven (ook binnen nav)
+    if (LOCK_EN.has(key)){
+      const rep = LOCK_EN.get(key);
+      if (rep !== trimmed) node.nodeValue = original.replace(trimmed, preservePunctuation(trimmed, rep));
+      return;
+    }
+    // 2) Binnen nav.tabs: verder niets aanpassen
+    if (inTabNav(parent)) return;
+
+    // 3) Overige overrides
+    const rep = OV.get(key);
+    if (rep && rep !== trimmed){
+      node.nodeValue = original.replace(trimmed, preservePunctuation(trimmed, rep));
+    }
+  }
+
+  function applyOnElement(el){
+    if (!el || el.nodeType !== 1) return;
+
+    // Tekstnoden direct onder dit element
+    for (const node of el.childNodes){
+      if (node.nodeType === 3){
+        applyOnTextNode(node, el);
+      }
+    }
+
+    // Veelgebruikte attributen
+    for (const attr of ["placeholder","title","aria-label"]){
+      if (!el.hasAttribute(attr)) continue;
+      const val = el.getAttribute(attr);
+      const key = norm(val);
+
+      // In tab-nav: alleen LOCK_EN toepassen
+      if (inTabNav(el)){
+        const lock = LOCK_EN.get(key);
+        if (lock && lock !== val) el.setAttribute(attr, preservePunctuation(val, lock));
+        continue;
+      }
+
+      const lock = LOCK_EN.get(key);
+      if (lock && lock !== val) { el.setAttribute(attr, preservePunctuation(val, lock)); continue; }
+
+      const rep = OV.get(key);
+      if (rep && rep !== val) el.setAttribute(attr, preservePunctuation(val, rep));
+    }
+  }
+
+  function applyOverrides(root=document.body){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: node => /^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName)
+        ? NodeFilter.FILTER_REJECT
+        : NodeFilter.FILTER_ACCEPT
+    });
+    let cur = root;
+    do { applyOnElement(cur); cur = walker.nextNode(); } while (cur);
+  }
+
+  // Observeer dynamische wijzigingen
+  let mo;
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver(muts=>{
+      for (const m of muts){
+        if (m.type === "attributes"){
+          applyOnElement(m.target);
+        }
+        for (const n of m.addedNodes){
+          if (n.nodeType === 1){
+            applyOnElement(n);
+            n.querySelectorAll && n.querySelectorAll("*").forEach(applyOnElement);
+          }
+        }
+      }
+    });
+    mo.observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:["placeholder","title","aria-label"]
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    applyOverrides(); startObserver();
+  });
+
+  // Na jouw vertaalactie nog even “na-poetsen”
+  const origTranslate = window.translateToDutch;
+  window.translateToDutch = function(){
+    const res = origTranslate ? origTranslate() : undefined;
+    let tries = 0;
+    const iv = setInterval(()=>{
+      applyOverrides();
+      if (++tries >= 30) clearInterval(iv); // ~3s
+    }, 100);
+    return res;
+  };
+})();
+</script>
 <!-- (Optional, but recommended) Keep the UI clean: hide GT banner/gadget -->
 <style>
   .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
