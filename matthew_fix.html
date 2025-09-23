@@ -297,8 +297,33 @@
   overflow-wrap: break-word !important; /* lange woorden breken */
   text-overflow: clip !important;       /* geen ellipsen */
 }
+  /* Rij ONDER de tabel, rechts uitgelijnd */
+  .globe-row{
+    display:flex; justify-content:flex-end; gap:8px;
+    margin-top:8px;
+  }
+  /* Inline icoon (niet zwevend) met subtiele feedback */
+  #globeNL.globe-inline{
+    position:static; width:24px; height:24px;
+    cursor:pointer; user-select:none; border-radius:999px;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.18));
+    transition:transform .12s ease, filter .12s ease;
+  }
+  #globeNL.globe-inline:hover{
+    transform:scale(1.04);
+    filter:drop-shadow(0 2px 6px rgba(0,0,0,.25));
+  }
+  #globeNL.globe-inline:focus-visible{
+    outline:none;
+    box-shadow:0 0 0 2px rgba(26,115,232,.35), 0 0 0 6px rgba(26,115,232,.15);
+  }
 
+  /* Verberg Google Translate UI zodat je layout strak blijft */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
+  .goog-te-gadget { display:none !important; }
+  body { top:0 !important; }
 </style>
+
 </head>
 <body>
   <header>
@@ -1805,43 +1830,11 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   </div>
 </div>
 
-  <div id="google_translate_element" style="display:none;"></div>
-
-<style>
-  /* Rij onder de tabel met rechts uitlijning */
-  .globe-row {
-    display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    margin-top: 8px;       /* ruimte onder je tabel */
-  }
-  /* Niet-vast; gewoon inline icoon met duidelijke hover/focus */
-  #globeNL.globe-inline {
-    position: static;
-    width: 24px; height: 24px;
-    cursor: pointer; user-select: none; border-radius: 999px;
-    filter: drop-shadow(0 1px 3px rgba(0,0,0,.18));
-    transition: transform .12s ease, filter .12s ease;
-  }
-  #globeNL.globe-inline:hover {
-    transform: translateZ(0) scale(1.04);
-    filter: drop-shadow(0 2px 6px rgba(0,0,0,.25));
-  }
-  #globeNL.globe-inline:focus-visible{
-    outline: none;
-    box-shadow:
-      0 0 0 2px rgba(26,115,232,.35),
-      0 0 0 6px rgba(26,115,232,.15);
-  }
-
-  /* Verberg Google Translate UI zodat je layout strak blijft */
-  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt { display:none !important; }
-  .goog-te-gadget { display:none !important; }
-  body { top:0 !important; }
-</style>
+<!-- Verborgen container moet in de BODY staan -->
+<div id="google_translate_element" style="display:none;"></div>
 
 <script>
-/* ===== Robuuste Google Translate + NL switch + cookie-fallback ===== */
+/* ===== Google Translate: loader + NL switch + cookie-fallback ===== */
 (function(){
   function loadGoogleTranslate(cb){
     if (window.google && window.google.translate) { cb && cb(); return; }
@@ -1877,7 +1870,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     }
   }
 
-  // Publieke functie (wordt door de globe aangeroepen)
+  // Publieke functie voor je globe
   window.translateToDutch = function(){
     loadGoogleTranslate(function(){
       var waited = 0;
@@ -1894,7 +1887,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     });
   };
 
-  // Auto-toepassen bij laden als de NL-cookie al bestaat
+  // Auto-NL bij reload als cookie al gezet is
   if (document.cookie.includes("googtrans=/auto/nl")) {
     loadGoogleTranslate(function ensureNL(){
       if (!tryLiveToDutch()) setTimeout(ensureNL, 150);
@@ -1902,45 +1895,79 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   }
 })();
 
-/* ===== Globe onder tabel, rechts uitgelijnd ===== */
+/* ===== Globe altijd ONDER de tabel van de ACTIEVE tab ===== */
 document.addEventListener('DOMContentLoaded', function () {
-  // 1) Globe element (maak aan als hij weg is)
+  // Globe element (maak aan als hij ontbreekt)
   var globe = document.getElementById('globeNL');
-  if (!globe) {
+  if (!globe){
     globe = document.createElement('img');
     globe.id = 'globeNL';
-    globe.src = 'assets/globe-blue.svg';   // jouw svg
+    globe.src = 'assets/globe-blue.svg';
     globe.alt = 'Nederlands';
     globe.onerror = function(){ this.style.display='none'; };
+    globe.setAttribute('role','button');
+    globe.setAttribute('tabindex','0');
     globe.addEventListener('click', function(){
       if (typeof translateToDutch === 'function') translateToDutch();
     });
-    globe.setAttribute('role','button');
-    globe.setAttribute('tabindex','0');
     globe.addEventListener('keydown', function(e){
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); globe.click(); }
     });
   }
+  globe.classList.remove('globe-fab');
+  globe.classList.add('globe-inline');
 
-  // 2) Zoek de tabel waar hij onder moet komen
-  var anchor = document.querySelector('#mainTable') ||
-               Array.from(document.querySelectorAll('table')).pop();
-  if (!anchor) { 
-    // geen tabel gevonden: zet hem helemaal onderaan de pagina zodat je hem ziet
-    globe.classList.add('globe-inline');
-    document.body.appendChild(globe);
-    return;
+  var TABLE_SELECTORS = [
+    '#goalsTable', '#risksTable', '#issuesTable', '#plansTable',
+    '#questionsTable', '#suggestionsTable', '#notificationsTable',
+    '#tripsTable', '#mainTable',
+    '.data-table', '.rdg', '.ag-root-wrapper', '.grid table',
+    'table'
+  ].join(',');
+
+  function getActiveSection(){
+    return document.querySelector('section.active') || document.body;
+  }
+  function getVisibleTablesIn(container){
+    return Array.from(container.querySelectorAll(TABLE_SELECTORS)).filter(function(el){
+      if (!el.offsetParent) return false;
+      var cs = getComputedStyle(el);
+      return cs.visibility !== 'hidden' && cs.display !== 'none';
+    });
+  }
+  function placeGlobeUnderActive(){
+    var active = getActiveSection();
+    var tables = getVisibleTablesIn(active);
+    var anchor = tables.length ? tables[tables.length - 1] : null;
+    var afterNode = anchor || (active.lastElementChild || active);
+
+    var row = afterNode.nextElementSibling;
+    if (!(row && row.classList && row.classList.contains('globe-row'))) {
+      row = document.createElement('div');
+      row.className = 'globe-row';
+      afterNode.insertAdjacentElement('afterend', row);
+    }
+    if (globe.parentElement !== row) row.appendChild(globe);
   }
 
-  // 3) Maak/plaats de rij direct NA de tabel
-  var row = document.createElement('div');
-  row.className = 'globe-row';
-  anchor.insertAdjacentElement('afterend', row);
+  function restartObserver(){
+    if (window.__gtObserver) window.__gtObserver.disconnect();
+    var active = getActiveSection();
+    window.__gtObserver = new MutationObserver(placeGlobeUnderActive);
+    window.__gtObserver.observe(active, {childList:true, subtree:true});
+  }
 
-  // 4) Style en append globe
-  globe.classList.remove('globe-fab');   // voor het geval oude "floating" class nog bestaat
-  globe.classList.add('globe-inline');
-  row.appendChild(globe);
+  // Initial + bij tab-wissel
+  placeGlobeUnderActive();
+  restartObserver();
+  document.querySelectorAll('nav.tabs button, [role="tab"]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      setTimeout(function(){
+        placeGlobeUnderActive();
+        restartObserver();
+      }, 0);
+    });
+  });
 });
 </script>
 </body>
