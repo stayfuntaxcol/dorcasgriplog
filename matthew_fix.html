@@ -2070,6 +2070,135 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 });
 </script>
+<style>
+  /* Korte, tijdelijke weergave om render te forceren */
+  #google_translate_element.gt-show,
+  .goog-te-gadget.gt-show{
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff;
+    padding: 6px 8px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    z-index: 9999;
+    display: block !important; /* override eventuele display:none */
+  }
+</style>
+
+<script>
+/* Forceer gadget-render + NL, en zorg dat target cellen vertaalbaar zijn */
+(function(){
+  // 1) Roep dit aan vóór je switch naar NL
+  function relaxTargets(){
+    // haal per ongeluk gezette 'notranslate' van je doelcellen
+    document.querySelectorAll('.gt-allow.notranslate').forEach(el=> el.classList.remove('notranslate'));
+    // zorg dat container bestaat en niet hard-verborgen is
+    var el = document.getElementById('google_translate_element');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'google_translate_element';
+      document.body.appendChild(el);
+    }
+    // Off-screen maar renderbaar
+    Object.assign(el.style, {position:'absolute', left:'-9999px', top:'auto', width:'1px', height:'1px', overflow:'hidden', display:'block'});
+  }
+
+  // 2) Laat gadget héél even in beeld om render te forceren
+  function forceShow(ms){
+    var c = document.getElementById('google_translate_element');
+    if (!c) return;
+    c.classList.add('gt-show');
+    var g = document.querySelector('.goog-te-gadget');
+    if (g){ g.classList.add('gt-show'); g.style.setProperty('display','block','important'); }
+    setTimeout(function(){
+      c.classList.remove('gt-show');
+      if (g){ g.classList.remove('gt-show'); }
+    }, ms || 1200);
+  }
+
+  // 3) Zet taal naar NL zodra combobox bestaat (poll tot 6s)
+  function switchToDutch(){
+    var waited = 0;
+    function tryOnce(){
+      var combo = document.querySelector('select.goog-te-combo');
+      if (combo){
+        if (combo.value !== 'nl'){
+          combo.value = 'nl';
+          combo.dispatchEvent(new Event('change', {bubbles:true}));
+          combo.dispatchEvent(new Event('input',  {bubbles:true}));
+        }
+        return true;
+      }
+      return false;
+    }
+    if (tryOnce()) return;
+    var iv = setInterval(function(){
+      waited += 100;
+      if (tryOnce()){ clearInterval(iv); return; }
+      if (waited >= 6000){ clearInterval(iv); }
+    }, 100);
+  }
+
+  // 4) Koppel dit aan je bestaande click-flow (startManualTranslate / translateToDutch / runTranslate)
+  //    We wikkelen de functie, zodat force-render + NL altijd gebeuren.
+  function wrap(fnName){
+    var orig = window[fnName];
+    if (typeof orig !== 'function') return;
+    window[fnName] = function(){
+      relaxTargets();       // maak doelcellen vertaalbaar
+      // laat gadget even zien zodat Google 'm écht rendert
+      setTimeout(function(){ forceShow(1200); }, 0);
+      // roep jouw originele starter aan
+      var r = orig.apply(this, arguments);
+      // en dan naar NL
+      switchToDutch();
+      return r;
+    };
+  }
+
+  // Probeer alle bekende starters te wikkelen
+  wrap('startManualTranslate');
+  wrap('translateToDutch');
+  wrap('runTranslate');
+
+  // Als je direct op de globe bindt zonder bovengenoemde functies,
+  // kun je hieronder een noodgeval opvangen door de Google scriptloader te doen:
+  if (!window.startManualTranslate && !window.translateToDutch && !window.runTranslate){
+    // bind op #globeNL als laatste redmiddel
+    document.addEventListener('DOMContentLoaded', function(){
+      var globe = document.getElementById('globeNL') || document.querySelector('header .header-left img');
+      if (!globe) return;
+      var bound = globe.__gtHardBound;
+      if (bound) return;
+      globe.__gtHardBound = true;
+
+      function hardStart(){
+        relaxTargets();
+        // forceer dat scripts mogen laden als je een soft-CSP patch gebruikt
+        if (typeof window.__gt_allow_scripts__ === 'function') window.__gt_allow_scripts__();
+        // laad Google script
+        var s = document.createElement('script');
+        s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+        window.googleTranslateElementInit = function(){
+          try { new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element'); } catch(e){}
+          forceShow(1200);
+          switchToDutch();
+        };
+        document.head.appendChild(s);
+      }
+
+      globe.addEventListener('click', hardStart);
+      globe.addEventListener('keydown', function(e){ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); hardStart(); }});
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
