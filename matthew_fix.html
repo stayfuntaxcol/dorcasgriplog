@@ -2027,6 +2027,351 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   });
 })();
 </script>
+<script>
+/* ===========================
+   Woordenboek-overrides (labels/knoppen/titels)
+   - Laat GRIP-tabnamen EN: Goals, Risks, Issues, Plans
+   - Laat ook Suggestions, Questions, Notifications in EN
+   - Corrigeert overige UI naar jouw NL-terminologie
+   - Werkt op tekstnodes + placeholder/title/aria-label
+   =========================== */
+(function(){
+  /* 1) ENGELS houden */
+  const LOCK_EN_ENTRIES = [
+    // Tabnamen en overige die Engels moeten blijven
+    ["grip", "GRIP"], // veilige no-op: zorgt dat "GRIP" niet wordt aangepast
+    ["goals","Goals"], ["risks","Risks"], ["issues","Issues"], ["plans","Plans"],
+    ["suggestions","Suggestions"], ["questions","Questions"], ["notifications","Notifications"]
+  ];
+
+  /* 2) Jouw gewenste NL-terminologie (pas aan / voeg toe) */
+  const DICT_ENTRIES = [
+    // Knoppen/acties
+    ["save","Opslaan"], ["save changes","Opslaan"], ["edit","Bewerken"],
+    ["delete","Verwijderen"], ["remove","Verwijderen"], ["close","Sluiten"],
+    ["open","Open"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
+    ["cancel","Annuleren"], ["confirm","Bevestigen"], ["search","Zoeken"],
+    ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
+    ["settings","Settings"], ["options","Opties"], ["actions","Acties"],
+    ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
+    ["yes","Ja"], ["no","Nee"],
+
+    // Kolommen/velden
+    ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
+    ["owner","Owner"], ["owners","Owners"], ["status","Status"],
+    ["submitted","Ingediend"], ["created","Aangemaakt"], ["modified","Gewijzigd"],
+
+    // Voorbeeld-correcties (GT-varianten → gewenste term)
+    ["kennisgevingen","Notifications"],   // forceer terug naar Engels
+    ["vragen","Questions"],
+    ["S - suggesties","S - Suggestions"]
+    ["Q - vragen","Q - Questions"],
+    ["G - Doelen","G - Goals"]
+    ["R - Risico's","R - Risks"],
+    ["Ik - Problemen","I - Issues"]
+    ["N - Meldingen","N - Notifications"],
+    ["suggesties","Suggestions"]
+  ];
+
+  /* — Helpers — */
+  const norm = (s) => (s||"")
+    .replace(/\s+/g," ")
+    .replace(/\s*[:;,.!?]+$/,"")
+    .trim()
+    .toLowerCase();
+
+  const LOCK_EN = new Map(LOCK_EN_ENTRIES.map(([k,v]) => [norm(k), v]));
+  const DICT    = new Map(DICT_ENTRIES.map(([k,v]) => [norm(k), v]));
+
+  // Element staat in de tabnavigatie? (niets vertalen behalve LOCK_EN)
+  function inTabNav(el){
+    return !!(el && el.closest && el.closest('nav.tabs, [role="tablist"]'));
+  }
+
+  // Bewaar voor/na spaties en eventuele eindpunctuatie
+  function keepPunct(original, replacement){
+    const lead = (original.match(/^\s*/) || [""])[0];
+    const trail = (original.match(/\s*$/) || [""])[0];
+    const endP = (original.trim().match(/[:;,.!?]+$/) || [""])[0];
+    return lead + replacement + endP + trail;
+  }
+
+  // Pas woordenboek toe op één tekstnode
+  function applyOnTextNode(node, parent){
+    const original = node.nodeValue;
+    const txt = original.trim();
+    if (!txt) return;
+
+    const key = norm(txt);
+
+    // 1) Engels houden (absolute regel)
+    if (LOCK_EN.has(key)){
+      const rep = LOCK_EN.get(key);
+      if (rep !== txt) node.nodeValue = original.replace(txt, keepPunct(txt, rep));
+      return;
+    }
+
+    // 2) In tabnavigatie: niets aanpassen behalve LOCK_EN
+    if (inTabNav(parent)) return;
+
+    // 3) Overige vervangingen
+    const rep = DICT.get(key);
+    if (rep && rep !== txt){
+      node.nodeValue = original.replace(txt, keepPunct(txt, rep));
+    }
+  }
+
+  // Pas woordenboek toe op attributen (placeholder/title/aria-label)
+  function applyOnAttributes(el){
+    for (const attr of ["placeholder","title","aria-label"]){
+      if (!el.hasAttribute(attr)) continue;
+      const val = el.getAttribute(attr);
+      const key = norm(val);
+
+      if (LOCK_EN.has(key)){
+        const rep = LOCK_EN.get(key);
+        if (rep !== val) el.setAttribute(attr, keepPunct(val, rep));
+        continue;
+      }
+      if (inTabNav(el)) continue;
+
+      const rep = DICT.get(key);
+      if (rep && rep !== val) el.setAttribute(attr, keepPunct(val, rep));
+    }
+  }
+
+  // Verwerk één element (eigen tekst + directe textnodes + attrs)
+  function processElement(el){
+    if (!el || el.nodeType !== 1) return;
+    // Tekstnoden direct onder dit element
+    for (const n of el.childNodes){
+      if (n.nodeType === 3) applyOnTextNode(n, el);
+    }
+    applyOnAttributes(el);
+  }
+
+  // Loop over hele subtree (zonder SCRIPT/STYLE/TEMPLATE)
+  function applyOverrides(root = document.body){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: (node) =>
+        /^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName)
+          ? NodeFilter.FILTER_REJECT
+          : NodeFilter.FILTER_ACCEPT
+    });
+    let cur = root;
+    do { processElement(cur); cur = walker.nextNode(); } while (cur);
+  }
+
+  // MutationObserver voor dynamische content (debounced, zonder loops)
+  let mo, debounce;
+  function isGoogleNode(n){
+    try {
+      return !!(n && (n.closest && (n.closest('#google_translate_element')
+        || n.closest('[class^="goog-"]') || n.closest('[class*=" goog-"]'))));
+    } catch(e){ return false; }
+  }
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver((muts) => {
+      let meaningful = false;
+      for (const m of muts){
+        if (m.type === "childList"){
+          for (const n of m.addedNodes){
+            if (n.nodeType === 1 && !isGoogleNode(n)) { meaningful = true; break; }
+          }
+          if (meaningful) break;
+        } else if (m.type === "attributes" || m.type === "characterData"){
+          const el = (m.target.nodeType === 1 ? m.target : m.target.parentElement);
+          if (el && !isGoogleNode(el)) { meaningful = true; break; }
+        }
+      }
+      if (!meaningful) return;
+      clearTimeout(debounce);
+      debounce = setTimeout(() => applyOverrides(), 120);
+    });
+    mo.observe(document.body, {
+      childList: true, subtree: true,
+      attributes: true, attributeFilter: ["placeholder","title","aria-label"],
+      characterData: true
+    });
+  }
+
+  // Expose hook zodat je vertaal-flow dit kan aanroepen na het wisselen naar NL
+  window.__applyOverridesAfterTranslate = function(){
+    // meerdere tikken; GT werkt asynchroon
+    let tries = 0;
+    const iv = setInterval(() => {
+      applyOverrides();
+      if (++tries >= 30) clearInterval(iv); // ~3s
+    }, 100);
+  };
+
+  // Init bij page load
+  document.addEventListener('DOMContentLoaded', () => {
+    applyOverrides();
+    startObserver();
+  });
+})();
+</script>
+<script>
+/* =========================================================
+   Vertaal ALLEEN inhoud van: Description, Comments, Notes, Mitigation, Resolution
+   - Zet 'notranslate' op álle elementen behalve de target-velden
+   - Herkent targets in tabellen (kolommen op basis van header-tekst)
+     én in formulieren/kaarten (op id/name/aria-label/placeholder)
+   - Werkt ook bij dynamische content (MutationObserver)
+   - Laat GRIP-tabbladen, knoppen, labels, kolomnamen ongemoeid
+   ========================================================= */
+(function(){
+  // 1) Doel-labels (case-insensitive)
+  const ALLOW_LABELS = ["description","comments","mitigation","resolution"];
+
+  // 2) Helpers
+  const norm = s => (s||"").replace(/\s+/g," ").trim().toLowerCase();
+  function isGoogleNode(n){
+    try {
+      return !!(n && (n.closest && (n.closest('#google_translate_element')
+        || n.closest('[class^="goog-"]') || n.closest('[class*=" goog-"]'))));
+    } catch(e){ return false; }
+  }
+  function isAllowedContainer(el){
+    if (!el) return false;
+    // Als dit element of een ouder al gemarkeerd is als target, is het toegestaan
+    return !!el.closest('.gt-allow');
+  }
+
+  // 3) Markeer cellen in tabellen op basis van TH-teksten
+  function markTableTargets(scope=document){
+    const tables = scope.querySelectorAll('table');
+    tables.forEach(tbl=>{
+      if (!tbl.tHead) return;
+      // Zoek alle header-cellen (eerste thead-row die zichtbaar is)
+      const headRow = Array.from(tbl.tHead.rows).find(r => r.offsetParent !== null) || tbl.tHead.rows[0];
+      if (!headRow) return;
+
+      const headerCells = Array.from(headRow.cells);
+      const targetIdx = new Set();
+      headerCells.forEach((th, i)=>{
+        const txt = norm(th.textContent);
+        if (ALLOW_LABELS.includes(txt)) targetIdx.add(i);
+      });
+      if (!targetIdx.size) return;
+
+      // Markeer elke body-rij in die kolommen als vertaalbaar
+      Array.from(tbl.tBodies || []).forEach(tb=>{
+        Array.from(tb.rows).forEach(tr=>{
+          Array.from(tr.cells).forEach((td, i)=>{
+            if (targetIdx.has(i)) td.classList.add('gt-allow');
+          });
+        });
+      });
+    });
+  }
+
+  // 4) Markeer formulier-/kaartvelden (div/textarea/input) op basis van id/name/labels
+  function markFormTargets(scope=document){
+    const selector = [
+      // directe ids/klassen
+      '[id*="description"]','[class*="description"]','[name*="description"]',
+      '[id*="comments"]','[class*="comments"]','[name*="comments"]',
+      '[id*="mitigation"]','[class*="mitigation"]','[name*="mitigation"]',
+      '[id*="resolution"]','[class*="resolution"]','[name*="resolution"]',
+       '[id*="notes"]','[class*="notes"]','[name*="notes"]',
+      // veelvoorkomende elementen met aria/placeholder
+      'textarea','[contenteditable="true"]','.card','.field','.form-group'
+    ].join(',');
+
+    const candidates = scope.querySelectorAll(selector);
+    candidates.forEach(el=>{
+      if (isGoogleNode(el)) return;
+
+      // Scoren: kijk naar id/name/class/aria-label/placeholder/label-tekst in de buurt
+      const attrs = [
+        el.id, el.getAttribute('name'), el.className,
+        el.getAttribute('aria-label'), el.getAttribute('placeholder'),
+      ].map(norm).filter(Boolean);
+
+      // Kijk ook naar bijbehorende <label for=...> tekst
+      const labFor = el.id ? scope.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null;
+      if (labFor) attrs.push(norm(labFor.textContent));
+
+      // Kijk naar dichtstbijzijnde label/div heading boven het veld
+      const labelLike = el.closest('.field, .form-group, .row, .col, .card, .item');
+      if (labelLike){
+        const heading = labelLike.querySelector('label, .label, .title, .heading, h1,h2,h3,h4,th');
+        if (heading) attrs.push(norm(heading.textContent));
+      }
+
+      // Matchen tegen gewenste labels
+      const matches = attrs.some(t => ALLOW_LABELS.includes(t));
+      if (matches) el.classList.add('gt-allow');
+    });
+  }
+
+  // 5) Universeel: bescherm ALLES behalve de targets met 'notranslate'
+  function protectAllExceptTargets(root=document.body){
+    if (!root) return;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: node => {
+        if (/^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName)) return NodeFilter.FILTER_REJECT;
+        if (isGoogleNode(node)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      }
+    });
+    // Loop: zet 'notranslate' op elk element dat niet binnen .gt-allow valt
+    let cur = root;
+    do {
+      if (!isAllowedContainer(cur)) {
+        cur.classList.add('notranslate');
+      } else {
+        cur.classList.remove('notranslate'); // zorg dat targets vrij zijn
+      }
+      cur = walker.nextNode();
+    } while (cur);
+  }
+
+  // 6) Hoofdfunctie: markeer en bescherm in één keer
+  function markAndProtect(scope=document){
+    markTableTargets(scope);
+    markFormTargets(scope);
+    protectAllExceptTargets(document.body);
+  }
+
+  // 7) Observer: bij dynamische updates opnieuw markeren/beschermen (debounced)
+  let mo, tmr;
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver(muts=>{
+      // negeer Google-nodes
+      if (muts.every(m=>{
+        const el = (m.target.nodeType===1 ? m.target : m.target.parentElement);
+        return !el || isGoogleNode(el);
+      })) return;
+
+      clearTimeout(tmr);
+      tmr = setTimeout(()=> markAndProtect(document), 120);
+    });
+    mo.observe(document.body, {childList:true, subtree:true, attributes:true, characterData:true});
+  }
+
+  // 8) Koppel aan jouw vertaalflow (optioneel): vóór overschakelen nog eens markeren
+  //    Als je ergens window.translateToDutch of een logo/globe-click hebt:
+  const prevTranslate = window.translateToDutch;
+  window.translateToDutch = function(){
+    markAndProtect(document); // targets vrijmaken vóór GT omschakelt
+    return prevTranslate ? prevTranslate() : undefined;
+  };
+
+  // Init
+  document.addEventListener('DOMContentLoaded', ()=>{
+    markAndProtect(document);
+    startObserver();
+  });
+
+  // Expose voor handmatig debuggen
+  window.__gt_markTranslateTargets = () => markAndProtect(document);
+})();
+</script>
 
 </body>
 </html>
