@@ -2145,6 +2145,91 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   });
 })();
 </script>
+<script>
+/* ==== Forceer GRIP-tabnamen (niet vertalen, altijd exact) ==== */
+(function(){
+  // Gewenste, exacte labels (pas hier aan als je andere schrijfwijze wilt)
+  const TAB_LOCK = new Map([
+    ['goals',        'Goals'],
+    ['risks',        'Risks'],
+    ['issues',       'Issues'],
+    ['plans',        'Plans'],
+    ['suggestions',  'Suggestions'],
+    ['questions',    'Questions'],
+    ['notifications','Notifications'],
+  ]);
+
+  const norm = s => (s||'').replace(/\s+/g,' ').trim().toLowerCase();
+
+  function isTab(el){
+    if (!el) return false;
+    const inNav = !!el.closest('nav.tabs, [role="tablist"]');
+    const role  = (el.getAttribute('role')||'').toLowerCase();
+    return inNav || role === 'tab';
+  }
+
+  function labelFor(el){
+    // Probeer volgorde: data-name|data-tab|aria-label|title|textContent
+    const d = el.dataset || {};
+    return d.name || d.tab || el.getAttribute('aria-label') || el.getAttribute('title') || el.textContent || '';
+  }
+
+  function forceTab(el, wanted){
+    if (!el) return;
+    // zet exacte tekst
+    if (el.textContent !== wanted) el.textContent = wanted;
+    // markeer als niet te vertalen
+    el.classList.add('notranslate');
+    el.setAttribute('translate','no');
+    el.setAttribute('lang','en');
+    // voor de zekerheid aria-label/title ook op Engels label
+    el.setAttribute('aria-label', wanted);
+    el.setAttribute('title', wanted);
+  }
+
+  function lockAllTabs(root = document){
+    const tabs = root.querySelectorAll('nav.tabs * , [role="tab"], .tabs [role="tab"], .tabs button, .tabs a');
+    tabs.forEach(el=>{
+      if (!isTab(el)) return;
+      const key = norm(labelFor(el));
+      if (TAB_LOCK.has(key)) forceTab(el, TAB_LOCK.get(key));
+    });
+  }
+
+  // Houd het vast bij dynamische updates
+  let mo;
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver((muts)=>{
+      // lichtgewicht: als er iets in/om tabs verandert, opnieuw locken
+      const changed = muts.some(m=>{
+        const t = m.target;
+        return (t && (t.closest && t.closest('nav.tabs, [role="tablist"], .tabs')));
+      });
+      if (changed) lockAllTabs(document);
+    });
+    mo.observe(document.body, {childList:true, subtree:true, characterData:true, attributes:true});
+  }
+
+  // Koppel ook aan jouw bestaande post-translate hook (als die er is)
+  const prevHook = window.__applyOverridesAfterTranslate;
+  window.__applyOverridesAfterTranslate = function(){
+    // eerst oude hook (als aanwezig), dan onze lock
+    try { if (typeof prevHook === 'function') prevHook(); } catch(e){}
+    // herhaald even “na-poetsen” omdat GT asynchroon werkt
+    let tries = 0;
+    const iv = setInterval(()=>{
+      lockAllTabs(document);
+      if (++tries >= 30) clearInterval(iv); // ~3s
+    }, 100);
+  };
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    lockAllTabs(document);
+    startObserver();
+  });
+})();
+</script>
 
 </body>
 </html>
