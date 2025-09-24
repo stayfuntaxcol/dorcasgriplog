@@ -2002,6 +2002,74 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   });
 })();
 </script>
+<script>
+/* Bind de globe in de header als vertaal-trigger */
+document.addEventListener('DOMContentLoaded', function () {
+  // Pak het (enige) logo/afbeelding in de header-left
+  var globe = document.querySelector('header .header-left img');
+  if (!globe) { console.warn('Geen header-afbeelding gevonden.'); return; }
+
+  // Geef 'm een id als die ontbreekt (zodat andere code ook werkt)
+  if (!globe.id) globe.id = 'globeNL';
+
+  // Maak 'm duidelijk klikbaar/toegankelijk
+  globe.style.cursor = 'pointer';
+  globe.setAttribute('role','button');
+  globe.setAttribute('tabindex','0');
+  globe.setAttribute('title','Vertaal naar Nederlands');
+
+  // Zorg dat de GT container in <body> staat en NIET display:none is
+  function ensureGtContainer(){
+    var el = document.getElementById('google_translate_element');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'google_translate_element';
+      document.body.appendChild(el);
+    }
+    // Off-screen i.p.v. display:none
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    el.style.top = 'auto';
+    el.style.width = '1px';
+    el.style.height = '1px';
+    el.style.overflow = 'hidden';
+    el.style.display = 'block';
+  }
+
+  function triggerTranslate(){
+    ensureGtContainer();
+
+    // Gebruik jouw bestaande functie als die bestaat:
+    if (typeof window.startManualTranslate === 'function') return window.startManualTranslate();
+    if (typeof window.translateToDutch   === 'function') return window.translateToDutch();
+    if (typeof window.runTranslate       === 'function') return window.runTranslate();
+
+    // --- Fallback loader (alleen als je geen van bovenstaande functies hebt) ---
+    try {
+      if (typeof window.__gt_allow_scripts__ === 'function') window.__gt_allow_scripts__();
+      var s = document.createElement('script');
+      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      window.googleTranslateElementInit = function(){
+        try { new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element'); } catch(e){}
+        // zet naar NL zodra de combobox er is
+        var waited = 0, iv = setInterval(function(){
+          var combo = document.querySelector('select.goog-te-combo');
+          if (combo){ combo.value='nl'; combo.dispatchEvent(new Event('change',{bubbles:true})); combo.dispatchEvent(new Event('input',{bubbles:true})); clearInterval(iv); }
+          if ((waited += 100) > 6000) clearInterval(iv);
+        },100);
+      };
+      document.head.appendChild(s);
+    } catch(e) {
+      console.warn('Kon Google Translate niet starten:', e);
+    }
+  }
+
+  globe.addEventListener('click', triggerTranslate);
+  globe.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerTranslate(); }
+  });
+});
+</script>
 
 </body>
 </html>
