@@ -1793,6 +1793,412 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     </div>
   </div>
 </div><!-- GT container moet in BODY staan -->
+<!-- HOUDT DE GADGET RENDERBAAR, MAAR UIT BEELD -->
+<div id="google_translate_element"></div>
+
+<!-- ====== STRICT MANUAL TRANSLATE: only target columns; no auto-start ====== -->
+<div id="google_translate_element"></div>
+
+<style>
+  /* Houd de gadget renderbaar maar uit beeld (géén display:none!) */
+  #google_translate_element, .goog-te-gadget{
+    position:absolute !important; left:-9999px !important; top:auto !important;
+    width:1px !important; height:1px !important; overflow:hidden !important;
+  }
+  /* Verberg Google banners; pagina-top blijft stabiel */
+  .goog-te-banner-frame, .goog-te-balloon-frame, #goog-gt-tt{ display:none !important; }
+  body{ top:0 !important; }
+</style>
+
+<script>
+(function(){
+  const LANG = 'nl';
+  const USER_FLAG = '__gt_user_clicked__';  // sessionStorage flag
+  const TARGET_LABELS = [
+    'description','beschrijving','omschrijving',
+    'comments','opmerkingen','reacties',
+    'mitigation','mitigatie','beperking','maatregel',
+    'resolution','oplossing','afhandeling'
+  ];
+  const TARGET_DATA_COL_KEYS = ['description','comments','mitigation','resolution'];
+
+  /* ---------- A) Kill all auto-start paths ---------- */
+  function clearGoogTransCookie(){
+    const past='Thu, 01 Jan 1970 00:00:00 GMT', host=location.hostname;
+    document.cookie=`googtrans=; expires=${past}; path=/`;
+    document.cookie=`googtrans=; domain=${host}; expires=${past}; path=/`;
+    if (!host.startsWith('.')) document.cookie=`googtrans=; domain=.${host}; expires=${past}; path=/`;
+  }
+  // On load: if user didn't click yet, nuke cookie
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if (!sessionStorage.getItem(USER_FLAG)) clearGoogTransCookie();
+  });
+
+  // Soft-CSP: block translate script injection until user clicks
+  (function harden(){
+    const _createElement = Document.prototype.createElement;
+    const _appendChild = Node.prototype.appendChild;
+    let allowGT = false;
+    window.__gt_allow_scripts__ = () => { allowGT = true; };
+    Document.prototype.createElement = function(tag){
+      const el = _createElement.call(this, tag);
+      if (tag.toLowerCase() === 'script'){
+        Object.defineProperty(el, 'src', {
+          set: function(v){
+            if (!allowGT && typeof v === 'string' && v.includes('translate_a/element.js')){
+              console.warn('Blocked auto Google Translate script until user clicks.');
+              this.setAttribute('data-blocked-src', v); return v;
+            }
+            this.setAttribute('src', v); return v;
+          },
+          get: function(){ return this.getAttribute('src'); }
+        });
+      }
+      return el;
+    };
+    Node.prototype.appendChild = function(child){
+      try{
+        if (!allowGT && child && child.tagName === 'SCRIPT'){
+          const src = child.src || child.getAttribute && child.getAttribute('data-blocked-src');
+          if (src && src.includes('translate_a/element.js')){
+            console.warn('Blocked appendChild of Google Translate script until user clicks.');
+            return child; // do nothing
+          }
+        }
+      }catch(e){}
+      return _appendChild.call(this, child);
+    };
+  })();
+
+  /* ---------- B) Markeer tabel-kolommen voor vertalen (alleen target kolommen) ---------- */
+  const norm = s => (s||'').replace(/\s+/g,' ').trim().toLowerCase();
+  function isTargetHeader(text){
+    const n = norm(text); if (!n) return false;
+    return TARGET_LABELS.some(lbl => n === lbl || n.includes(lbl));
+  }
+  function hasTargetDataKey(el){
+    if (!el || el.nodeType !== 1) return false;
+    const keys = [
+      el.getAttribute('data-col'),
+      el.getAttribute('data-column'),
+      el.getAttribute('data-field'),
+      el.getAttribute('data-key'),
+      el.dataset && (el.dataset.col || el.dataset.column || el.dataset.field || el.dataset.key)
+    ].filter(Boolean).map(norm);
+    return keys.some(k => TARGET_DATA_COL_KEYS.includes(k));
+  }
+  function markTable(table){
+    if (!(table && table.rows && table.rows.length)) return;
+    // Headers vinden
+    let headerRow = null;
+    if (table.tHead && table.tHead.rows.length){
+      headerRow = Array.from(table.tHead.rows).find(r => r.offsetParent !== null) || table.tHead.rows[0];
+    }
+    if (!headerRow){
+      for (let i=0; i<Math.min(5, table.rows.length); i++){
+        if (table.rows[i].querySelector && table.rows[i].querySelector('th')){ headerRow = table.rows[i]; break; }
+      }
+    }
+    if (!headerRow) return;
+
+    const headerCells = Array.from(headerRow.cells || []);
+    const targetIdx = new Set();
+    headerCells.forEach((th, i)=>{
+      if (hasTargetDataKey(th) || isTargetHeader(th.textContent)) targetIdx.add(i);
+      // headers zelf NOOIT vertalen:
+      th.classList.add('notranslate');
+    });
+
+    if (!targetIdx.size) return;
+
+    // Bodycellen markeren: alleen target kolommen vertalen
+    Array.from(table.tBodies || []).forEach(tb=>{
+      Array.from(tb.rows || []).forEach(tr=>{
+        Array.from(tr.cells || []).forEach((td, i)=>{
+          if (targetIdx.has(i) || hasTargetDataKey(td)){
+            td.classList.remove('notranslate');  // toestaan
+            td.classList.add('gt-allow');
+          } else {
+            td.classList.add('notranslate');      // blokkeren
+            td.classList.remove('gt-allow');
+          }
+        });
+      });
+    });
+  }
+  function markAllTables(scope){
+    const root = scope || document.querySelector('section.active') || document;
+    root.querySelectorAll('table').forEach(markTable);
+    // ook knoppen/labels/tabs expliciet blokkeren
+    root.querySelectorAll('button,[role="tab"],nav.tabs,thead,th,label,.chip,.user-info,.header-right,.header-left,.title,.sub')
+        .forEach(el=> el.classList.add('notranslate'));
+  }
+  function markNow(){ try{ markAllTables(); }catch(e){} }
+
+  // bij tab-wissel: cookie wissen en markering updaten
+  function bindTabGuards(){
+    document.querySelectorAll('nav.tabs button,[role="tab"]').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        clearGoogTransCookie();        // voorkom auto bij Goals etc.
+        setTimeout(markNow, 0);        // markeer opnieuw voor de nieuwe sectie
+      });
+    });
+  }
+
+  /* ---------- C) Handmatige start via GLOBE ---------- */
+  function loadGT(callback){
+    // laat vanaf hier het laden toe
+    if (typeof window.__gt_allow_scripts__ === 'function') window.__gt_allow_scripts__();
+    // ..en injecteer het script
+    const s = document.createElement('script');
+    s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+    window.googleTranslateElementInit = function(){
+      try{ new google.translate.TranslateElement({pageLanguage:'auto', autoDisplay:false}, 'google_translate_element'); }catch(e){}
+      callback && callback();
+    };
+    document.head.appendChild(s);
+  }
+  function tryLive(lang){
+    const combo = document.querySelector('select.goog-te-combo');
+    if (!combo) return false;
+    if (combo.value !== lang){
+      combo.value = lang;
+      combo.dispatchEvent(new Event('change',{bubbles:true}));
+      combo.dispatchEvent(new Event('input',{bubbles:true}));
+    }
+    return true;
+  }
+  function startManualTranslate(){
+    sessionStorage.setItem(USER_FLAG,'1'); // markeer dat de gebruiker het wil
+    // vóór vertalen: markeer target kolommen
+    markNow();
+    // laad widget (nu toegestaan) en switch naar NL
+    loadGT(()=>{
+      let waited=0;
+      if (tryLive(LANG)) return;
+      const iv = setInterval(()=>{
+        waited += 100;
+        if (tryLive(LANG)){ clearInterval(iv); return; }
+        if (waited >= 6000){ clearInterval(iv); /* geen cookie, dus geen auto */ }
+      },100);
+    });
+  }
+
+  // Bind de globe
+  document.addEventListener('DOMContentLoaded', ()=>{
+    markNow();
+    bindTabGuards();
+
+    const globe = document.getElementById('globeNL');
+    if (globe && !globe.__gtBound){
+      globe.__gtBound = true;
+      globe.style.cursor='pointer';
+      globe.setAttribute('role','button');
+      globe.setAttribute('tabindex','0');
+      globe.title='Vertaal (alleen tekstvelden) naar Nederlands';
+      globe.addEventListener('click', startManualTranslate);
+      globe.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); startManualTranslate(); }});
+    }
+  });
+})();
+</script>
+<script>
+/* Bind de globe in de header als vertaal-trigger */
+document.addEventListener('DOMContentLoaded', function () {
+  // Pak het (enige) logo/afbeelding in de header-left
+  var globe = document.querySelector('header .header-left img');
+  if (!globe) { console.warn('Geen header-afbeelding gevonden.'); return; }
+
+  // Geef 'm een id als die ontbreekt (zodat andere code ook werkt)
+  if (!globe.id) globe.id = 'globeNL';
+
+  // Maak 'm duidelijk klikbaar/toegankelijk
+  globe.style.cursor = 'pointer';
+  globe.setAttribute('role','button');
+  globe.setAttribute('tabindex','0');
+  globe.setAttribute('title','Vertaal naar Nederlands');
+
+  // Zorg dat de GT container in <body> staat en NIET display:none is
+  function ensureGtContainer(){
+    var el = document.getElementById('google_translate_element');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'google_translate_element';
+      document.body.appendChild(el);
+    }
+    // Off-screen i.p.v. display:none
+    el.style.position = 'absolute';
+    el.style.left = '-9999px';
+    el.style.top = 'auto';
+    el.style.width = '1px';
+    el.style.height = '1px';
+    el.style.overflow = 'hidden';
+    el.style.display = 'block';
+  }
+
+  function triggerTranslate(){
+    ensureGtContainer();
+
+    // Gebruik jouw bestaande functie als die bestaat:
+    if (typeof window.startManualTranslate === 'function') return window.startManualTranslate();
+    if (typeof window.translateToDutch   === 'function') return window.translateToDutch();
+    if (typeof window.runTranslate       === 'function') return window.runTranslate();
+
+    // --- Fallback loader (alleen als je geen van bovenstaande functies hebt) ---
+    try {
+      if (typeof window.__gt_allow_scripts__ === 'function') window.__gt_allow_scripts__();
+      var s = document.createElement('script');
+      s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+      window.googleTranslateElementInit = function(){
+        try { new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element'); } catch(e){}
+        // zet naar NL zodra de combobox er is
+        var waited = 0, iv = setInterval(function(){
+          var combo = document.querySelector('select.goog-te-combo');
+          if (combo){ combo.value='nl'; combo.dispatchEvent(new Event('change',{bubbles:true})); combo.dispatchEvent(new Event('input',{bubbles:true})); clearInterval(iv); }
+          if ((waited += 100) > 6000) clearInterval(iv);
+        },100);
+      };
+      document.head.appendChild(s);
+    } catch(e) {
+      console.warn('Kon Google Translate niet starten:', e);
+    }
+  }
+
+  globe.addEventListener('click', triggerTranslate);
+  globe.addEventListener('keydown', function(e){
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); triggerTranslate(); }
+  });
+});
+</script>
+<style>
+  /* Korte, tijdelijke weergave om render te forceren */
+  #google_translate_element.gt-show,
+  .goog-te-gadget.gt-show{
+    position: fixed !important;
+    right: 16px !important;
+    bottom: 16px !important;
+    left: auto !important;
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    overflow: visible !important;
+    background: #fff;
+    padding: 6px 8px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0,0,0,.18);
+    z-index: 9999;
+    display: block !important; /* override eventuele display:none */
+  }
+</style>
+
+<script>
+/* Forceer gadget-render + NL, en zorg dat target cellen vertaalbaar zijn */
+(function(){
+  // 1) Roep dit aan vóór je switch naar NL
+  function relaxTargets(){
+    // haal per ongeluk gezette 'notranslate' van je doelcellen
+    document.querySelectorAll('.gt-allow.notranslate').forEach(el=> el.classList.remove('notranslate'));
+    // zorg dat container bestaat en niet hard-verborgen is
+    var el = document.getElementById('google_translate_element');
+    if (!el){
+      el = document.createElement('div');
+      el.id = 'google_translate_element';
+      document.body.appendChild(el);
+    }
+    // Off-screen maar renderbaar
+    Object.assign(el.style, {position:'absolute', left:'-9999px', top:'auto', width:'1px', height:'1px', overflow:'hidden', display:'block'});
+  }
+
+  // 2) Laat gadget héél even in beeld om render te forceren
+  function forceShow(ms){
+    var c = document.getElementById('google_translate_element');
+    if (!c) return;
+    c.classList.add('gt-show');
+    var g = document.querySelector('.goog-te-gadget');
+    if (g){ g.classList.add('gt-show'); g.style.setProperty('display','block','important'); }
+    setTimeout(function(){
+      c.classList.remove('gt-show');
+      if (g){ g.classList.remove('gt-show'); }
+    }, ms || 1200);
+  }
+
+  // 3) Zet taal naar NL zodra combobox bestaat (poll tot 6s)
+  function switchToDutch(){
+    var waited = 0;
+    function tryOnce(){
+      var combo = document.querySelector('select.goog-te-combo');
+      if (combo){
+        if (combo.value !== 'nl'){
+          combo.value = 'nl';
+          combo.dispatchEvent(new Event('change', {bubbles:true}));
+          combo.dispatchEvent(new Event('input',  {bubbles:true}));
+        }
+        return true;
+      }
+      return false;
+    }
+    if (tryOnce()) return;
+    var iv = setInterval(function(){
+      waited += 100;
+      if (tryOnce()){ clearInterval(iv); return; }
+      if (waited >= 6000){ clearInterval(iv); }
+    }, 100);
+  }
+
+  // 4) Koppel dit aan je bestaande click-flow (startManualTranslate / translateToDutch / runTranslate)
+  //    We wikkelen de functie, zodat force-render + NL altijd gebeuren.
+  function wrap(fnName){
+    var orig = window[fnName];
+    if (typeof orig !== 'function') return;
+    window[fnName] = function(){
+      relaxTargets();       // maak doelcellen vertaalbaar
+      // laat gadget even zien zodat Google 'm écht rendert
+      setTimeout(function(){ forceShow(1200); }, 0);
+      // roep jouw originele starter aan
+      var r = orig.apply(this, arguments);
+      // en dan naar NL
+      switchToDutch();
+      return r;
+    };
+  }
+
+  // Probeer alle bekende starters te wikkelen
+  wrap('startManualTranslate');
+  wrap('translateToDutch');
+  wrap('runTranslate');
+
+  // Als je direct op de globe bindt zonder bovengenoemde functies,
+  // kun je hieronder een noodgeval opvangen door de Google scriptloader te doen:
+  if (!window.startManualTranslate && !window.translateToDutch && !window.runTranslate){
+    // bind op #globeNL als laatste redmiddel
+    document.addEventListener('DOMContentLoaded', function(){
+      var globe = document.getElementById('globeNL') || document.querySelector('header .header-left img');
+      if (!globe) return;
+      var bound = globe.__gtHardBound;
+      if (bound) return;
+      globe.__gtHardBound = true;
+
+      function hardStart(){
+        relaxTargets();
+        // forceer dat scripts mogen laden als je een soft-CSP patch gebruikt
+        if (typeof window.__gt_allow_scripts__ === 'function') window.__gt_allow_scripts__();
+        // laad Google script
+        var s = document.createElement('script');
+        s.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+        window.googleTranslateElementInit = function(){
+          try { new google.translate.TranslateElement({ pageLanguage:'auto', autoDisplay:false }, 'google_translate_element'); } catch(e){}
+          forceShow(1200);
+          switchToDutch();
+        };
+        document.head.appendChild(s);
+      }
+
+      globe.addEventListener('click', hardStart);
+      globe.addEventListener('keydown', function(e){ if (e.key==='Enter'||e.key===' '){ e.preventDefault(); hardStart(); }});
+    });
+  }
+})();
+</script>
 
 </body>
 </html>
