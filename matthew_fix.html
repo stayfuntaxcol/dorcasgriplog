@@ -1998,6 +1998,153 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+<script>
+/* =========================================================
+   UI-woordenboek (optioneel): corrigeert labels/knoppen/kolomkoppen
+   - Tabs blijven Engels
+   - Past ook placeholders/title/aria-label aan
+   - Werkt na vertaling & bij dynamische updates
+   ========================================================= */
+(function(){
+  const ENABLE_ON_LOAD = true; // zet op false als je alleen na vertaling wilt corrigeren
+
+  /* 1) Engels houden (NIET wijzigen) */
+  const LOCK_EN_ENTRIES = [
+    ["goals","Goals"], ["risks","Risks"], ["issues","Issues"], ["plans","Plans"],
+    ["new goal","New Goal"], ["new risk","New Risk"], ["new issue","New Issue"], ["new plan","New Plan"],
+    ["suggestions","Suggestions"], ["questions","Questions"], ["notifications","Notifications"],
+
+    // Als "GRIP" ooit geraakt zou worden
+    ["grip","GRIP"]
+  ];
+
+  /* 2) Jouw gewenste NL-termen (vul aan naar smaak) */
+  const DICT_ENTRIES = [
+    // Acties / knoppen
+    ["save","Opslaan"], ["save changes","Wijzigingen opslaan"], ["edit","Bewerken"],
+    ["delete","Verwijderen"], ["remove","Verwijderen"], ["close","Sluiten"],
+    ["open","Openen"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
+    ["cancel","Annuleren"], ["confirm","Bevestigen"], ["search","Zoeken"],
+    ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
+    ["settings","Instellingen"], ["options","Opties"], ["actions","Acties"],
+    ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
+    ["yes","Ja"], ["no","Nee"],
+
+    // Kolomkoppen / velden
+    ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
+    ["comments","Comments"], ["mitigation","Maatregel"], ["resolution","Oplossing"],["notes","Notities"],
+    ["owner","Eigenaar"], ["owners","Eigenaren"], ["status","Status"],
+    ["submitted","Ingediend"], ["created","Aangemaakt"], ["modified","Gewijzigd"],
+
+    ];
+
+  /* ========== Engine ========== */
+  const norm = s => (s||"").replace(/\s+/g," ").replace(/\s*[:;,.!?]+$/,"").trim().toLowerCase();
+  const LOCK_EN = new Map(LOCK_EN_ENTRIES.map(([k,v])=>[norm(k),v]));
+  const DICT    = new Map(DICT_ENTRIES.map(([k,v])=>[norm(k),v]));
+
+  // Staat element in tabnavigatie? Dan alleen LOCK_EN toepassen.
+  function inTabNav(el){ return !!(el && el.closest && el.closest('nav.tabs,[role="tablist"]')); }
+
+  function keepPunct(original, replacement){
+    const lead = (original.match(/^\s*/) || [""])[0];
+    const trail= (original.match(/\s*$/) || [""])[0];
+    const endP = (original.trim().match(/[:;,.!?]+$/) || [""])[0];
+    return lead + replacement + endP + trail;
+  }
+
+  function applyOnTextNode(node, parent){
+    const original = node.nodeValue;
+    const t = original.trim();
+    if (!t) return;
+    const key = norm(t);
+
+    // Tabs e.d.: geforceerd Engels houden
+    if (LOCK_EN.has(key)){
+      const rep = LOCK_EN.get(key);
+      if (rep !== t) node.nodeValue = original.replace(t, keepPunct(t, rep));
+      return;
+    }
+    // In tabnavigatie: niets veranderen behalve LOCK_EN
+    if (inTabNav(parent)) return;
+
+    const rep = DICT.get(key);
+    if (rep && rep !== t){
+      node.nodeValue = original.replace(t, keepPunct(t, rep));
+    }
+  }
+
+  function applyOnAttributes(el){
+    for (const attr of ["placeholder","title","aria-label"]){
+      if (!el.hasAttribute(attr)) continue;
+      const val = el.getAttribute(attr);
+      const key = norm(val);
+
+      if (LOCK_EN.has(key)){
+        const rep = LOCK_EN.get(key);
+        if (rep !== val) el.setAttribute(attr, keepPunct(val, rep));
+        continue;
+      }
+      if (inTabNav(el)) continue;
+
+      const rep = DICT.get(key);
+      if (rep && rep !== val){
+        el.setAttribute(attr, keepPunct(val, rep));
+      }
+    }
+  }
+
+  function processElement(el){
+    if (!el || el.nodeType !== 1) return;
+    // direct child textnodes
+    for (const n of el.childNodes){
+      if (n.nodeType === 3) applyOnTextNode(n, el);
+    }
+    applyOnAttributes(el);
+  }
+
+  function applyOverrides(root=document.body){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: (node) =>
+        /^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    let cur = root;
+    do { processElement(cur); cur = walker.nextNode(); } while (cur);
+  }
+
+  // MutationObserver: blijf netjes corrigeren bij dynamische content
+  let mo, deb;
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver((muts)=>{
+      // simpele debounce
+      clearTimeout(deb);
+      deb = setTimeout(()=> applyOverrides(), 120);
+    });
+    mo.observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:["placeholder","title","aria-label"],
+      characterData:true
+    });
+  }
+
+  // Hook: als jouw vertaalflow deze aanroept, doen we extra “napoetsen”
+  if (typeof window.__applyOverridesAfterTranslate !== 'function'){
+    window.__applyOverridesAfterTranslate = function(){
+      let tries = 0;
+      const iv = setInterval(()=>{
+        applyOverrides();
+        if (++tries >= 30) clearInterval(iv); // ~3s
+      }, 100);
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if (ENABLE_ON_LOAD) applyOverrides();
+    startObserver();
+  });
+})();
+</script>
 
 </body>
 </html>
