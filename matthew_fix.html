@@ -328,6 +328,7 @@
       <select id="role" class="input">
         <option value="Viewer" selected>Viewer (read-only)</option>
         <option>Admin</option>
+        <option>Sponsor/Partner</option>
         <option>Projectmanager</option>
         <option>Strategic Program Advisor</option>
         <option>Thematic Expert</option>
@@ -646,7 +647,7 @@ const $ = (q,root=document)=>root.querySelector(q);
     const $$ = (q,root=document)=>Array.from(root.querySelectorAll(q));
     $('#yr').textContent = new Date().getFullYear();
 
-    const EDIT_ROLES = new Set(['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert']);
+    const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
     const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
@@ -658,7 +659,7 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     const noteSubjects = ["","Goal","Risk","Issue","Plan","Suggestion","Question","New Goal","New Risk","New Issue","New Plan","New Suggestion","New Question"];
     const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
-    const noteRoles    = ["","Admin","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
+    const noteRoles    = ["","Admin","Sponsor/Partner","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
 
