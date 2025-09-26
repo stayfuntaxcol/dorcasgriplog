@@ -830,7 +830,10 @@ const $ = (q,root=document)=>root.querySelector(q);
     $('#btnSaveAll').onclick=saveAll;
 
     // Helpers
-    function num(id){ const n=parseInt(String(id).replace(/\\D+/g,'')||'0',10); return isNaN(n)?0:n; }
+function num(id){
+  const m = String(id||'').match(/\d+/);
+  return m ? parseInt(m[0], 10) : Number.POSITIVE_INFINITY; // geen cijfers? zet die achteraan
+}
     function escapeHtml(s){ return (s||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
 
 function actionsCell(coll){
@@ -947,7 +950,7 @@ function actionsCell(coll){
       const fStart=$('#gStartFrom').value; if(fStart) rows=rows.filter(r=> (r.start||'')>=fStart);
       const fEnd=$('#gEndTo').value; if(fEnd) rows=rows.filter(r=> (r.end||'')<=fEnd);
       const q=$('#gSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.goal||'')+' '+(r.notes||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowGoal(r); tbody.appendChild(tr); });
     }
     function renderRisks(){ const tbody=$('#tblRisks tbody'); tbody.innerHTML=''; let rows=[...cache.risks];
@@ -956,7 +959,7 @@ function actionsCell(coll){
       const fI=$('#rImpact').value; if(fI) rows=rows.filter(r=> (r.impact||'')===fI);
       const fS=$('#rStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
       const q=$('#rSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.mitigation||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowRisk(r); tbody.appendChild(tr); });
     }
     function renderIssues(){ const tbody=$('#tblIssues tbody'); tbody.innerHTML=''; let rows=[...cache.issues];
@@ -964,7 +967,7 @@ function actionsCell(coll){
       const fV=$('#iSeverity').value; if(fV) rows=rows.filter(r=> (r.severity||'')===fV);
       const fS=$('#iStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
       const q=$('#iSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')+' '+(r.resolution||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowIssue(r); tbody.appendChild(tr); });
     }
     function renderPlans(){ const tbody=$('#tblPlans tbody'); tbody.innerHTML=''; let rows=[...cache.plans];
@@ -972,7 +975,7 @@ function actionsCell(coll){
       const fS=$('#pStatus').value; if(fS) rows=rows.filter(r=> (r.status||'')===fS);
       const fG=$('#pGoalId').value.trim().toLowerCase(); if(fG) rows=rows.filter(r=> (r.goalId||'').toLowerCase().includes(fG));
       const q=$('#pSearch').value?.toLowerCase()||''; if(q) rows=rows.filter(r=> ((r.description||'')).toLowerCase().includes(q));
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ const tr=document.createElement('tr'); tr.innerHTML=rowPlan(r); tbody.appendChild(tr); });
     }
 
@@ -1013,7 +1016,7 @@ function actionsCell(coll){
       if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
       if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
       if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.sugid=r.id; tr.innerHTML=rowSuggestion(r); tbody.appendChild(tr); });
     }
 
@@ -1054,7 +1057,7 @@ function actionsCell(coll){
       if(fStatus) rows=rows.filter(r=> (r.status||'')===fStatus);
       if(fRevRole) rows=rows.filter(r=> (r.reviewerRole||'')===fRevRole);
       if(fRevDate) rows=rows.filter(r=> (r.reviewed||'')>=fRevDate);
-      rows.sort((a,b)=>num(a.id)-num(b.id));
+      rows.sort((a,b)=> num(a.id) - num(b.id));
       rows.forEach(r=>{ if(r.stars==null) r.stars=0; if(!r.starredBy) r.starredBy={}; const tr=document.createElement('tr'); tr.dataset.qid=r.id; tr.innerHTML=rowQuestion(r); tbody.appendChild(tr); });
     }
 
