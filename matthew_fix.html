@@ -709,7 +709,7 @@ const $ = (q,root=document)=>root.querySelector(q);
 
       CURRENT_ROLE=role; CURRENT_NAME=full;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
-      authTxt.textContent = isEditor? 'editor' : 'viewer';
+      authTxt.textContent = isEditor? 'editor' : '(role==='Partner/Sponsor' ? 'sponsor' : 'viewer');
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
       syncSectionUserLabels();
       setEditMode(isEditor);
