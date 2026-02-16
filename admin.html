@@ -10,43 +10,62 @@
       --accent:#6ea8fe; --ok:#29c48a; --warn:#ffcc66; --bad:#ff6b6b; --line:#243049;
     }
     *{box-sizing:border-box}
-    body{margin:0;font:14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#070911,#0b0d12); color:var(--text)}
-    header{padding:18px 16px;border-bottom:1px solid var(--line);background:rgba(10,12,18,.85);position:sticky;top:0;backdrop-filter: blur(8px);}
+    body{margin:0;font:14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, Arial; background:linear-gradient(180deg,#070911,#0b0d12); color:var(--text)}
+    header{padding:18px 16px;border-bottom:1px solid var(--line);background:rgba(10,12,18,.85);position:sticky;top:0;backdrop-filter: blur(8px);z-index:50}
     h1{margin:0;font-size:18px}
+    h2,h3{font-weight:650}
     .wrap{max-width:1100px;margin:0 auto;padding:16px}
     .grid{display:grid;gap:12px}
-    @media(min-width:900px){ .grid{grid-template-columns: 420px 1fr;} }
-    .card{background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:14px; padding:14px; box-shadow:0 10px 40px rgba(0,0,0,.25)}
+    @media(min-width:980px){ .grid{grid-template-columns: 420px 1fr;} }
+
+    .card{background:linear-gradient(180deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:16px; padding:14px; box-shadow:0 10px 40px rgba(0,0,0,.25)}
     .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .right{margin-left:auto}
+
     label{display:block;color:var(--muted);font-size:12px;margin:10px 0 6px}
     input, select, textarea{
       width:100%; background:#0b1020; border:1px solid #263252; color:var(--text);
-      border-radius:10px; padding:10px 10px; outline:none;
+      border-radius:12px; padding:11px 12px; outline:none;
+      font-size:14px;
     }
-    textarea{min-height:90px;resize:vertical}
+    textarea{min-height:110px;resize:vertical}
     input:focus, select:focus, textarea:focus{border-color:var(--accent); box-shadow:0 0 0 3px rgba(110,168,254,.15)}
+
     button{
       border:1px solid #2a3a60; background:#0f1629; color:var(--text);
-      padding:9px 12px; border-radius:10px; cursor:pointer;
+      padding:10px 12px; border-radius:12px; cursor:pointer; font-weight:600;
     }
     button:hover{border-color:#3a5190}
     button.primary{background:rgba(110,168,254,.12); border-color:rgba(110,168,254,.45)}
     button.good{background:rgba(41,196,138,.12); border-color:rgba(41,196,138,.45)}
     button.bad{background:rgba(255,107,107,.12); border-color:rgba(255,107,107,.45)}
+
     .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--muted);font-size:12px}
-    .pill b{color:var(--text);font-weight:600}
-    .kpi{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px}
+    .pill b{color:var(--text);font-weight:700}
     .muted{color:var(--muted)}
-    table{width:100%; border-collapse:collapse; font-size:13px}
-    th, td{padding:10px 8px; border-bottom:1px solid var(--line); vertical-align:top}
-    th{color:var(--muted); text-align:left; font-weight:600}
-    tr:hover td{background:rgba(255,255,255,.02)}
-    .right{margin-left:auto}
     .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace}
     .small{font-size:12px}
-    .notice{border:1px dashed #3a4a74; padding:10px 12px; border-radius:12px; background:rgba(110,168,254,.06); color:var(--muted)}
+    .notice{border:1px dashed #3a4a74; padding:10px 12px; border-radius:14px; background:rgba(110,168,254,.06); color:var(--muted)}
     .hidden{display:none!important}
-    .divider{height:1px;background:var(--line);margin:12px 0}
+    .divider{height:1px;background:var(--line);margin:14px 0}
+
+    /* Link box (wrap + stay in left column) */
+    .linkBox{
+      min-height:74px;
+      overflow-wrap:anywhere;
+      word-break:break-word;
+      white-space:pre-wrap;
+    }
+
+    /* Users list layout (readable) */
+    .usersList{display:flex;flex-direction:column;gap:12px;margin-top:10px}
+    .userCard{border:1px solid var(--line);border-radius:16px;padding:12px;background:rgba(255,255,255,.02)}
+    .userHead{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .userUid{padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.18)}
+    .fieldStack{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+    .field{display:flex;flex-direction:column}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .actions button{padding:9px 12px}
   </style>
 </head>
 <body>
@@ -58,10 +77,12 @@
 </header>
 
 <div class="wrap grid">
+  <!-- LEFT: AUTH / LINKS -->
   <section class="card" id="cardAuth">
     <h2 style="margin:0 0 8px;font-size:15px">Login (admin)</h2>
+
     <div class="notice small">
-      Alleen jouw admin-account kan hier users beheren. Dit scherm werkt met Firestore <span class="mono">users/{uid}</span> docs + de rules.
+      Alleen jouw admin-account kan hier users beheren. Dit scherm schrijft naar <span class="mono">users/{uid}</span> en gebruikt je Firestore rules.
     </div>
 
     <label>Email</label>
@@ -78,19 +99,22 @@
 
     <div class="divider"></div>
 
-    <div class="kpi">
+    <div class="row">
       <span class="pill">Admin email: <b class="mono" id="adminEmail"></b></span>
-      <span class="pill">App login link: <b class="mono" id="appUrl"></b></span>
+    </div>
+
+    <label>App login link</label>
+    <textarea id="appUrlBox" class="mono linkBox" readonly></textarea>
+    <div class="row" style="margin-top:10px">
       <button id="btnCopyAppUrl" class="small">Copy link</button>
     </div>
 
-    <div class="divider"></div>
-
-    <div id="noAccess" class="notice hidden">
+    <div id="noAccess" class="notice hidden" style="margin-top:12px">
       Je bent wel ingelogd, maar je account is niet admin volgens <span class="mono">ADMIN_EMAIL</span>.
     </div>
   </section>
 
+  <!-- RIGHT: ADMIN -->
   <section class="card hidden" id="cardAdmin">
     <div class="row">
       <h2 style="margin:0;font-size:15px">Gebruikers beheren</h2>
@@ -101,37 +125,31 @@
     <div class="divider"></div>
 
     <h3 style="margin:0 0 8px;font-size:14px">Nieuwe gebruiker aanmaken</h3>
-    <div class="row">
-      <div style="flex:1 1 240px">
-        <label>Email (verplicht)</label>
-        <input id="newEmail" type="email" placeholder="naam@bedrijf.nl" autocomplete="off"/>
-      </div>
-      <div style="flex:1 1 180px">
-        <label>Naam</label>
-        <input id="newName" type="text" placeholder="Voornaam Achternaam"/>
-      </div>
-      <div style="flex:1 1 180px">
-        <label>Organisatie</label>
-        <input id="newOrg" type="text" placeholder="Bedrijf / Team"/>
-      </div>
-    </div>
+
+    <label>Email (verplicht)</label>
+    <input id="newEmail" type="email" placeholder="naam@bedrijf.nl" autocomplete="off"/>
+
+    <label>Naam</label>
+    <input id="newName" type="text" placeholder="Voornaam Achternaam"/>
+
+    <label>Organisatie</label>
+    <input id="newOrg" type="text" placeholder="Bedrijf / Team"/>
+
+    <label>Rol</label>
+    <select id="newRole">
+      <option value="User">User (Q+S schrijven/wijzigen, geen delete)</option>
+      <option value="Viewer">Viewer (alleen ster in Q+S)</option>
+      <option value="Project Manager">Project Manager (alles in GRIP + Q/S)</option>
+      <option value="Strategic Program Advisor">Strategic Program Advisor (alles in GRIP + Q/S)</option>
+      <option value="Thematic Expert">Thematic Expert (alles in GRIP + Q/S)</option>
+    </select>
 
     <div class="row">
-      <div style="flex:1 1 220px">
-        <label>Rol</label>
-        <select id="newRole">
-          <option value="User">User (Q+S schrijven/wijzigen, geen delete)</option>
-          <option value="Viewer">Viewer (alleen ster in Q+S)</option>
-          <option value="Project Manager">Project Manager (alles in GRIP + Q/S)</option>
-          <option value="Strategic Program Advisor">Strategic Program Advisor (alles in GRIP + Q/S)</option>
-          <option value="Thematic Expert">Thematic Expert (alles in GRIP + Q/S)</option>
-        </select>
-      </div>
-      <div style="flex:1 1 220px">
+      <div style="flex:1 1 260px">
         <label>Tijdelijk wachtwoord</label>
         <input id="newPass" type="text" placeholder="Laat leeg voor auto-generate"/>
       </div>
-      <div style="flex:1 1 220px">
+      <div style="flex:0 0 auto">
         <label>&nbsp;</label>
         <button id="btnGenPass">Genereer</button>
       </div>
@@ -156,24 +174,10 @@
 
     <div class="row" style="margin-top:6px">
       <h3 style="margin:0;font-size:14px">Bestaande users</h3>
-      <input id="filter" type="text" placeholder="Filter op naam/email/org/rol" style="max-width:320px" class="right"/>
+      <input id="filter" type="text" placeholder="Filter op naam/email/org/rol" style="max-width:340px" class="right"/>
     </div>
 
-    <div style="overflow:auto;border:1px solid var(--line);border-radius:12px;margin-top:10px">
-      <table>
-        <thead>
-          <tr>
-            <th>UID</th>
-            <th>Naam</th>
-            <th>Email</th>
-            <th>Org</th>
-            <th>Rol</th>
-            <th class="small">Acties</th>
-          </tr>
-        </thead>
-        <tbody id="usersTbody"></tbody>
-      </table>
-    </div>
+    <div id="usersList" class="usersList"></div>
 
     <div class="divider"></div>
 
@@ -208,7 +212,7 @@
   const ADMIN_EMAIL = "s.tollenaar@dorcas.nl";
 
   // Link naar jouw GRIPlog app (waar gebruikers moeten inloggen)
-  const APP_LOGIN_URL = (location.origin + location.pathname).replace(/\/[^\/]*$/, "/GRIPlog_Kitui_WASH_import.html");
+  const APP_LOGIN_URL = "https://stayfuntaxcol.github.io/dorcasgriplog/GRIPlog_Kitui_WASH_import.html";
 
   // ==== init ====
   const app = initializeApp(firebaseConfig);
@@ -224,7 +228,7 @@
   const el = {
     status: $("#status"),
     adminEmail: $("#adminEmail"),
-    appUrl: $("#appUrl"),
+    appUrlBox: $("#appUrlBox"),
     btnCopyAppUrl: $("#btnCopyAppUrl"),
     btnLogin: $("#btnLogin"),
     btnLogout: $("#btnLogout"),
@@ -233,7 +237,7 @@
     cardAdmin: $("#cardAdmin"),
     countUsers: $("#countUsers"),
     btnRefresh: $("#btnRefresh"),
-    usersTbody: $("#usersTbody"),
+    usersList: $("#usersList"),
     filter: $("#filter"),
 
     newEmail: $("#newEmail"),
@@ -249,7 +253,7 @@
   };
 
   el.adminEmail.textContent = ADMIN_EMAIL;
-  el.appUrl.textContent = APP_LOGIN_URL;
+  el.appUrlBox.value = APP_LOGIN_URL;
 
   function isAdminUser(user){
     const email = (user?.email || "").toLowerCase();
@@ -279,7 +283,7 @@
     lines.push("");
     lines.push("Na inloggen: kies 'Wachtwoord vergeten' om je eigen wachtwoord te zetten (of gebruik de reset mail).");
     lines.push(`Rol: ${role}`);
-    return lines.join("\\n");
+    return lines.join("\n");
   }
 
   // ==== Auth UI ====
@@ -313,8 +317,15 @@
 
   el.btnCopyAppUrl.onclick = () => copyText(APP_LOGIN_URL);
 
-  // ==== Users table ====
+  // ==== Users list ====
   let USERS = [];
+
+  function escapeHtml(s){
+    return String(s ?? "")
+      .replaceAll("&","&amp;").replaceAll("<","&lt;")
+      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
 
   function roleOptionsHtml(selected){
     const roles = [
@@ -327,36 +338,45 @@
     return roles.map(r => `<option value="${r}" ${r===selected?"selected":""}>${r}</option>`).join("");
   }
 
-  function rowHtml(u){
+  function userCardHtml(u){
     const uid = u.__id;
     const name = u.fullName || "";
     const email = u.email || "";
     const org = u.org || "";
     const role = u.role || "User";
     return `
-      <tr data-uid="${uid}">
-        <td class="mono small">${uid}</td>
-        <td><input data-k="fullName" value="${escapeHtml(name)}"></td>
-        <td><input data-k="email" value="${escapeHtml(email)}"></td>
-        <td><input data-k="org" value="${escapeHtml(org)}"></td>
-        <td>
-          <select data-k="role">${roleOptionsHtml(role)}</select>
-        </td>
-        <td class="small">
-          <div class="row" style="gap:8px">
-            <button class="good" data-act="save">Save</button>
-            <button data-act="reset">Reset</button>
-            <button class="bad" data-act="del">Delete doc</button>
-          </div>
-        </td>
-      </tr>`;
-  }
+      <div class="userCard" data-uid="${uid}">
+        <div class="userHead">
+          <span class="userUid mono small">${uid}</span>
+          <span class="pill right">Rol: <b>${escapeHtml(role)}</b></span>
+        </div>
 
-  function escapeHtml(s){
-    return String(s ?? "")
-      .replaceAll("&","&amp;").replaceAll("<","&lt;")
-      .replaceAll(">","&gt;").replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
+        <div class="fieldStack">
+          <div class="field">
+            <label>Naam</label>
+            <input data-k="fullName" value="${escapeHtml(name)}" placeholder="Naam"/>
+          </div>
+          <div class="field">
+            <label>Email</label>
+            <input data-k="email" value="${escapeHtml(email)}" placeholder="Email"/>
+          </div>
+          <div class="field">
+            <label>Organisatie</label>
+            <input data-k="org" value="${escapeHtml(org)}" placeholder="Organisatie"/>
+          </div>
+          <div class="field">
+            <label>Rol</label>
+            <select data-k="role">${roleOptionsHtml(role)}</select>
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="good" data-act="save">Save</button>
+          <button data-act="reset">Reset</button>
+          <button class="bad" data-act="del">Delete doc</button>
+        </div>
+      </div>
+    `;
   }
 
   function renderUsers(){
@@ -367,7 +387,9 @@
     });
 
     el.countUsers.textContent = String(list.length);
-    el.usersTbody.innerHTML = list.map(rowHtml).join("") || `<tr><td colspan="6" class="muted">Geen users gevonden.</td></tr>`;
+    el.usersList.innerHTML = list.length
+      ? list.map(userCardHtml).join("")
+      : `<div class="notice">Geen users gevonden.</div>`;
   }
 
   async function loadUsers(){
@@ -383,15 +405,16 @@
     catch(e){ console.error(e); alert(e?.message || String(e)); }
   };
 
-  el.usersTbody.onclick = async (ev) => {
+  el.usersList.onclick = async (ev) => {
     const btn = ev.target.closest("button[data-act]");
     if(!btn) return;
-    const tr = ev.target.closest("tr[data-uid]");
-    const uid = tr?.dataset?.uid;
+
+    const card = ev.target.closest(".userCard[data-uid]");
+    const uid = card?.dataset?.uid;
     if(!uid) return;
 
     const data = {};
-    tr.querySelectorAll("[data-k]").forEach(inp => {
+    card.querySelectorAll("[data-k]").forEach(inp => {
       const k = inp.dataset.k;
       data[k] = inp.value.trim();
     });
@@ -426,6 +449,7 @@
   // ==== Create user flow ====
   el.btnGenPass.onclick = ()=> {
     el.newPass.value = genPass();
+    updateInvitePreview();
   };
 
   function updateInvitePreview(){
@@ -482,7 +506,16 @@
       // 5) Show summary + refresh list
       el.inviteText.value = buildInviteText({name:fullName,email,role,pass});
       await loadUsers();
-      alert(`User created.\nUID: ${uid}`);
+      alert(`User created.
+UID: ${uid}`);
+
+      // clear inputs (leave role)
+      el.newEmail.value = "";
+      el.newName.value = "";
+      el.newOrg.value = "";
+      el.newPass.value = "";
+
+      updateInvitePreview();
 
     }catch(e){
       console.error(e);
