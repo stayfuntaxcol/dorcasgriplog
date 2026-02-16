@@ -137,7 +137,7 @@
 
     <label>Rol</label>
     <select id="newRole">
-      <option value="User">User (Q+S schrijven/wijzigen, geen delete)</option>
+      <option value="Sponsor/Partner">Sponsor/Partner (Q+S schrijven/wijzigen, geen delete)</option>
       <option value="Viewer">Viewer (alleen ster in Q+S)</option>
       <option value="Project Manager">Project Manager (alles in GRIP + Q/S)</option>
       <option value="Strategic Program Advisor">Strategic Program Advisor (alles in GRIP + Q/S)</option>
@@ -329,7 +329,7 @@
 
   function roleOptionsHtml(selected){
     const roles = [
-      "User",
+      "Sponsor/Partner",
       "Viewer",
       "Project Manager",
       "Strategic Program Advisor",
@@ -343,7 +343,7 @@
     const name = u.fullName || "";
     const email = u.email || "";
     const org = u.org || "";
-    const role = u.role || "User";
+    const role = u.role || "Sponsor/Partner";
     return `
       <div class="userCard" data-uid="${uid}">
         <div class="userHead">
@@ -555,3 +555,4 @@ UID: ${uid}`);
 </script>
 </body>
 </html>
+
