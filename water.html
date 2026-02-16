@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GRIPlog – Honey Value Chain</title>
+  <title>GRIPlog – Water &amp; Sanitation (Kitui School)</title>
   <link rel="icon" href="assets/globe-blue.svg" />
   <style>
     :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
@@ -305,7 +305,7 @@
     <div class="header-left">
       <img src="assets/globe-blue.svg" alt="Dorcas" onerror="this.style.display='none'">
       <div>
-        <div class="title">GRIPlog – Honey Value Chain (Kitui)</div>
+        <div class="title">GRIPlog – Water &amp; Sanitation (Kitui School)</div>
         <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
       </div>
     </div>
@@ -633,6 +633,13 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    // ===== Project scope (per GRIPlog project) =====
+    // All GRIPlog data will be stored under: projects/{PROJECT_ID}/(goals|risks|issues|plans|suggestions|questions|notifications)
+    const PROJECT_ID = "kitui-wash-school"; // <-- change this per GRIPlog project
+    const pcoll = (name) => collection(db, "projects", PROJECT_ID, name);
+
+
+
     
     // Data readiness gate: block creating new items until initial data is loaded
     let DATA_READY = false;
@@ -764,13 +771,13 @@ const $ = (q,root=document)=>root.querySelector(q);
     // Load / Save
     async function loadAll(){
       const [g,r,i,p,s,q,n] = await Promise.all([
-        getDocs(collection(db,'goals')),
-        getDocs(collection(db,'risks')),
-        getDocs(collection(db,'issues')),
-        getDocs(collection(db,'plans')),
-        getDocs(collection(db,'suggestions')),
-        getDocs(collection(db,'questions')),
-        getDocs(collection(db,'notifications')),
+        getDocs(pcoll('goals')),
+        getDocs(pcoll('risks')),
+        getDocs(pcoll('issues')),
+        getDocs(pcoll('plans')),
+        getDocs(pcoll('suggestions')),
+        getDocs(pcoll('questions')),
+        getDocs(pcoll('notifications')),
       ]);
 
       prevCache = JSON.parse(JSON.stringify(cache));
@@ -805,7 +812,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       function upserts(prevArr, nextArr, coll, label){
         const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
-          tasks.push(setDoc(doc(db,coll,row.id), row));
+          tasks.push(setDoc(doc(pcoll(coll), row.id), row));
           if(!prevMap[row.id]){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
           } else if(changed(prevMap[row.id], row)){
@@ -823,7 +830,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       upserts(prevCache.plans, newPlans, 'plans', 'Plan');
 
       await Promise.all(tasks);
-      if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(pcoll('notifications'), n)));
       alert('saved to firestore');
       await loadAll();
     }
@@ -1096,14 +1103,14 @@ function actionsCell(coll){
 
 // === Unique ID (online + cache) ===
 async function docExists(coll, id){
-  try{ const snap = await getDoc(doc(db, coll, id)); return snap.exists(); }
+  try{ const snap = await getDoc(doc(pcoll(coll), id)); return snap.exists(); }
   catch(_e){ return false; }
 }
 async function nextUniqueId(coll, prefix){
   let arr = cache[coll] || [];
   if(!arr || arr.length===0){
     try{
-      const snap = await getDocs(collection(db, coll));
+      const snap = await getDocs(pcoll(coll));
       arr = snap.docs.map(d=>({id:d.id, ...d.data()}));
     }catch(_e){ arr = []; }
   }
@@ -1128,9 +1135,9 @@ function nextId(arr, prefix){
       if(!goal){ alert('goal required'); return; }
       const today = new Date().toISOString().slice(0,10);
       const row = { submitted: today,  id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
-      await setDoc(doc(db,'goals', id), row);
+      await setDoc(doc(pcoll('goals'), id), row);
       if(opts.source==='manual'){
-      await addDoc(collection(db,'notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
+      await addDoc(pcoll('notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
     }
 cache.goals.push(row); renderGoals();
     };
@@ -1141,8 +1148,8 @@ cache.goals.push(row); renderGoals();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
       const row = { submitted: today,  id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
-      await setDoc(doc(db,'risks', id), row);
-      await addDoc(collection(db,'notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
+      await setDoc(doc(pcoll('risks'), id), row);
+      await addDoc(pcoll('notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
       cache.risks.push(row); renderRisks();
     };
     $('#addIssueBtn').onclick = async ()=>{
@@ -1152,8 +1159,8 @@ cache.goals.push(row); renderGoals();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
       const row = { submitted: today,  id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
-      await setDoc(doc(db,'issues', id), row);
-      await addDoc(collection(db,'notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
+      await setDoc(doc(pcoll('issues'), id), row);
+      await addDoc(pcoll('notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
       cache.issues.push(row); renderIssues();
     };
     $('#addPlanBtn').onclick = async ()=>{
@@ -1163,8 +1170,8 @@ cache.goals.push(row); renderGoals();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
       const row = { submitted: today,  id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
-      await setDoc(doc(db,'plans', id), row);
-      await addDoc(collection(db,'notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
+      await setDoc(doc(pcoll('plans'), id), row);
+      await addDoc(pcoll('notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
       cache.plans.push(row); renderPlans();
     };
 
@@ -1176,7 +1183,7 @@ cache.goals.push(row); renderGoals();
         const tr = starBtn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
         starBtn.disabled = true;
         try{
-          const ref = doc(db,'suggestions', sugId);
+          const ref = doc(pcoll('suggestions'), sugId);
           const cntEl = tr.querySelector('[data-star-count]');
           const current = parseInt(cntEl?.textContent||'0',10) || 0;
           await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
@@ -1189,7 +1196,7 @@ cache.goals.push(row); renderGoals();
         const tr = starQBtn.closest('tr'); const qid = tr?.dataset.qid; if(!qid) return;
         starQBtn.disabled = true;
         try{
-          const ref = doc(db,'questions', qid);
+          const ref = doc(pcoll('questions'), qid);
           const cntEl = tr.querySelector('[data-star-count]');
           const current = parseInt(cntEl?.textContent||'0',10) || 0;
           await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
@@ -1233,17 +1240,17 @@ if(editBtn){
   }
 
   try{
-    await updateDoc(doc(db, coll, id), updates);
+    await updateDoc(doc(pcoll(coll), id), updates);
     Object.assign(row, updates);
     // herteken huidig tabblad
     renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
     // note aan Notifications
     const subj = (coll==='suggestions')?'Suggestion' : (coll==='questions')?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1);
-    await addDoc(collection(db,'notifications'), makeNote({
+    await addDoc(pcoll('notifications'), makeNote({
       subject: subj, status:'Edited', relatedId:id, description: pickDesc(subj,row)
     }));
     // refresh notifications cache
-    const listSnap = await getDocs(collection(db,'notifications'));
+    const listSnap = await getDocs(pcoll('notifications'));
     cache.notifications = listSnap.docs.map(d=>({__id:d.id, ...d.data()}));
   }catch(err){ alert('edit failed: '+err.message); }
 }
@@ -1256,11 +1263,11 @@ if(editBtn){
         const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
         if(!confirm(`Delete ${id} from ${coll}?`)) return;
         try{ 
-          await deleteDoc(doc(db, coll, id)); 
+          await deleteDoc(doc(pcoll(coll), id)); 
           tr.remove(); 
           const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
-          await addDoc(collection(db,'notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
-          const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
+          await addDoc(pcoll('notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
+          const list = await getDocs(pcoll('notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
       }
 
@@ -1269,8 +1276,8 @@ if(editBtn){
         if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
         const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
         if(!confirm('Delete this notification?')) return;
-        await deleteDoc(doc(db,'notifications',id));
-        const list = await getDocs(collection(db,'notifications'));
+        await deleteDoc(doc(pcoll('notifications'),id));
+        const list = await getDocs(pcoll('notifications'));
         cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
         renderNotifications(cache.notifications);
       }
@@ -1285,8 +1292,8 @@ if(editBtn){
       const today = new Date().toISOString().slice(0,10);
       const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
-        await setDoc(doc(db,'suggestions', id), suggestion);
-        await addDoc(collection(db,'notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
+        await setDoc(doc(pcoll('suggestions'), id), suggestion);
+        await addDoc(pcoll('notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
         cache.suggestions.push(suggestion);
         renderSuggestions();
       }catch(err){ alert('Could not add: '+err.message); }
@@ -1299,8 +1306,8 @@ if(editBtn){
       const today = new Date().toISOString().slice(0,10);
       const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
-        await setDoc(doc(db,'questions', id), qdoc);
-        await addDoc(collection(db,'notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
+        await setDoc(doc(pcoll('questions'), id), qdoc);
+        await addDoc(pcoll('notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
         cache.questions.push(qdoc);
         renderQuestions();
       }catch(err){ alert('Could not add: '+err.message); }
@@ -1437,9 +1444,9 @@ async function saveOverlay(updates, opts={}){
   if(OV.coll==='plans' && 'goalId' in updates && updates.goalId && !/^G\d+$/.test(String(updates.goalId).trim())){ alert('Goal Link must look like G1, G2, ...'); return; }
   try{
     if(Object.keys(updates).length){
-      await updateDoc(doc(db, OV.coll, OV.id), updates);
+      await updateDoc(doc(pcoll(OV.coll), OV.id), updates);
       Object.assign(getRow(OV.coll,OV.id), updates);
-      await addDoc(collection(db,'notifications'), makeNote({
+      await addDoc(pcoll('notifications'), makeNote({
         subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)),
         status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion':(OV.coll==='questions'?'Question':OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id))
       }));
@@ -1675,9 +1682,9 @@ $('#ovDelete')?.addEventListener('click', async ()=>{
   const coll = OV.coll, id = OV.id;
   if(!confirm(`Delete ${id}?`)) return;
   try{
-    await deleteDoc(doc(db, coll, id));
+    await deleteDoc(doc(pcoll(coll), id));
     cache[coll] = (cache[coll]||[]).filter(x=>x.id!==id);
-    await addDoc(collection(db,'notifications'), makeNote({
+    await addDoc(pcoll('notifications'), makeNote({
       subject: coll==='suggestions'?'Suggestion' : (coll==='questions'?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1)),
       status:'Deleted', relatedId:id, description:''
     }));
@@ -1727,8 +1734,8 @@ if(OV && OV.id){ row.parentId = OV.id; }
     }
   }
 
-  await setDoc(doc(db, coll, id), row);
-  await addDoc(collection(db,'notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
+  await setDoc(doc(pcoll(coll), id), row);
+  await addDoc(pcoll('notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
   cache[coll].push(row);
   renderTab(coll);
   renderOverlay(coll,id);
