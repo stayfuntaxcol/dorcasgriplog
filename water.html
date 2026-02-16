@@ -298,6 +298,19 @@
   text-overflow: clip !important;       /* geen ellipsen */
 }
 
+
+/* === Load menu (Firebase vs JSON import) === */
+#loadMenu{position:fixed;inset:0;display:none;z-index:1200}
+#loadMenu.show{display:block}
+.lm-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+.lm-panel{position:absolute;left:50%;top:86px;transform:translateX(-50%);width:min(560px,calc(100% - 32px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
+.lm-header{padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc);font-weight:800}
+.lm-body{padding:12px 16px}
+.lm-body p{margin:0 0 10px 0;color:var(--muted);font-size:12px}
+.lm-actions{display:flex;gap:8px;flex-wrap:wrap}
+.lm-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
+#lmMsg{font-size:12px;color:var(--muted)}
+
 </style>
 </head>
 <body>
@@ -339,6 +352,28 @@
       <button id="btnSignout" class="btn" style="display:none">logout</button>
     </div>
   </div>
+
+
+  <!-- Load menu (Firebase vs JSON import) -->
+  <input id="jsonImportInput" type="file" accept="application/json,.json" style="display:none" />
+  <div id="loadMenu" aria-hidden="true">
+    <div class="lm-backdrop"></div>
+    <div class="lm-panel" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
+      <div class="lm-header" id="lmTitle">Load data</div>
+      <div class="lm-body">
+        <p>Choose where to load from for this project: <strong id="lmProject"></strong></p>
+        <div class="lm-actions">
+          <button id="lmLoadFirestore" class="btn">Load from Firebase</button>
+          <button id="lmImportJson" class="btn primary">Import JSON file</button>
+        </div>
+      </div>
+      <div class="lm-footer">
+        <span id="lmMsg"></span>
+        <button id="lmClose" class="btn">Close</button>
+      </div>
+    </div>
+  </div>
+
 
   <!-- Tabs -->
   <nav class="tabs" role="tablist">
@@ -834,7 +869,112 @@ const $ = (q,root=document)=>root.querySelector(q);
       alert('saved to firestore');
       await loadAll();
     }
-    $('#btnLoad').onclick=loadAll;
+    
+    // --- Load menu (Firebase vs JSON import) ---
+    function setLoadMenuMsg(msg=''){ const el = document.getElementById('lmMsg'); if(el) el.textContent = msg||''; }
+    function showLoadMenu(msg=''){
+      const m = document.getElementById('loadMenu');
+      if(!m) return;
+      m.classList.add('show'); m.setAttribute('aria-hidden','false');
+      const proj = document.getElementById('lmProject'); if(proj) proj.textContent = PROJECT_ID;
+      setLoadMenuMsg(msg);
+    }
+    function hideLoadMenu(){
+      const m = document.getElementById('loadMenu');
+      if(!m) return;
+      m.classList.remove('show'); m.setAttribute('aria-hidden','true');
+      setLoadMenuMsg('');
+    }
+    function isCacheEmpty(){
+      return ['goals','risks','issues','plans','suggestions','questions','notifications']
+        .every(k => Array.isArray(cache[k]) && cache[k].length===0);
+    }
+    function normalizeArr(v){ return Array.isArray(v) ? v : []; }
+    function importFromJson(data, filename=''){
+      if(!data || typeof data !== 'object') throw new Error('Invalid JSON (expected an object)');
+      // Snapshot current cache so Save-to-DB can produce correct "new/edited" notes
+      prevCache = JSON.parse(JSON.stringify(cache));
+
+      const goals = normalizeArr(data.goals);
+      const risks = normalizeArr(data.risks);
+      const issues = normalizeArr(data.issues);
+      const plans = normalizeArr(data.plans);
+      const suggestions = normalizeArr(data.suggestions);
+      const questions = normalizeArr(data.questions);
+      const notifications = normalizeArr(data.notifications);
+
+      const withId = (arr)=> arr
+        .filter(x=>x && typeof x==='object')
+        .map(x=>({ ...x, id: String(x.id||'').trim() }))
+        .filter(x=>x.id);
+
+      cache.goals = withId(goals);
+      cache.risks = withId(risks);
+      cache.issues = withId(issues);
+      cache.plans = withId(plans);
+      cache.suggestions = withId(suggestions);
+      cache.questions = withId(questions);
+      cache.notifications = notifications
+        .filter(x=>x && typeof x==='object')
+        .map(x=>({ __id: String(x.__id||x.id||''), ...x }));
+
+      buildFilterOptions();
+      renderAll();
+      openFromHash();
+
+      DATA_READY = true;
+      disableNewButtons(false);
+
+      alert(`JSON imported${filename?`: ${filename}`:''}. Now click "Save to Database" to write to Firebase (requires editor login).`);
+    }
+
+    async function loadFromFirestoreViaMenu(){
+      setLoadMenuMsg('Loading from Firebase…');
+      try{
+        await loadAll();
+        if(isCacheEmpty()){
+          setLoadMenuMsg('No data found in Firebase for this project. Use "Import JSON file".');
+          return; // keep modal open
+        }
+        hideLoadMenu();
+      }catch(e){
+        console.error(e);
+        setLoadMenuMsg('Load failed: ' + (e?.message||String(e)));
+      }
+    }
+
+    function triggerJsonImport(){
+      const inp = document.getElementById('jsonImportInput');
+      if(!inp) return;
+      inp.value = '';
+      inp.click();
+    }
+
+    document.getElementById('jsonImportInput')?.addEventListener('change', async (e)=>{
+      const file = e.target.files && e.target.files[0];
+      if(!file) return;
+      setLoadMenuMsg('Reading file…');
+      try{
+        const text = await file.text();
+        const obj = JSON.parse(text);
+        importFromJson(obj, file.name);
+        hideLoadMenu();
+      }catch(err){
+        console.error(err);
+        setLoadMenuMsg('Import failed: ' + (err?.message||String(err)));
+      } finally {
+        e.target.value = '';
+      }
+    });
+
+    document.getElementById('lmClose')?.addEventListener('click', hideLoadMenu);
+    document.querySelector('#loadMenu .lm-backdrop')?.addEventListener('click', hideLoadMenu);
+    document.getElementById('lmLoadFirestore')?.addEventListener('click', loadFromFirestoreViaMenu);
+    document.getElementById('lmImportJson')?.addEventListener('click', triggerJsonImport);
+
+    // Clicking "Load Database" opens the menu (instead of directly loading)
+    document.getElementById('btnLoad')?.addEventListener('click', ()=>showLoadMenu());
+
     $('#btnSaveAll').onclick=saveAll;
 
     // Helpers
