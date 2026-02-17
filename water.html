@@ -331,7 +331,7 @@
   <div class="toolbar">
     <div class="leftbar">
       <button id="btnLoad" class="btn">Load Database</button>
-      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled title="Writes current Goals/Risks/Issues/Plans/Questions/Suggestions to Firebase for this project. Generates Notifications for Added/Edited/Deleted changes.">Save to Database</button>
     </div>
 
     <div class="rightbar">
@@ -836,25 +836,57 @@ const $ = (q,root=document)=>root.querySelector(q);
       if(!CAN_EDIT){ alert('no edit rights'); return; }
       const tasks=[]; const notes=[];
 
-      const newGoals = rowsFromTable('goals');
-      const newRisks = rowsFromTable('risks');
-      const newIssues= rowsFromTable('issues');
-      const newPlans = rowsFromTable('plans');
+      // Save-to-DB is meant to sync the current UI/cache state into Firebase.
+      // Skip invalid rows (prevents empty items from being written when a draft exists).
+      const warnings=[];
+      const nonEmpty = (v)=> String(v||'').trim().length>0;
+      const isValid = (coll,row)=>{
+        if(coll==='goals') return nonEmpty(row.goal);
+        if(['risks','issues','plans','suggestions','questions'].includes(coll)) return nonEmpty(row.description);
+        return true;
+      };
+      const cleanRow = (row)=>{
+        const r = { ...row };
+        delete r.__isDraft; delete r.__isNew; delete r.__isLocal; delete r._local;
+        return r;
+      };
+      const prep = (coll, arr)=> (Array.isArray(arr)?arr:[])
+        .filter(x=>x && typeof x==='object' && x.id)
+        .map(cleanRow)
+        .filter(r=>{
+          if(!isValid(coll,r)){ warnings.push(`${coll}:${r.id}`); return false; }
+          return true;
+        });
+
+      const newGoals = prep('goals', rowsFromTable('goals'));
+      const newRisks = prep('risks', rowsFromTable('risks'));
+      const newIssues= prep('issues', rowsFromTable('issues'));
+      const newPlans = prep('plans', rowsFromTable('plans'));
+
+      // Q/S tables are read-only in the grid; the cache is the source of truth (incl. JSON import)
+      const newSuggestions = prep('suggestions', cache.suggestions);
+      const newQuestions   = prep('questions', cache.questions);
 
       const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
-      const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
+      const changed = (prev,next)=> {
+        const keys = Object.keys(next||{});
+        for(const k of keys){
+          if(JSON.stringify(prev?.[k]) !== JSON.stringify(next[k])) return true;
+        }
+        return false;
+      };
 
       function upserts(prevArr, nextArr, coll, label){
-        const prevMap = byId(prevArr);
+        const prevMap = byId(prevArr || []);
         nextArr.forEach(row=>{
-          tasks.push(setDoc(doc(pcoll(coll), row.id), row));
+          tasks.push(setDoc(doc(pcoll(coll), row.id), row, {merge:true}));
           if(!prevMap[row.id]){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
           } else if(changed(prevMap[row.id], row)){
             notes.push(makeNote({subject: label, status:'Edited', relatedId: row.id, description: pickDesc(label,row)}));
           }
         });
-        prevArr.forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
+        (prevArr||[]).forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
           notes.push(makeNote({subject: label, status:'Deleted', relatedId: prev.id, description: pickDesc(label,prev)}));
         }});
       }
@@ -863,14 +895,20 @@ const $ = (q,root=document)=>root.querySelector(q);
       upserts(prevCache.risks, newRisks, 'risks', 'Risk');
       upserts(prevCache.issues,newIssues,'issues','Issue');
       upserts(prevCache.plans, newPlans, 'plans', 'Plan');
+      upserts(prevCache.suggestions, newSuggestions, 'suggestions', 'Suggestion');
+      upserts(prevCache.questions, newQuestions, 'questions', 'Question');
 
       await Promise.all(tasks);
       if(notes.length) await Promise.all(notes.map(n=>addDoc(pcoll('notifications'), n)));
-      alert('saved to firestore');
+
+      const msg = warnings.length
+        ? `saved to firestore (skipped ${warnings.length} invalid rows without required text)`
+        : 'saved to firestore';
+      alert(msg);
+
       await loadAll();
     }
-    
-    // --- Load menu (Firebase vs JSON import) ---
+// --- Load menu (Firebase vs JSON import) ---
     function setLoadMenuMsg(msg=''){ const el = document.getElementById('lmMsg'); if(el) el.textContent = msg||''; }
     function showLoadMenu(msg=''){
       const m = document.getElementById('loadMenu');
@@ -2299,6 +2337,113 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
   const norm = s => (s||"").replace(/\s+/g," ").replace(/\s*[:;,.!?]+$/,"").trim().toLowerCase();
   const LOCK_EN = new Map(LOCK_EN_ENTRIES.map(([k,v])=>[norm(k),v]));
   const DICT    = new Map(DICT_ENTRIES.map(([k,v])=>[norm(k),v]));
+
+  // Staat element in tabnavigatie? Dan alleen LOCK_EN toepassen.
+  function inTabNav(el){ return !!(el && el.closest && el.closest('nav.tabs,[role="tablist"]')); }
+
+  function keepPunct(original, replacement){
+    const lead = (original.match(/^\s*/) || [""])[0];
+    const trail= (original.match(/\s*$/) || [""])[0];
+    const endP = (original.trim().match(/[:;,.!?]+$/) || [""])[0];
+    return lead + replacement + endP + trail;
+  }
+
+  function applyOnTextNode(node, parent){
+    const original = node.nodeValue;
+    const t = original.trim();
+    if (!t) return;
+    const key = norm(t);
+
+    // Tabs e.d.: geforceerd Engels houden
+    if (LOCK_EN.has(key)){
+      const rep = LOCK_EN.get(key);
+      if (rep !== t) node.nodeValue = original.replace(t, keepPunct(t, rep));
+      return;
+    }
+    // In tabnavigatie: niets veranderen behalve LOCK_EN
+    if (inTabNav(parent)) return;
+
+    const rep = DICT.get(key);
+    if (rep && rep !== t){
+      node.nodeValue = original.replace(t, keepPunct(t, rep));
+    }
+  }
+
+  function applyOnAttributes(el){
+    for (const attr of ["placeholder","title","aria-label"]){
+      if (!el.hasAttribute(attr)) continue;
+      const val = el.getAttribute(attr);
+      const key = norm(val);
+
+      if (LOCK_EN.has(key)){
+        const rep = LOCK_EN.get(key);
+        if (rep !== val) el.setAttribute(attr, keepPunct(val, rep));
+        continue;
+      }
+      if (inTabNav(el)) continue;
+
+      const rep = DICT.get(key);
+      if (rep && rep !== val){
+        el.setAttribute(attr, keepPunct(val, rep));
+      }
+    }
+  }
+
+  function processElement(el){
+    if (!el || el.nodeType !== 1) return;
+    // direct child textnodes
+    for (const n of el.childNodes){
+      if (n.nodeType === 3) applyOnTextNode(n, el);
+    }
+    applyOnAttributes(el);
+  }
+
+  function applyOverrides(root=document.body){
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
+      acceptNode: (node) =>
+        /^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
+    });
+    let cur = root;
+    do { processElement(cur); cur = walker.nextNode(); } while (cur);
+  }
+
+  // MutationObserver: blijf netjes corrigeren bij dynamische content
+  let mo, deb;
+  function startObserver(){
+    if (mo) mo.disconnect();
+    mo = new MutationObserver((muts)=>{
+      // simpele debounce
+      clearTimeout(deb);
+      deb = setTimeout(()=> applyOverrides(), 120);
+    });
+    mo.observe(document.body, {
+      childList:true, subtree:true,
+      attributes:true, attributeFilter:["placeholder","title","aria-label"],
+      characterData:true
+    });
+  }
+
+  // Hook: als jouw vertaalflow deze aanroept, doen we extra “napoetsen”
+  if (typeof window.__applyOverridesAfterTranslate !== 'function'){
+    window.__applyOverridesAfterTranslate = function(){
+      let tries = 0;
+      const iv = setInterval(()=>{
+        applyOverrides();
+        if (++tries >= 30) clearInterval(iv); // ~3s
+      }, 100);
+    };
+  }
+
+  document.addEventListener('DOMContentLoaded', ()=>{
+    if (ENABLE_ON_LOAD) applyOverrides();
+    startObserver();
+  });
+})();
+</script>
+
+</body>
+</html>
+ DICT    = new Map(DICT_ENTRIES.map(([k,v])=>[norm(k),v]));
 
   // Staat element in tabnavigatie? Dan alleen LOCK_EN toepassen.
   function inTabNav(el){ return !!(el && el.closest && el.closest('nav.tabs,[role="tablist"]')); }
