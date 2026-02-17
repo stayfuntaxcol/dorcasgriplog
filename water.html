@@ -26,6 +26,7 @@
     .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
     .btn.danger{background:#fee2e2;border-color:#fecaca}
+    .btn.ok{background:#d1fae5;border-color:#a7f3d0}
     .btn.ghost{background:transparent}
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
@@ -1248,6 +1249,16 @@ function actionsCell(coll){
     }
 
     // Notifications
+    function linkedCollFromId(id){
+      const p = String(id||'').trim().slice(0,1).toUpperCase();
+      const map = {G:'goals',R:'risks',I:'issues',P:'plans',S:'suggestions',Q:'questions'};
+      return map[p] || null;
+    }
+    function itemHasCardNotes(coll,id){
+      const row = getRow(coll,id);
+      if(!row) return false;
+      return ['comments','notes','mitigation','resolution'].some(k => String(row[k]||'').trim().length>0);
+    }
     function renderNotifications(rows){
       const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
       let list=[...rows];
@@ -1263,6 +1274,13 @@ function actionsCell(coll){
       list.forEach(r=>{
         const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
         const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
+        const _coll = linkedCollFromId(r.id);
+        const _hasCard = (_coll && itemHasCardNotes(_coll, r.id));
+        const _yesBtn = _hasCard ? `<button class=\"btn ok\" data-open-item data-coll=\"${_coll}\" data-id=\"${escapeHtml(r.id||'')}\">Yes</button>` : '';
+        const _nComments = String(r.comments||'').trim();
+        const commentsCellHtml = (_yesBtn || _nComments)
+          ? (`<div class=\"row-actions\">${_yesBtn}</div>` + (_nComments?`<div class=\"cell-text\">${escapeHtml(_nComments)}</div>`:''))
+          : '—';
         tr.innerHTML = `
           <td>${escapeHtml(r.id||'')}</td>
           <td>${escapeHtml(r.description||'')}</td>
@@ -1270,7 +1288,7 @@ function actionsCell(coll){
           <td>${escapeHtml(r.status||'')}</td>
           <td>${escapeHtml(r.role||'')}</td>
           <td>${escapeHtml(r.date||'')}</td>
-          <td>${escapeHtml(r.comments||'')}</td>
+          <td>${commentsCellHtml}</td>
           <td>${actions}</td>`;
         tbody.appendChild(tr);
       });
@@ -1312,7 +1330,7 @@ function nextId(arr, prefix){
       let goal = (prompt('Goal (SMART):','')||'').trim();
       if(!goal){ alert('goal required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today,  id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
+      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
       await setDoc(doc(pcoll('goals'), id), row);
       if(opts.source==='manual'){
       await addDoc(pcoll('notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
@@ -1325,7 +1343,7 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Risk description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today,  id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
+      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
       await setDoc(doc(pcoll('risks'), id), row);
       await addDoc(pcoll('notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
       cache.risks.push(row); renderRisks();
@@ -1336,7 +1354,7 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Issue description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today,  id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
+      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
       await setDoc(doc(pcoll('issues'), id), row);
       await addDoc(pcoll('notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
       cache.issues.push(row); renderIssues();
@@ -1347,7 +1365,7 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Plan description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today,  id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
+      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
       await setDoc(doc(pcoll('plans'), id), row);
       await addDoc(pcoll('notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
       cache.plans.push(row); renderPlans();
@@ -1355,6 +1373,16 @@ cache.goals.push(row); renderGoals();
 
     // Click handlers
     document.addEventListener('click', async (e)=>{
+      const openItemBtn = e.target.closest('[data-open-item]');
+      if(openItemBtn){
+        const coll = openItemBtn.dataset.coll;
+        const id = openItemBtn.dataset.id;
+        if(coll && id){
+          try{ renderOverlay(coll, id); }catch(err){ alert('Could not open item: '+err.message); }
+        }
+        return;
+      }
+
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
@@ -1468,7 +1496,7 @@ if(editBtn){
       const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
       const owner = CURRENT_ROLE || 'Viewer';
       const today = new Date().toISOString().slice(0,10);
-      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      const suggestion = { id, description, subject, owner, submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'), status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
         await setDoc(doc(pcoll('suggestions'), id), suggestion);
         await addDoc(pcoll('notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
@@ -1482,7 +1510,7 @@ if(editBtn){
       const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
       const owner = CURRENT_ROLE || 'Viewer';
       const today = new Date().toISOString().slice(0,10);
-      const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      const qdoc = { id, description, subject, owner, submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'), status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
         await setDoc(doc(pcoll('questions'), id), qdoc);
         await addDoc(pcoll('notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
@@ -1650,6 +1678,13 @@ async function saveOverlay(updates, opts={}){
 
     if(isDraft){
       const toSave = Object.assign({}, merged);
+      // ensure creator fields exist (for timeline)
+      try{
+        toSave.createdByUid = toSave.createdByUid || (CURRENT_UID||'');
+        toSave.createdByName = toSave.createdByName || (CURRENT_NAME||'');
+        toSave.createdByRole = toSave.createdByRole || (CURRENT_ROLE||'Viewer');
+        toSave.createdAt = toSave.createdAt || new Date().toISOString();
+      }catch(_e){}
       // strip local-only fields
       try{ delete toSave.__isDraft; delete toSave.__isNew; delete toSave.__draftCreatedAt; }catch(_e){}
 
@@ -1711,7 +1746,22 @@ function renderLinkGraph(){
   });
 
   const typeClass = (k)=> ({goals:'goal',risks:'risk',issues:'issue',plans:'plan',questions:'question',suggestions:'suggestion'}[k]||'');
-  const label = (n)=>{ const t=fmtDate(pickTime(n.data)); const d=t? t.slice(0,10):''; const map={goals:'Goal',risks:'Risk',issues:'Issue',plans:'Plan',questions:'Question',suggestions:'Suggestion'}; const ty=map[n.coll]||n.coll; return d? `${ty} • ${n.id} • ${d}` : `${ty} • ${n.id}`; };
+  const firstName = (full)=>{ 
+    const s = String(full||'').trim(); 
+    if(!s) return ''; 
+    return s.split(/\s+/)[0]; 
+  };
+  const label = (n)=>{ 
+    const data = (n.data||{}); 
+    const t = fmtDate(pickTime(data)); 
+    const d = t ? t.slice(0,10) : ''; 
+    const full = String(data.createdByName || data.createdBy || data.creatorName || '').trim(); 
+    const fn = firstName(full) || String(data.createdByUid||'').trim() || '—'; 
+    const role = String(data.createdByRole || data.creatorRole || data.role || data.owner || '').trim() || '—'; 
+    const s = d ? `${n.id} • ${fn} • ${role} • ${d}` : `${n.id} • ${fn} • ${role}`; 
+    return escapeHtml(s); 
+  };
+
   const pickTime = (d)=> d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.timestamp || '';
   const fmtDate = (v)=>{ if(!v) return ''; try{ if(/^\d{4}-\d{2}-\d{2}/.test(v)) return v; const dt=new Date(v); if(!isNaN(dt)) return dt.toISOString().slice(0,10);}catch(e){} return String(v); };
 
@@ -1823,6 +1873,18 @@ function renderOverlay(coll,id){
     const opts  = Array.isArray(optsOrGroup)? optsOrGroup : (Array.isArray(maybeGroup)? maybeGroup : null);
     pieces[group] += inputHtml(name,type,label,opts,row[name]||'', !OV.edit);
   });
+
+  // Creator info (read-only fields)
+  try{
+    const fullName = String(row.createdByName||'').trim();
+    const role = String(row.createdByRole||'').trim();
+    if(fullName || role){
+      const _rows = [];
+      _rows.push(`<div class="form-row"><label>Created by</label><div>${escapeHtml(fullName||'—')}</div></div>`);
+      _rows.push(`<div class="form-row"><label>User role</label><div>${escapeHtml(role||'—')}</div></div>`);
+      pieces.meta = _rows.join('') + (pieces.meta||'');
+    }
+  }catch(_e){}
 
   let html = '';
   if(pieces.content) html += sectionWrap('Content', pieces.content);
@@ -1988,6 +2050,14 @@ async function addNew(coll, forcedId){
   };
 
   const row = defaults[coll](id);
+
+  // creator stamps (for timeline labels)
+  try{
+    row.createdByUid = row.createdByUid || (CURRENT_UID||'');
+    row.createdByName = row.createdByName || (CURRENT_NAME||'');
+    row.createdByRole = row.createdByRole || (CURRENT_ROLE||'Viewer');
+    row.createdAt = row.createdAt || new Date().toISOString();
+  }catch(_e){}
 
   // timestamps (local draft)
   try{
@@ -2323,7 +2393,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
     ["settings","Instellingen"], ["options","Opties"], ["actions","Acties"],
     ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
-    ["yes","Ja"], ["no","Nee"],
+    ["yes","Com"], ["no","Nee"],
 
     // Kolomkoppen / velden
     ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
@@ -2443,111 +2513,5 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
- DICT    = new Map(DICT_ENTRIES.map(([k,v])=>[norm(k),v]));
 
-  // Staat element in tabnavigatie? Dan alleen LOCK_EN toepassen.
-  function inTabNav(el){ return !!(el && el.closest && el.closest('nav.tabs,[role="tablist"]')); }
-
-  function keepPunct(original, replacement){
-    const lead = (original.match(/^\s*/) || [""])[0];
-    const trail= (original.match(/\s*$/) || [""])[0];
-    const endP = (original.trim().match(/[:;,.!?]+$/) || [""])[0];
-    return lead + replacement + endP + trail;
-  }
-
-  function applyOnTextNode(node, parent){
-    const original = node.nodeValue;
-    const t = original.trim();
-    if (!t) return;
-    const key = norm(t);
-
-    // Tabs e.d.: geforceerd Engels houden
-    if (LOCK_EN.has(key)){
-      const rep = LOCK_EN.get(key);
-      if (rep !== t) node.nodeValue = original.replace(t, keepPunct(t, rep));
-      return;
-    }
-    // In tabnavigatie: niets veranderen behalve LOCK_EN
-    if (inTabNav(parent)) return;
-
-    const rep = DICT.get(key);
-    if (rep && rep !== t){
-      node.nodeValue = original.replace(t, keepPunct(t, rep));
-    }
-  }
-
-  function applyOnAttributes(el){
-    for (const attr of ["placeholder","title","aria-label"]){
-      if (!el.hasAttribute(attr)) continue;
-      const val = el.getAttribute(attr);
-      const key = norm(val);
-
-      if (LOCK_EN.has(key)){
-        const rep = LOCK_EN.get(key);
-        if (rep !== val) el.setAttribute(attr, keepPunct(val, rep));
-        continue;
-      }
-      if (inTabNav(el)) continue;
-
-      const rep = DICT.get(key);
-      if (rep && rep !== val){
-        el.setAttribute(attr, keepPunct(val, rep));
-      }
-    }
-  }
-
-  function processElement(el){
-    if (!el || el.nodeType !== 1) return;
-    // direct child textnodes
-    for (const n of el.childNodes){
-      if (n.nodeType === 3) applyOnTextNode(n, el);
-    }
-    applyOnAttributes(el);
-  }
-
-  function applyOverrides(root=document.body){
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT, {
-      acceptNode: (node) =>
-        /^(SCRIPT|STYLE|TEMPLATE)$/i.test(node.tagName) ? NodeFilter.FILTER_REJECT : NodeFilter.FILTER_ACCEPT
-    });
-    let cur = root;
-    do { processElement(cur); cur = walker.nextNode(); } while (cur);
-  }
-
-  // MutationObserver: blijf netjes corrigeren bij dynamische content
-  let mo, deb;
-  function startObserver(){
-    if (mo) mo.disconnect();
-    mo = new MutationObserver((muts)=>{
-      // simpele debounce
-      clearTimeout(deb);
-      deb = setTimeout(()=> applyOverrides(), 120);
-    });
-    mo.observe(document.body, {
-      childList:true, subtree:true,
-      attributes:true, attributeFilter:["placeholder","title","aria-label"],
-      characterData:true
-    });
-  }
-
-  // Hook: als jouw vertaalflow deze aanroept, doen we extra “napoetsen”
-  if (typeof window.__applyOverridesAfterTranslate !== 'function'){
-    window.__applyOverridesAfterTranslate = function(){
-      let tries = 0;
-      const iv = setInterval(()=>{
-        applyOverrides();
-        if (++tries >= 30) clearInterval(iv); // ~3s
-      }, 100);
-    };
-  }
-
-  document.addEventListener('DOMContentLoaded', ()=>{
-    if (ENABLE_ON_LOAD) applyOverrides();
-    startObserver();
-  });
-})();
-</script>
-
-</body>
-</html>
 
