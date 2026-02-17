@@ -1579,19 +1579,77 @@ function collectOverlayUpdates(){
 async function saveOverlay(updates, opts={}){
   if(!CAN_EDIT){ alert('no edit rights'); return; }
   if(!OV.coll || !OV.id) return;
-  // validation
-  if(OV.coll==='goals' && 'goal' in updates && (updates.goal||'').trim()===''){ alert('Goal is required'); return; }
-  if(OV.coll==='plans' && 'goalId' in updates && updates.goalId && !/^G\d+$/.test(String(updates.goalId).trim())){ alert('Goal Link must look like G1, G2, ...'); return; }
+
+  const base = getRow(OV.coll, OV.id) || OV.row || {};
+  const isDraft = !!(base && base.__isDraft);
+
+  // Never autosave drafts; drafts are only committed when the user clicks Save
+  if(isDraft && opts.source !== 'manual') return;
+
+  const merged = Object.assign({}, base, updates);
+
+  // validation (required fields)
+  const reqKey = ({goals:'goal', risks:'description', issues:'description', plans:'description', questions:'description', suggestions:'description'}[OV.coll] || '');
+  if(reqKey && String(merged[reqKey]||'').trim()===''){
+    alert(OV.coll==='goals' ? 'Goal is required' : 'Description is required');
+    return;
+  }
+  if(OV.coll==='plans'){
+    const gid = String(merged.goalId||'').trim();
+    if(gid && !/^G\d+$/.test(gid)){ alert('Goal Link must look like G1, G2, ...'); return; }
+  }
+
   try{
-    if(Object.keys(updates).length){
-      await updateDoc(doc(pcoll(OV.coll), OV.id), updates);
-      Object.assign(getRow(OV.coll,OV.id), updates);
-      await addDoc(pcoll('notifications'), makeNote({
-        subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)),
-        status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion':(OV.coll==='questions'?'Question':OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id))
-      }));
-      renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
+    // Nothing to do for existing items with no changes
+    if(!isDraft && !Object.keys(updates).length){
+      setOverlayEdit(false);
+      return;
     }
+
+    const subj = (OV.coll==='suggestions') ? 'Suggestion'
+              : (OV.coll==='questions') ? 'Question'
+              : (OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1));
+
+    if(isDraft){
+      const toSave = Object.assign({}, merged);
+      // strip local-only fields
+      try{ delete toSave.__isDraft; delete toSave.__isNew; delete toSave.__draftCreatedAt; }catch(_e){}
+
+      await setDoc(doc(pcoll(OV.coll), OV.id), toSave);
+
+      // update local cache + overlay snapshot
+      const live = getRow(OV.coll, OV.id) || base;
+      Object.assign(live, toSave);
+      if(OV.row) Object.assign(OV.row, toSave);
+      try{ if(OV.row){ delete OV.row.__isDraft; delete OV.row.__isNew; delete OV.row.__draftCreatedAt; } }catch(_e){}
+      try{ delete live.__isDraft; delete live.__isNew; delete live.__draftCreatedAt; }catch(_e){}
+
+      // Notification only on manual Save
+      if(opts.source === 'manual'){
+        await addDoc(pcoll('notifications'), makeNote({
+          subject: `New ${subj}`, status:'Added', relatedId:OV.id, description: pickDesc(subj, live)
+        }));
+      }
+
+      // refresh underlying list
+      try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
+    }else{
+      if(Object.keys(updates).length){
+        await updateDoc(doc(pcoll(OV.coll), OV.id), updates);
+        const live = getRow(OV.coll, OV.id) || base;
+        Object.assign(live, updates);
+        if(OV.row) Object.assign(OV.row, updates);
+
+        // Notification only on manual Save
+        if(opts.source === 'manual'){
+          await addDoc(pcoll('notifications'), makeNote({
+            subject: subj, status:'Edited', relatedId:OV.id, description: pickDesc(subj, live)
+          }));
+          try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
+        }
+      }
+    }
+
     setOverlayEdit(false);
   }catch(err){ alert('save failed: '+err.message); }
 }
@@ -1698,7 +1756,11 @@ async function annotateOverlayNextIds(){
     const btn = document.getElementById(btnId);
     if(!btn) continue;
     try{
-      const cand = await nextUniqueId(coll, PREFIX[coll]);
+      // Prefer the Firebase-backed next id, but avoid duplicates with local drafts
+      let cand = await nextUniqueId(coll, PREFIX[coll]);
+      const used = (cache[coll]||[]).some(x=> String(x.id||'').trim()===String(cand||'').trim());
+      if(used) cand = nextId(cache[coll]||[], PREFIX[coll]);
+
       btn.textContent = `+ New ${label} (${cand})`;
       btn.title = `Volgende ID: ${cand}`;
       btn.dataset.nextId = cand;
@@ -1795,7 +1857,27 @@ function renderOverlay(coll,id){
     }
   }catch(_e){}
 }
-function closeOverlay(){ $('#overlay').classList.remove('show'); OV={coll:null,id:null,row:null,edit:false}; try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){} }
+function closeOverlay(){
+  // if a new draft was never saved, discard it (no Firebase writes, no logs)
+  try{
+    const isDraft = (OV && OV.row && OV.row.__isDraft);
+    const coll = OV?.coll, id = OV?.id;
+    $('#overlay').classList.remove('show');
+
+    if(isDraft && coll && id){
+      cache[coll] = (cache[coll]||[]).filter(x=> String(x.id||'').trim() !== String(id||'').trim());
+      try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
+    }
+
+    OV = {coll:null,id:null,row:null,edit:false};
+    try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){}
+    return;
+  }catch(_e){
+    $('#overlay').classList.remove('show');
+    OV={coll:null,id:null,row:null,edit:false};
+    try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){}
+  }
+}
 function setOverlayEdit(on){
   OV.edit = !!on;
   $$('#ovBody [name]').forEach(el=>{ el.disabled = !OV.edit; });
@@ -1835,8 +1917,13 @@ $('#ovDelete')?.addEventListener('click', async ()=>{
 // autosave debounce
 $('#ovBody')?.addEventListener('input', ()=>{
   if(!OV.edit) return;
+  // drafts are never autosaved (only manual Save commits them)
+  if(OV && OV.row && OV.row.__isDraft) return;
   clearTimeout(_autosaveTimer);
-  _autosaveTimer = setTimeout(()=>{ const updates = collectOverlayUpdates(); if(Object.keys(updates).length) saveOverlay(updates, {source:'auto'}); }, 120000);
+  _autosaveTimer = setTimeout(()=>{
+    const updates = collectOverlayUpdates();
+    if(Object.keys(updates).length) saveOverlay(updates, {source:'auto'});
+  }, 120000);
 });
 // keyboard shortcuts in overlay
 // Add New from overlay header
@@ -1844,8 +1931,15 @@ async function addNew(coll, forcedId){
   if(!DATA_READY){ alert('Data wordt geladen. Probeer zo nogmaals.'); return; }
 
   if(!CAN_EDIT){ alert('no edit rights'); return; }
+
+  cache[coll] = cache[coll] || [];
   const prefix = PREFIX[coll];
-  const id = (forcedId && String(forcedId).trim()) || nextId(cache[coll]||[], prefix);
+
+  // Prefer the suggested nextId (from Firebase), but never create duplicates locally
+  let id = (forcedId && String(forcedId).trim()) || nextId(cache[coll]||[], prefix);
+  const hasId = (xid)=> (cache[coll]||[]).some(x=> String(x.id||'').trim()===String(xid||'').trim());
+  if(hasId(id)) id = nextId(cache[coll]||[], prefix);
+
   const defaults = {
     goals:       (id)=>({id, goal:'', owner:'', start:'', end:'', status:'Open', notes:'', parentId:''}),
     risks:       (id)=>({id, description:'', owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'', parentId:'', goalId:''}),
@@ -1854,12 +1948,23 @@ async function addNew(coll, forcedId){
     questions:   (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
     suggestions: (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
   };
+
   const row = defaults[coll](id);
-      try{ const _today = new Date().toISOString().slice(0,10); row.ts = new Date().toISOString(); row.submitted = _today; row.Submitted = _today; }catch(_e){}
-row.ts = new Date().toISOString();
-  row.Submitted = new Date().toISOString().slice(0,10);
-if(OV && OV.id){ row.parentId = OV.id; }
+
+  // timestamps (local draft)
+  try{
+    const _today = new Date().toISOString().slice(0,10);
+    row.ts = new Date().toISOString();
+    row.submitted = row.submitted || _today;
+    row.Submitted = row.Submitted || _today;
+  }catch(_e){}
+  row.__isDraft = true;
+  row.__isNew = true;
+  row.__draftCreatedAt = new Date().toISOString();
+
+  if(OV && OV.id){ row.parentId = OV.id; }
   if(OV && OV.coll==='goals' && coll!=='goals'){ row.goalId = OV.id; }
+
   // Ensure chain info for Questions/Suggestions
   if((coll==='questions'||coll==='suggestions') && typeof OV!=='undefined' && OV){
     if(!row.parentId && OV.id) row.parentId = OV.id;
@@ -1874,11 +1979,12 @@ if(OV && OV.id){ row.parentId = OV.id; }
     }
   }
 
-  await setDoc(doc(pcoll(coll), id), row);
-  await addDoc(pcoll('notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
+  // IMPORTANT: do NOT write to Firebase yet. Only save/commit on manual Save.
   cache[coll].push(row);
-  renderTab(coll);
-  renderOverlay(coll,id);
+
+  // refresh current view (keep behaviour) and open overlay
+  try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
+  renderOverlay(coll, id);
 }
 $('#ovAddRisk')?.addEventListener('click', ()=>{ const cand=$('#ovAddRisk')?.dataset?.nextId; addNew('risks', cand); });
 $('#ovAddIssue')?.addEventListener('click', ()=>{ const cand=$('#ovAddIssue')?.dataset?.nextId; addNew('issues', cand); });
@@ -2299,3 +2405,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
