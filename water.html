@@ -785,12 +785,14 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     // Notification helpers
     function makeNote({subject,status,relatedId,description,comments=''}) {
+      const ts = new Date().toISOString(); // full timestamp (date + time)
       return {
         id: relatedId,
         description: description||'',
         subject, status,
         role: CURRENT_ROLE||'Viewer',
-        date: new Date().toISOString().slice(0,10),
+        timestamp: ts,
+        date: ts.slice(0,10), // show only date in UI
         comments
       };
     }
@@ -824,7 +826,12 @@ const $ = (q,root=document)=>root.querySelector(q);
       cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
       cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
       cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
-      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
+      cache.notifications = n.docs.map(d=>{
+        const data = d.data() || {};
+        const ts = data.timestamp || data.ts || data.createdAt || (data.date ? (String(data.date).length===10 ? String(data.date)+'T00:00:00.000Z' : String(data.date)) : '');
+        const date = data.date || (ts ? String(ts).slice(0,10) : '');
+        return { __id: d.id, ...data, timestamp: ts, date };
+      });
 
       buildFilterOptions();
       renderAll();
@@ -1270,7 +1277,11 @@ function actionsCell(coll){
       if(rl) list=list.filter(r=> (r.role||'')===rl);
       if(from) list=list.filter(r=> (r.date||'')>=from);
       if(to) list=list.filter(r=> (r.date||'')<=to);
-      list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
+      const _ts = (x)=> {
+        const v = (x && (x.timestamp || x.ts || x.createdAt)) || (x && x.date ? (String(x.date).length===10 ? String(x.date)+'T00:00:00.000Z' : String(x.date)) : '') || '';
+        return String(v);
+      };
+      list.sort((a,b)=> _ts(b).localeCompare(_ts(a)));
       list.forEach(r=>{
         const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
         const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
@@ -2513,5 +2524,3 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
-
-
