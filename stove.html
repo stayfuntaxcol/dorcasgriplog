@@ -990,7 +990,18 @@ const $ = (q,root=document)=>root.querySelector(q);
     $('#yr').textContent = new Date().getFullYear();
 
     const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+    
+
+    // Map user role -> rights label (used in auth header + permissions UX)
+    function rightsFromRole(role){
+      const r = String(role||'Viewer');
+      if(r.toLowerCase()==='admin') return 'admin';
+      if(EDIT_ROLES.has(r)) return 'editor';
+      if(r.toLowerCase().includes('sponsor') || r.toLowerCase().includes('partner')) return 'partner';
+      return 'viewer';
+    }
+
+const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
     const owners=["","Dorcas Tanzania","Mimi Moto (Tanzania)","Pellet Plant Manager","Operations Lead","Sales Lead","Finance Lead","PAYG/VICOBA Coordinator","Field Officer","After-Sales Technician Lead","MRV/Carbon Lead","Govt Liaison (Arusha)","TANESCO Liaison","Community Leader","Institutional Sales"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
@@ -2774,5 +2785,3 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
-
-
