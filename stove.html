@@ -1773,10 +1773,11 @@ function renderLinkGraph(){
   const pickActorName = (d)=> (d.updatedByName || d.createdByName || d.actor || d.actorName || d.byName || '').toString().trim();
   const pickActorRole = (d)=> (d.updatedByRole || d.createdByRole || d.role || d.actorRole || '').toString().trim();
   const pickOwner = (d)=> (d.owner || d.eigenaar || '').toString().trim();
+  const firstName = (s)=>{ s=(s||'').toString().trim(); if(!s) return ''; return s.split(/\s+/)[0]; };
   const label = (n)=>{
     const t = fmtDate(pickTime(n.data));
     const d = t ? t.slice(0,10) : '';
-    const actor = pickActorName(n.data) || '—';
+    const actor = firstName(pickActorName(n.data)) || '—';
     const roleOrOwner = (n.coll==='questions' || n.coll==='suggestions')
       ? (pickActorRole(n.data) || '—')
       : (pickOwner(n.data) || '—');
@@ -2511,3 +2512,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
