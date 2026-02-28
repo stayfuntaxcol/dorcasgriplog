@@ -312,6 +312,52 @@
 .lm-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
 #lmMsg{font-size:12px;color:var(--muted)}
 
+
+/* ===== Online users (presence) ===== */
+#userInfo{ display:none !important; }
+
+.onlineUsers{
+  display:none;
+  max-width:520px;
+  border:none;
+  background:rgba(255,255,255,.92);
+  border-radius:12px;
+  padding:8px 10px;
+  font-size:12px;
+  color:var(--ink);
+}
+.onlineUsers .ou-head{
+  font-weight:900;
+  font-size:12px;
+  margin-bottom:6px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  white-space:nowrap;
+  text-align:right;
+}
+.onlineUsers .ou-note{ color:var(--muted); font-size:12px; }
+.onlineUsers .ou-list{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  gap:8px;
+}
+.onlineUsers .ou-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(0,0,0,.10);
+  background:rgba(255,255,255,.75);
+  white-space:nowrap;
+}
+.onlineUsers .ou-name{ font-weight:700; }
+.onlineUsers .ou-name.ou-me{ font-weight:900; }
+.onlineUsers .ou-role{ color:var(--muted); font-weight:700; }
+
 </style>
 </head>
 <body>
@@ -326,6 +372,7 @@
     <div class="header-right">
       <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
       <span id="userInfo" class="user-info"></span>
+      <div id="onlineUsers" class="onlineUsers" aria-live="polite"></div>
     </div>
   </header>
 
@@ -654,7 +701,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, getDocs, onSnapshot, setDoc, doc, serverTimestamp, Timestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -705,6 +752,169 @@ const $ = (q,root=document)=>root.querySelector(q);
     const noteRoles    = ["","Admin","Sponsor/Partner","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
+    // ===== Presence (online users, TTL 2h) =====
+    const PRESENCE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+    let presenceUnsub = null;
+    let presenceTimer = null;
+    let presenceSnapshot = [];
+
+    function stopPresenceTimer(){
+      if(presenceTimer){ clearInterval(presenceTimer); presenceTimer = null; }
+    }
+    function stopPresenceList(){
+      if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
+    }
+
+    function escapeHtmlOU(s){
+      return (s ?? '').toString().replace(/[&<>"']/g, c => ({
+        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+      }[c]));
+    }
+
+    function roleRank(roleRaw){
+      const r = (roleRaw||'').toString().toLowerCase().replace(/\s+/g,' ').trim();
+      if(!r) return 99;
+      // Order: Admin, Project manager, Thematic Expert, Sponsor/Partner, Viewers
+      if(r.includes('admin')) return 0;
+      if((r.includes('project') && r.includes('manager')) || r.includes('projectmanager')) return 1;
+      if(r.includes('thematic')) return 2;
+      if(r.includes('sponsor') || r.includes('partner')) return 3;
+      if(r.includes('viewer') || r.includes('view')) return 4;
+      return 98;
+    }
+
+    async function setOnlinePresence(extra = {}){
+      if(!CURRENT_UID) return;
+      try{
+        const now = Date.now();
+        await setDoc(
+          doc(pcoll('presence'), CURRENT_UID),
+          {
+            uid: CURRENT_UID,
+            name: (CURRENT_NAME||'').trim(),
+            role: CURRENT_ROLE || 'Viewer',
+            online: true,
+            loginAt: serverTimestamp(),
+            expiresAt: Timestamp.fromMillis(now + PRESENCE_TTL_MS),
+            ...extra
+          },
+          { merge:true }
+        );
+      }catch(e){
+        console.warn('presence write failed', e);
+      }
+    }
+
+    async function setOfflinePresence(extra = {}){
+      if(!CURRENT_UID) return;
+      try{
+        await setDoc(
+          doc(pcoll('presence'), CURRENT_UID),
+          { online:false, logoutAt: serverTimestamp(), ...extra },
+          { merge:true }
+        );
+      }catch(e){
+        console.warn('presence offline write failed', e);
+      }
+    }
+
+    function renderOnlineUsers(list){
+      const box = document.getElementById('onlineUsers');
+      if(!box) return;
+
+      if(!CURRENT_UID){
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+
+      const items = (list||[]).filter(Boolean);
+      const count = items.length;
+
+      box.style.display = 'block';
+
+      if(!count){
+        box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div>
+                         <div class="ou-note">Niemand online.</div>`;
+        return;
+      }
+
+      const head = `<div class="ou-head"><span class="ou-title">Online Users: ${count}</span></div>`;
+      const chips = items.map(u=>{
+        const name = (u.name||'unknown').toString().trim();
+        const role = (u.role||'').toString().trim();
+        const isMe = (u.uid && u.uid===CURRENT_UID)
+          || ((CURRENT_NAME||'').toString().trim().toLowerCase()===name.toLowerCase());
+        return `
+          <div class="ou-chip" title="${escapeHtmlOU(role)}">
+            <span class="dot ok"></span>
+            <span class="ou-name ${isMe?'ou-me':''}">${escapeHtmlOU(name)}</span>
+            <span class="ou-role">${role?('— '+escapeHtmlOU(role)):""}</span>
+          </div>`;
+      }).join('');
+
+      box.innerHTML = head + `<div class="ou-list">${chips}</div>`;
+    }
+
+    function refreshPresenceRender(){
+      if(!CURRENT_UID){ renderOnlineUsers([]); return; }
+      const now = Date.now();
+      const filtered = (presenceSnapshot||[])
+        .map(u=>{
+          const exp = u.expiresAt;
+          const expMs = (exp && typeof exp.toMillis === 'function') ? exp.toMillis()
+                       : (typeof exp === 'number' ? exp : 0);
+          return { ...u, _expMs: expMs };
+        })
+        .filter(u => (u.online !== false) && u._expMs && (u._expMs > now));
+
+      filtered.sort((a,b)=>{
+        const ra = roleRank(a.role), rb = roleRank(b.role);
+        if(ra !== rb) return ra - rb;
+        return (a.name||'').localeCompare((b.name||''), undefined, { sensitivity:'base' });
+      });
+
+      renderOnlineUsers(filtered);
+    }
+
+    function startPresenceList(){
+      stopPresenceList();
+      stopPresenceTimer();
+      presenceSnapshot = [];
+
+      if(!CURRENT_UID){ renderOnlineUsers([]); return; }
+
+      const collRef = pcoll('presence');
+      presenceUnsub = onSnapshot(collRef, (snap)=>{
+        const list = [];
+        snap.forEach(d=>{
+          const x = d.data() || {};
+          list.push({
+            uid: x.uid || d.id,
+            name: x.name || d.id,
+            role: x.role || 'Viewer',
+            online: (x.online !== false),
+            expiresAt: x.expiresAt || 0
+          });
+        });
+        presenceSnapshot = list;
+        refreshPresenceRender();
+      }, (err)=>{
+        console.warn('presence read failed', err);
+        presenceSnapshot = [];
+        renderOnlineUsers([]);
+      });
+
+      // UI refresh only (no DB writes) so expired users disappear
+      presenceTimer = setInterval(refreshPresenceRender, 60000);
+    }
+
+    function startPresence(){
+      if(!CURRENT_UID) return;
+      setOnlinePresence();
+      startPresenceList();
+    }
+
 
     let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
     let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[]};
@@ -736,11 +946,17 @@ const $ = (q,root=document)=>root.querySelector(q);
         if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
       }catch(e){ alert('login failed: '+e.message); }
     };
-    $('#btnSignout').onclick=()=>signOut(auth);
+    $('#btnSignout').onclick=async ()=>{
+      try{ await setOfflinePresence(); }catch(e){}
+      try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
+      await signOut(auth);
+    };
 
     onAuthStateChanged(auth, async (user)=>{
       const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
+      try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
+      return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
       let role='Viewer', full=user.displayName||user.email||'';
@@ -756,6 +972,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
       syncSectionUserLabels();
       setEditMode(isEditor);
+      try{ startPresence(); }catch(e){}
       await loadAll();
     });
 
@@ -2524,3 +2741,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
