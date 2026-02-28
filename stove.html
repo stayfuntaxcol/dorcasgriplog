@@ -300,6 +300,19 @@
 
 
 /* === Load modal (Firebase / JSON import) === */
+
+.chip.clickable{ cursor:pointer; }
+#projectOverlay{position:fixed;inset:0;display:none;z-index:1100}
+#projectOverlay.show{display:block}
+#projectOverlay .modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+#projectOverlay .modal-card{position:relative;max-width:520px;margin:10vh auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+#projectOverlay .modal-title{font-weight:800;font-size:18px;margin-bottom:6px}
+#projectOverlay .modal-sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+#projectOverlay .modal-actions{display:flex;gap:10px;margin-top:10px}
+#projectOverlay .modal-foot{display:flex;justify-content:flex-end;margin-top:10px}
+#projectOverlay .modal-row{display:flex;gap:10px;align-items:center}
+#projectOverlay .modal-row .input{flex:1}
+
 #loadOverlay{position:fixed;inset:0;display:none;z-index:1100}
 #loadOverlay.show{display:block}
 #loadOverlay .modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
@@ -322,6 +335,7 @@
       </div>
     </div>
     <div class="header-right">
+      <span id="projChip" class="chip clickable"><span id="projDot" class="dot"></span><span id="projTxt">project: (all)</span></span>
       <span class="chip"><span id="dsDot" class="dot"></span><span id="datasetChip">no dataset loaded</span></span>
       <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
       <span id="userInfo" class="user-info"></span>
@@ -631,7 +645,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -645,6 +659,92 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
+
+// ===== Projects (multi-project support) =====
+const PROJECTS_COLL = 'projects';
+let ACTIVE_PROJECT_ID = localStorage.getItem('griplog_projectId') || '';
+let PROJECTS_CACHE = [];
+
+function isAllProjects(){ return !ACTIVE_PROJECT_ID || ACTIVE_PROJECT_ID === '__ALL__'; }
+function setActiveProject(id){
+  ACTIVE_PROJECT_ID = (id || '').trim();
+  localStorage.setItem('griplog_projectId', ACTIVE_PROJECT_ID);
+  updateProjectChip();
+}
+function updateProjectChip(){
+  const t = document.getElementById('projTxt');
+  if(t) t.textContent = isAllProjects() ? 'project: (all)' : ('project: ' + ACTIVE_PROJECT_ID);
+  const d = document.getElementById('projDot');
+  if(d){
+    if(isAllProjects()) d.classList.remove('ok');
+    else d.classList.add('ok');
+  }
+}
+function colRef(name){
+  return isAllProjects()
+    ? collection(db, name)
+    : query(collection(db, name), where('projectId','==', ACTIVE_PROJECT_ID));
+}
+async function loadProjects(){
+  try{
+    const snap = await getDocs(collection(db, PROJECTS_COLL));
+    PROJECTS_CACHE = snap.docs.map(d=>({id:d.id, ...d.data()}));
+    PROJECTS_CACHE.sort((a,b)=> String(a.title||a.name||a.id).localeCompare(String(b.title||b.name||b.id)));
+    const sel = document.getElementById('projectSelect');
+    if(sel){
+      sel.innerHTML = '';
+      const optAll = document.createElement('option');
+      optAll.value = '__ALL__';
+      optAll.textContent = '(all projects)';
+      sel.appendChild(optAll);
+      PROJECTS_CACHE.forEach(p=>{
+        const opt=document.createElement('option');
+        opt.value=p.id;
+        opt.textContent = p.title || p.name || p.id;
+        sel.appendChild(opt);
+      });
+      // choose active
+      const exists = PROJECTS_CACHE.some(p=>p.id===ACTIVE_PROJECT_ID);
+      if(!ACTIVE_PROJECT_ID || (!exists && !isAllProjects())){
+        if(PROJECTS_CACHE.length) setActiveProject(PROJECTS_CACHE[0].id);
+        else setActiveProject('__ALL__');
+      }
+      sel.value = isAllProjects() ? '__ALL__' : ACTIVE_PROJECT_ID;
+    }else{
+      // no selector; still keep ACTIVE_PROJECT_ID sane
+      const exists = PROJECTS_CACHE.some(p=>p.id===ACTIVE_PROJECT_ID);
+      if(!ACTIVE_PROJECT_ID || (!exists && !isAllProjects())){
+        if(PROJECTS_CACHE.length) setActiveProject(PROJECTS_CACHE[0].id);
+        else setActiveProject('__ALL__');
+      }
+    }
+    updateProjectChip();
+  }catch(err){
+    console.warn('projects load failed', err);
+    updateProjectChip();
+  }
+}
+async function createProject(projectId, title){
+  const id = (projectId||'').trim();
+  if(!id){ alert('Project ID is required'); return; }
+  const payload = {
+    title: (title||'').trim() || id,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+  await setDoc(doc(db, PROJECTS_COLL, id), payload, { merge:true });
+  await loadProjects();
+  setActiveProject(id);
+}
+updateProjectChip();
+
+function showProjectModal(show=true){
+  const ov = document.getElementById('projectOverlay');
+  if(!ov) return;
+  ov.classList.toggle('show', !!show);
+  ov.setAttribute('aria-hidden', show?'false':'true');
+}
+
 
     
     // Data readiness gate: block creating new items until initial data is loaded
@@ -726,6 +826,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
       syncSectionUserLabels();
       setEditMode(isEditor);
+      await loadProjects();
       await loadAll();
     });
 
@@ -756,6 +857,7 @@ const $ = (q,root=document)=>root.querySelector(q);
     // Notification helpers
     function makeNote({subject,status,relatedId,description,comments=''}) {
       return {
+        projectId: isAllProjects() ? '' : (ACTIVE_PROJECT_ID||''),
         id: relatedId,
         description: description||'',
         subject, status,
@@ -777,13 +879,13 @@ const $ = (q,root=document)=>root.querySelector(q);
     // Load / Save
     async function loadAll(){
       const [g,r,i,p,s,q,n] = await Promise.all([
-        getDocs(collection(db,'goals')),
-        getDocs(collection(db,'risks')),
-        getDocs(collection(db,'issues')),
-        getDocs(collection(db,'plans')),
-        getDocs(collection(db,'suggestions')),
-        getDocs(collection(db,'questions')),
-        getDocs(collection(db,'notifications')),
+        getDocs(colRef('goals')),
+        getDocs(colRef('risks')),
+        getDocs(colRef('issues')),
+        getDocs(colRef('plans')),
+        getDocs(colRef('suggestions')),
+        getDocs(colRef('questions')),
+        getDocs(colRef('notifications')),
       ]);
 
       prevCache = JSON.parse(JSON.stringify(cache));
@@ -812,12 +914,16 @@ const $ = (q,root=document)=>root.querySelector(q);
       const newIssues= rowsFromTable('issues');
       const newPlans = rowsFromTable('plans');
 
+      const newSuggestions = (cache.suggestions||[]).map(x=>({...(x||{})}));
+      const newQuestions   = (cache.questions||[]).map(x=>({...(x||{})}));
+
       const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
       const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
 
       function upserts(prevArr, nextArr, coll, label){
         const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
+          if(!isAllProjects()){ row.projectId = ACTIVE_PROJECT_ID; }
           tasks.push(setDoc(doc(db,coll,row.id), row));
           if(!prevMap[row.id]){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
@@ -835,7 +941,10 @@ const $ = (q,root=document)=>root.querySelector(q);
       upserts(prevCache.issues,newIssues,'issues','Issue');
       upserts(prevCache.plans, newPlans, 'plans', 'Plan');
 
-      await Promise.all(tasks);
+      
+      upserts(prevCache.suggestions, newSuggestions, 'suggestions', 'Suggestion');
+      upserts(prevCache.questions, newQuestions, 'questions', 'Question');
+await Promise.all(tasks);
       if(notes.length) await Promise.all(notes.map(n=>addDoc(collection(db,'notifications'), n)));
       alert('saved to firestore');
       await loadAll();
@@ -863,6 +972,13 @@ const $ = (q,root=document)=>root.querySelector(q);
       const keys = ['goals','risks','issues','plans','suggestions','questions','notifications'];
       for(const k of keys){
         cache[k] = Array.isArray(obj?.[k]) ? obj[k] : [];
+      }
+
+      // apply active projectId to imported items (keeps Firebase data separated)
+      if(!isAllProjects()){
+        ['goals','risks','issues','plans','suggestions','questions','notifications'].forEach(k=>{
+          if(Array.isArray(cache[k])) cache[k] = cache[k].map(x=> (x && typeof x==='object') ? ({...x, projectId: ACTIVE_PROJECT_ID}) : x);
+        });
       }
 
       // normalize notifications (this app expects __id)
@@ -903,6 +1019,42 @@ const $ = (q,root=document)=>root.querySelector(q);
     }
 
     document.addEventListener('DOMContentLoaded', ()=>{
+
+      // Projects UI
+      const projChip = document.getElementById('projChip');
+      projChip && (projChip.onclick=async()=>{ showProjectModal(true); });
+
+      const pov = document.getElementById('projectOverlay');
+      const pback = pov?.querySelector('.modal-backdrop');
+      pback && pback.addEventListener('click', ()=>showProjectModal(false));
+
+      const btnCloseP = document.getElementById('btnCloseProject');
+      btnCloseP && (btnCloseP.onclick=()=>showProjectModal(false));
+
+      const btnUseP = document.getElementById('btnUseProject');
+      btnUseP && (btnUseP.onclick=async()=>{
+        const sel = document.getElementById('projectSelect');
+        const id = sel ? sel.value : '__ALL__';
+        setActiveProject(id);
+        showProjectModal(false);
+        if(CURRENT_UID){ await loadAll(); }
+      });
+
+      const btnNewP = document.getElementById('btnNewProject');
+      btnNewP && (btnNewP.onclick=async()=>{
+        const id = prompt('New project ID (e.g. stove-clean-cooking-tanzania):','stove-clean-cooking-tanzania');
+        if(!id) return;
+        const title = prompt('Project title (shown in dropdown):','Clean Cooking Stoves (Tanzania)');
+        try{
+          await createProject(id, title||id);
+          alert('Project created: ' + id);
+        }catch(err){
+          console.error(err);
+          alert('Failed to create project. Check your rights / rules.');
+        }
+      });
+
+
       const ov = document.getElementById('loadOverlay');
       const back = ov?.querySelector('.modal-backdrop');
       back && back.addEventListener('click', ()=>showLoadModal(false));
@@ -1338,7 +1490,7 @@ if(editBtn){
       subject: subj, status:'Edited', relatedId:id, description: pickDesc(subj,row)
     }));
     // refresh notifications cache
-    const listSnap = await getDocs(collection(db,'notifications'));
+    const listSnap = await getDocs(colRef('notifications'));
     cache.notifications = listSnap.docs.map(d=>({__id:d.id, ...d.data()}));
   }catch(err){ alert('edit failed: '+err.message); }
 }
@@ -1355,7 +1507,7 @@ if(editBtn){
           tr.remove(); 
           const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
           await addDoc(collection(db,'notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
-          const list = await getDocs(collection(db,'notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
+          const list = await getDocs(colRef('notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
       }
 
@@ -1365,7 +1517,7 @@ if(editBtn){
         const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
         if(!confirm('Delete this notification?')) return;
         await deleteDoc(doc(db,'notifications',id));
-        const list = await getDocs(collection(db,'notifications'));
+        const list = await getDocs(colRef('notifications'));
         cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
         renderNotifications(cache.notifications);
       }
@@ -1822,6 +1974,7 @@ if(OV && OV.id){ row.parentId = OV.id; }
     }
   }
 
+  if(!isAllProjects()){ row.projectId = ACTIVE_PROJECT_ID; }
   await setDoc(doc(db, coll, id), row);
   await addDoc(collection(db,'notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
   cache[coll].push(row);
