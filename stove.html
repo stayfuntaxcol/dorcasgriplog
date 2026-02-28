@@ -847,6 +847,8 @@ const $ = (q,root=document)=>root.querySelector(q);
         description: description||'',
         subject, status,
         role: CURRENT_ROLE||'Viewer',
+        actor: (CURRENT_NAME||'').trim(),
+        actorUid: CURRENT_UID||'',
         date: new Date().toISOString().slice(0,10),
         comments
       };
@@ -927,8 +929,18 @@ const $ = (q,root=document)=>root.querySelector(q);
         const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
           if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
+          // audit fields (actor)
+          if(_isNew){
+            if(!('createdByName' in row)) row.createdByName = (CURRENT_NAME||'').trim();
+            if(!('createdByRole' in row)) row.createdByRole = (CURRENT_ROLE||'Viewer');
+            if(!('createdByUid'  in row)) row.createdByUid  = (CURRENT_UID||'');
+          }
+          row.updatedByName = (CURRENT_NAME||'').trim();
+          row.updatedByRole = (CURRENT_ROLE||'Viewer');
+          row.updatedByUid  = (CURRENT_UID||'');
+
           // keep all fields; only touch timestamps server-side
-          const _isNew = !prevMap[row.id];
+
           if(_isNew && !('createdAt' in row)) row.createdAt = serverTimestamp();
           row.updatedAt = serverTimestamp();
           tasks.push(setDoc(projDoc(coll,row.id), row, {merge:true}));
@@ -1757,8 +1769,19 @@ function renderLinkGraph(){
   });
 
   const typeClass = (k)=> ({goals:'goal',risks:'risk',issues:'issue',plans:'plan',questions:'question',suggestions:'suggestion'}[k]||'');
-  const label = (n)=>{ const t=fmtDate(pickTime(n.data)); const d=t? t.slice(0,10):''; const map={goals:'Goal',risks:'Risk',issues:'Issue',plans:'Plan',questions:'Question',suggestions:'Suggestion'}; const ty=map[n.coll]||n.coll; return d? `${ty} • ${n.id} • ${d}` : `${ty} • ${n.id}`; };
-  const pickTime = (d)=> d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.timestamp || '';
+  const pickActorName = (d)=> (d.updatedByName || d.createdByName || d.actor || d.actorName || d.byName || '').toString().trim();
+  const pickActorRole = (d)=> (d.updatedByRole || d.createdByRole || d.role || d.actorRole || '').toString().trim();
+  const pickOwner = (d)=> (d.owner || d.eigenaar || '').toString().trim();
+  const label = (n)=>{
+    const t = fmtDate(pickTime(n.data));
+    const d = t ? t.slice(0,10) : '';
+    const actor = pickActorName(n.data) || '—';
+    const roleOrOwner = (n.coll==='questions' || n.coll==='suggestions')
+      ? (pickActorRole(n.data) || '—')
+      : (pickOwner(n.data) || '—');
+    return d ? `${n.id} • ${actor} • ${roleOrOwner} • ${d}` : `${n.id} • ${actor} • ${roleOrOwner}`;
+  };
+  const pickTime = (d)=> d.updatedAt || d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.created || d.timestamp || '';
   const fmtDate = (v)=>{
     if(!v) return '';
     try{
@@ -2036,7 +2059,16 @@ if(OV && OV.id){ row.parentId = OV.id; }
   }
 
   if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
-  await setDoc(projDoc(coll, id), row);
+  // audit fields
+  if(!('createdByName' in row)) row.createdByName = (CURRENT_NAME||'').trim();
+  if(!('createdByRole' in row)) row.createdByRole = (CURRENT_ROLE||'Viewer');
+  if(!('createdByUid'  in row)) row.createdByUid  = (CURRENT_UID||'');
+  row.updatedByName = (CURRENT_NAME||'').trim();
+  row.updatedByRole = (CURRENT_ROLE||'Viewer');
+  row.updatedByUid  = (CURRENT_UID||'');
+  row.createdAt = row.createdAt || serverTimestamp();
+  row.updatedAt = serverTimestamp();
+  await setDoc(projDoc(coll, id), row, {merge:true});
   await addDoc(projColl('notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
   cache[coll].push(row);
   renderTab(coll);
@@ -2478,5 +2510,3 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
-
-
