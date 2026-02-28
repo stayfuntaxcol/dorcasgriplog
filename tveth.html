@@ -392,6 +392,15 @@
     .onlineUsers .ou-name.ou-me{ font-weight:900; }
     .onlineUsers .ou-role{ color:var(--muted); font-weight:700; }
 
+
+/* ===== Online Users header: force right alignment ===== */
+.onlineUsers .ou-head{
+  width:100% !important;
+  justify-content:flex-end !important;
+  text-align:right !important;
+}
+.onlineUsers .ou-title{ margin-left:auto !important; }
+
 </style>
 </head>
 <body>
@@ -2796,4 +2805,3 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
-
