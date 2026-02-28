@@ -893,22 +893,37 @@ const $ = (q,root=document)=>root.querySelector(q);
       if(!CAN_EDIT){ alert('no edit rights'); return; }
       const tasks=[]; const notes=[];
 
-      const newGoals = rowsFromTable('goals');
-      const newRisks = rowsFromTable('risks');
-      const newIssues= rowsFromTable('issues');
-      const newPlans = rowsFromTable('plans');
+      const tblGoals = rowsFromTable('goals');
+      const tblRisks = rowsFromTable('risks');
+      const tblIssues= rowsFromTable('issues');
+      const tblPlans = rowsFromTable('plans');
+
+      const mergeWithCache = (kind, rows)=> rows.map(r=>({
+        ...((cache[kind]||[]).find(x=>x.id===r.id) || {}),
+        ...r
+      }));
+
+      const newGoals = mergeWithCache('goals', tblGoals);
+      const newRisks = mergeWithCache('risks', tblRisks);
+      const newIssues= mergeWithCache('issues',tblIssues);
+      const newPlans = mergeWithCache('plans',tblPlans);
 
       const newSuggestions = (cache.suggestions||[]).map(x=>({...(x||{})}));
       const newQuestions   = (cache.questions||[]).map(x=>({...(x||{})}));
 
       const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
-      const changed = (a,b)=> JSON.stringify(a) !== JSON.stringify(b);
+      const stripMeta = (o)=>{ const x={...(o||{})}; delete x.updatedAt; delete x.createdAt; return x; };
+      const changed = (a,b)=> JSON.stringify(stripMeta(a)) !== JSON.stringify(stripMeta(b));
 
       function upserts(prevArr, nextArr, coll, label){
         const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
           if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
-          tasks.push(setDoc(projDoc(coll,row.id), row));
+          // keep all fields; only touch timestamps server-side
+          const _isNew = !prevMap[row.id];
+          if(_isNew && !('createdAt' in row)) row.createdAt = serverTimestamp();
+          row.updatedAt = serverTimestamp();
+          tasks.push(setDoc(projDoc(coll,row.id), row, {merge:true}));
           if(!prevMap[row.id]){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
           } else if(changed(prevMap[row.id], row)){
@@ -1466,7 +1481,7 @@ if(editBtn){
   }
 
   try{
-    await updateDoc(doc(db, coll, id), updates);
+    await updateDoc(projDoc(coll, id), { ...updates, updatedAt: serverTimestamp() });
     Object.assign(row, updates);
     // herteken huidig tabblad
     renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
@@ -1662,6 +1677,33 @@ function collectOverlayUpdates(){
   });
   return updates;
 }
+
+async function flushGoalBundle(goalId){
+  try{
+    if(!hasProject()) return;
+    const gId = String(goalId||'').trim();
+    if(!gId) return;
+    const colls = ['goals','risks','issues','plans','questions','suggestions'];
+    const writes = [];
+    colls.forEach(coll=>{
+      const arr = (cache[coll]||[]);
+      const rows = (coll==='goals')
+        ? arr.filter(r=>String(r.id||'')===gId)
+        : arr.filter(r=>String(r.goalId||'')===gId);
+      rows.forEach(r=>{
+        const payload = { ...(r||{}) };
+        payload.projectId = ACTIVE_PROJECT_ID;
+        if(!('createdAt' in payload)) payload.createdAt = serverTimestamp();
+        payload.updatedAt = serverTimestamp();
+        writes.push(setDoc(projDoc(coll, payload.id), payload, {merge:true}));
+      });
+    });
+    if(writes.length) await Promise.all(writes);
+  }catch(err){
+    console.warn('flushGoalBundle failed', err);
+  }
+}
+
 async function saveOverlay(updates, opts={}){
   if(!CAN_EDIT){ alert('no edit rights'); return; }
   if(!OV.coll || !OV.id) return;
@@ -1670,8 +1712,11 @@ async function saveOverlay(updates, opts={}){
   if(OV.coll==='plans' && 'goalId' in updates && updates.goalId && !/^G\d+$/.test(String(updates.goalId).trim())){ alert('Goal Link must look like G1, G2, ...'); return; }
   try{
     if(Object.keys(updates).length){
-      await updateDoc(doc(db, OV.coll, OV.id), updates);
+      await updateDoc(projDoc(OV.coll, OV.id), { ...updates, updatedAt: serverTimestamp() });
       Object.assign(getRow(OV.coll,OV.id), updates);
+      // also persist full goal bundle so timeline-linked items keep all fields
+      const _gId = (OV.coll==='goals') ? OV.id : (getRow(OV.coll,OV.id)?.goalId||'');
+      await flushGoalBundle(_gId);
       await addDoc(projColl('notifications'), makeNote({
         subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)),
         status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion':(OV.coll==='questions'?'Question':OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id))
