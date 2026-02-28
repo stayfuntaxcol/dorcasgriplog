@@ -30,6 +30,9 @@
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
     .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+
+/* Header visibility tweaks (show only user chip) */
+#projChip,#dsChip,#authChip{display:none!important}
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
     .ok{background:var(--ok)}
     .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
@@ -336,9 +339,9 @@
     </div>
     <div class="header-right">
       <span id="projChip" class="chip clickable"><span id="projDot" class="dot"></span><span id="projTxt">project: (select)</span></span>
-      <span class="chip"><span id="dsDot" class="dot"></span><span id="datasetChip">no dataset loaded</span></span>
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
+      <span id="dsChip" class="chip"><span id="dsDot" class="dot"></span><span id="datasetChip">no dataset loaded</span></span>
+      <span id="authChip" class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userChip" class="chip clickable"><span id="userDot" class="dot"></span><span id="userTxt">not signed in</span></span>
     </div>
   </header>
 
@@ -673,7 +676,7 @@ function setActiveProject(id){
 }
 function updateProjectChip(){
   const t = document.getElementById('projTxt');
-  if(t) t.textContent = hasProject() ? ('project: ' + ACTIVE_PROJECT_ID) : 'project: (select)';
+  if(t) t.textContent = hasProject() ? ('project: (selected)') : 'project: (select)';
   const d = document.getElementById('projDot');
   if(d){
     if(hasProject()) d.classList.add('ok');
@@ -785,8 +788,8 @@ const $ = (q,root=document)=>root.querySelector(q);
     $('#btnSignout').onclick=()=>signOut(auth);
 
     onAuthStateChanged(auth, async (user)=>{
-      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userDot=$('#userDot'), userTxt=$('#userTxt');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; if(userDot) userDot.classList.remove('ok'); if(userTxt) userTxt.textContent='not signed in'; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
       let role='Viewer', full=user.displayName||user.email||'';
@@ -798,8 +801,10 @@ const $ = (q,root=document)=>root.querySelector(q);
 
       CURRENT_ROLE=role; CURRENT_NAME=full;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
-      authTxt.textContent = isEditor ? 'editor' : (role==='Partner/Sponsor' ? 'sponsor' : 'viewer');
-      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      const rights = isEditor ? 'editor' : ((String(role||'').toLowerCase().includes('sponsor') || String(role||'').toLowerCase().includes('partner')) ? 'partner' : 'viewer');
+      authTxt.textContent = rights;
+      if(userDot) userDot.classList.add('ok');
+      if(userTxt) userTxt.textContent = `${(full||'').toLowerCase()} – ${String(role||'').toLowerCase()} (${rights})`;
       syncSectionUserLabels();
       setEditMode(isEditor);
       await loadProjects();
@@ -1022,6 +1027,9 @@ await Promise.all(tasks);
       // Projects UI
       const projChip = document.getElementById('projChip');
       projChip && (projChip.onclick=async()=>{ const inp=document.getElementById('projectIdInput'); if(inp) inp.value = ACTIVE_PROJECT_ID||''; showProjectModal(true); });
+
+      const userChip = document.getElementById('userChip');
+      userChip && (userChip.onclick=async()=>{ const inp=document.getElementById('projectIdInput'); if(inp) inp.value = ACTIVE_PROJECT_ID||''; showProjectModal(true); });
 
       const pov = document.getElementById('projectOverlay');
       const pback = pov?.querySelector('.modal-backdrop');
@@ -2448,3 +2456,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
