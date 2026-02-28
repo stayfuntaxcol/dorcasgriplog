@@ -928,6 +928,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       function upserts(prevArr, nextArr, coll, label){
         const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
+          const _isNew = !prevMap[row.id];
           if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
           // audit fields (actor)
           if(_isNew){
@@ -944,7 +945,7 @@ const $ = (q,root=document)=>root.querySelector(q);
           if(_isNew && !('createdAt' in row)) row.createdAt = serverTimestamp();
           row.updatedAt = serverTimestamp();
           tasks.push(setDoc(projDoc(coll,row.id), row, {merge:true}));
-          if(!prevMap[row.id]){
+          if(_isNew){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
           } else if(changed(prevMap[row.id], row)){
             notes.push(makeNote({subject: label, status:'Edited', relatedId: row.id, description: pickDesc(label,row)}));
