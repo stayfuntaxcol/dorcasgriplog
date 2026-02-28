@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>GRIPlog – Water &amp; Sanitation (Kitui School)</title>
+  <title>GRIPlog – Clean Cooking Stoves</title>
   <link rel="icon" href="assets/globe-blue.svg" />
   <style>
     :root{ --bg:#f6f7fb;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#e5e7eb; --brand:#0ea5a3;--danger:#ef4444;--ok:#10b981; }
@@ -26,11 +26,17 @@
     .btn{appearance:none;border:1px solid var(--line);border-radius:10px;padding:8px 12px;background:#fff;cursor:pointer;font-size:14px}
     .btn.primary{background:var(--brand);color:#fff;border-color:transparent}
     .btn.danger{background:#fee2e2;border-color:#fecaca}
-    .btn.ok{background:#d1fae5;border-color:#a7f3d0}
     .btn.ghost{background:transparent}
     .btn:disabled{opacity:.5;cursor:not-allowed}
     .input, select, input[type="text"], input[type="password"], input[type="email"]{border:1px solid var(--line);border-radius:8px;padding:8px 10px;background:#fff;font-size:14px}
     .chip{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+
+/* Header visibility tweaks (show only users list) */
+#projChip,#dsChip,#authChip,#userChip{display:none!important}
+.users-bar{display:flex;flex-direction:column;gap:6px;align-items:flex-end}
+.users-bar .chip{color:var(--ink);background:#fff;border:1px solid var(--line);padding:4px 10px;border-radius:999px;font-size:12px}
+.users-bar .chip .dot{margin-right:2px}
+.users-bar.clickable{cursor:pointer}
     .dot{width:8px;height:8px;border-radius:999px;background:#bbb}
     .ok{background:var(--ok)}
     .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
@@ -300,21 +306,33 @@
 }
 
 
-/* === Load menu (Firebase vs JSON import) === */
-#loadMenu{position:fixed;inset:0;display:none;z-index:1200}
-#loadMenu.show{display:block}
-.lm-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
-.lm-panel{position:absolute;left:50%;top:86px;transform:translateX(-50%);width:min(560px,calc(100% - 32px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden}
-.lm-header{padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f8fafc);font-weight:800}
-.lm-body{padding:12px 16px}
-.lm-body p{margin:0 0 10px 0;color:var(--muted);font-size:12px}
-.lm-actions{display:flex;gap:8px;flex-wrap:wrap}
-.lm-footer{padding:12px 16px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:space-between;align-items:center}
-#lmMsg{font-size:12px;color:var(--muted)}
+/* === Load modal (Firebase / JSON import) === */
+
+.chip.clickable{ cursor:pointer; }
+#projectOverlay{position:fixed;inset:0;display:none;z-index:1100}
+#projectOverlay.show{display:block}
+#projectOverlay .modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+#projectOverlay .modal-card{position:relative;max-width:520px;margin:10vh auto;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:0 30px 80px rgba(0,0,0,.35)}
+#projectOverlay .modal-title{font-weight:800;font-size:18px;margin-bottom:6px}
+#projectOverlay .modal-sub{color:var(--muted);font-size:13px;margin-bottom:12px}
+#projectOverlay .modal-actions{display:flex;gap:10px;margin-top:10px}
+#projectOverlay .modal-foot{display:flex;justify-content:flex-end;margin-top:10px}
+#projectOverlay .modal-row{display:flex;gap:10px;align-items:center}
+#projectOverlay .modal-row .input{flex:1}
+
+#loadOverlay{position:fixed;inset:0;display:none;z-index:1100}
+#loadOverlay.show{display:block}
+#loadOverlay .modal-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.55);backdrop-filter:blur(2px)}
+#loadOverlay .modal-card{position:absolute;left:50%;top:18%;transform:translateX(-50%);width:min(520px,calc(100% - 32px));background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);padding:16px}
+#loadOverlay .modal-title{font-weight:800;font-size:16px;margin:0 0 4px 0}
+#loadOverlay .modal-sub{color:var(--muted);font-size:12px;margin:0 0 12px 0}
+#loadOverlay .modal-actions{display:flex;gap:8px;flex-wrap:wrap}
+#loadOverlay .modal-foot{display:flex;justify-content:flex-end;margin-top:12px}
 
 
 /* ===== Online users (presence) ===== */
-#userInfo{ display:none !important; }
+#usersBar{display:none!important;}
+#userChip{display:none!important;}
 
 .onlineUsers{
   display:none;
@@ -358,10 +376,6 @@
 .onlineUsers .ou-name.ou-me{ font-weight:900; }
 .onlineUsers .ou-role{ color:var(--muted); font-weight:700; }
 
-
-/* Hide user rights text in header */
-#authTxt, #rightsTxt, #userRights, .authTxt, .rightsTxt{display:none!important;}
-
 </style>
 </head>
 <body>
@@ -369,21 +383,24 @@
     <div class="header-left">
       <img src="assets/globe-blue.svg" alt="Dorcas" onerror="this.style.display='none'">
       <div>
-        <div class="title">GRIPlog – Water &amp; Sanitation (Kitui School)</div>
+        <div id="appTitle" class="title">GRIPlog – Clean Cooking Stoves (Tanzania)</div>
         <div class="sub">Get a GRIP: Goals • Risks • Issues • Plans • Questions • Suggestions • Notifications</div>
+        <div class="sub"><span id="appArea"></span> <span id="appVersion"></span></div>
       </div>
     </div>
     <div class="header-right">
-      <span class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
-      <span id="userInfo" class="user-info"></span>
+      <span id="projChip" class="chip clickable"><span id="projDot" class="dot"></span><span id="projTxt">project: (select)</span></span>
+      <span id="dsChip" class="chip"><span id="dsDot" class="dot"></span><span id="datasetChip">no dataset loaded</span></span>
+      <span id="authChip" class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
+      <span id="userChip" class="chip clickable"><span id="userDot" class="dot"></span><span id="userTxt">not signed in</span></span>
       <div id="onlineUsers" class="onlineUsers" aria-live="polite"></div>
     </div>
   </header>
 
   <div class="toolbar">
     <div class="leftbar">
-      <button id="btnLoad" class="btn">Upload Data</button>
-      <button id="btnSaveAll" class="btn primary" disabled title="Writes current Goals/Risks/Issues/Plans/Questions/Suggestions to Firebase for this project. Generates Notifications for Added/Edited/Deleted changes.">Save Data</button>
+      <button id="btnLoad" class="btn">Load Database</button>
+      <button id="btnSaveAll" class="btn primary" disabled>Save to Database</button>
     </div>
 
     <div class="rightbar">
@@ -404,28 +421,6 @@
       <button id="btnSignout" class="btn" style="display:none">logout</button>
     </div>
   </div>
-
-
-  <!-- Load menu (Firebase vs JSON import) -->
-  <input id="jsonImportInput" type="file" accept="application/json,.json" style="display:none" />
-  <div id="loadMenu" aria-hidden="true">
-    <div class="lm-backdrop"></div>
-    <div class="lm-panel" role="dialog" aria-modal="true" aria-labelledby="lmTitle">
-      <div class="lm-header" id="lmTitle">Load data</div>
-      <div class="lm-body">
-        <p>Choose where to load from for this project: <strong id="lmProject"></strong></p>
-        <div class="lm-actions">
-          <button id="lmLoadFirestore" class="btn">Load from Firebase</button>
-          <button id="lmImportJson" class="btn primary">Import JSON file</button>
-        </div>
-      </div>
-      <div class="lm-footer">
-        <span id="lmMsg"></span>
-        <button id="lmClose" class="btn">Close</button>
-      </div>
-    </div>
-  </div>
-
 
   <!-- Tabs -->
   <nav class="tabs" role="tablist">
@@ -705,7 +700,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, getDocs, onSnapshot, setDoc, doc, serverTimestamp, Timestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, onSnapshot, setDoc, doc, serverTimestamp, Timestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -720,11 +715,264 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // ===== Project scope (per GRIPlog project) =====
-    // All GRIPlog data will be stored under: projects/{PROJECT_ID}/(goals|risks|issues|plans|suggestions|questions|notifications)
-    const PROJECT_ID = "kitui-wash-school"; // <-- change this per GRIPlog project
-    const pcoll = (name) => collection(db, "projects", PROJECT_ID, name);
+// ===== Projects (multi-project support) =====
+const PROJECTS_COLL = 'projects';
+let ACTIVE_PROJECT_ID = localStorage.getItem('griplog_projectId') || '';
+let PROJECTS_CACHE = [];
 
+function hasProject(){ return !!(ACTIVE_PROJECT_ID && ACTIVE_PROJECT_ID.trim()); }
+function setActiveProject(id){
+  const prev = ACTIVE_PROJECT_ID;
+  ACTIVE_PROJECT_ID = (id || '').trim();
+  localStorage.setItem('griplog_projectId', ACTIVE_PROJECT_ID);
+  updateProjectChip();
+  try{ presenceOnProjectChanged(prev); }catch(e){}
+}
+function updateProjectChip(){
+  const t = document.getElementById('projTxt');
+  if(t) t.textContent = hasProject() ? ('project: (selected)') : 'project: (select)';
+  const d = document.getElementById('projDot');
+  if(d){
+    if(hasProject()) d.classList.add('ok');
+    else d.classList.remove('ok');
+  }
+}
+function colRef(name){
+  if(!hasProject()) throw new Error('No project selected');
+  return collection(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, name);
+}
+
+function projDoc(coll, id){
+  if(!hasProject()) throw new Error('No project selected');
+  return doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, coll, id);
+}
+function projColl(coll){
+  if(!hasProject()) throw new Error('No project selected');
+  return collection(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, coll);
+}
+// ===== Presence (online users, TTL 2h) =====
+const PRESENCE_COLL = 'presence';
+const PRESENCE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
+let presenceUnsub = null;
+let presenceTimer = null;
+let presenceSnapshot = [];
+
+function stopPresenceTimer(){
+  if(presenceTimer){ clearInterval(presenceTimer); presenceTimer = null; }
+}
+function stopPresenceList(){
+  if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
+}
+
+function escapeHtmlOU(s){
+  return (s ?? '').toString().replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function roleRank(roleRaw){
+  const r = (roleRaw||'').toString().toLowerCase().replace(/\s+/g,' ').trim();
+  if(!r) return 99;
+  // Order: Admin, Project manager, Thematic Expert, Sponsor/Partner, Viewers
+  if(r.includes('admin')) return 0;
+  if((r.includes('project') && r.includes('manager')) || r.includes('projectmanager')) return 1;
+  if(r.includes('thematic')) return 2;
+  if(r.includes('sponsor') || r.includes('partner')) return 3;
+  if(r.includes('viewer') || r.includes('view')) return 4;
+  return 98;
+}
+
+async function setOnlinePresence(extra = {}){
+  if(!CURRENT_UID || !hasProject()) return;
+  try{
+    const now = Date.now();
+    await setDoc(
+      doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL, CURRENT_UID),
+      {
+        uid: CURRENT_UID,
+        name: (CURRENT_NAME||'').trim(),
+        role: CURRENT_ROLE || 'Viewer',
+        online: true,
+        loginAt: serverTimestamp(),
+        expiresAt: Timestamp.fromMillis(now + PRESENCE_TTL_MS),
+        ...extra
+      },
+      { merge:true }
+    );
+  }catch(e){
+    console.warn('presence write failed', e);
+  }
+}
+
+async function setOfflinePresence(extra = {}){
+  if(!CURRENT_UID || !hasProject()) return;
+  try{
+    await setDoc(
+      doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL, CURRENT_UID),
+      { online:false, logoutAt: serverTimestamp(), ...extra },
+      { merge:true }
+    );
+  }catch(e){
+    console.warn('presence offline write failed', e);
+  }
+}
+
+function renderOnlineUsers(list){
+  const box = document.getElementById('onlineUsers');
+  if(!box) return;
+
+  if(!CURRENT_UID){
+    box.style.display = 'none';
+    box.innerHTML = '';
+    return;
+  }
+
+  if(!hasProject()){
+    box.style.display = 'block';
+    box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div>
+                     <div class="ou-note">Select a project to see who is online.</div>`;
+    return;
+  }
+
+  const items = (list||[]).filter(Boolean);
+  const count = items.length;
+
+  box.style.display = 'block';
+
+  if(!count){
+    box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div>
+                     <div class="ou-note">Niemand online.</div>`;
+    return;
+  }
+
+  const head = `<div class="ou-head"><span class="ou-title">Online Users: ${count}</span></div>`;
+  const chips = items.map(u=>{
+    const name = (u.name||'unknown').toString().trim();
+    const role = (u.role||'').toString().trim();
+    const isMe = (u.uid && u.uid===CURRENT_UID)
+      || ((CURRENT_NAME||'').toString().trim().toLowerCase()===name.toLowerCase());
+
+    return `
+      <div class="ou-chip" title="${escapeHtmlOU(role)}">
+        <span class="dot ok"></span>
+        <span class="ou-name ${isMe?'ou-me':''}">${escapeHtmlOU(name)}</span>
+        <span class="ou-role">${role?('— '+escapeHtmlOU(role)):""}</span>
+      </div>`;
+  }).join('');
+
+  box.innerHTML = head + `<div class="ou-list">${chips}</div>`;
+}
+
+function refreshPresenceRender(){
+  if(!CURRENT_UID || !hasProject()){
+    renderOnlineUsers([]);
+    return;
+  }
+  const now = Date.now();
+  const filtered = (presenceSnapshot||[])
+    .map(u=>{
+      const exp = u.expiresAt;
+      const expMs = (exp && typeof exp.toMillis === 'function') ? exp.toMillis()
+                   : (typeof exp === 'number' ? exp : 0);
+      return { ...u, _expMs: expMs };
+    })
+    .filter(u => (u.online !== false) && u._expMs && (u._expMs > now));
+
+  filtered.sort((a,b)=>{
+    const ra = roleRank(a.role), rb = roleRank(b.role);
+    if(ra !== rb) return ra - rb;
+    return (a.name||'').localeCompare((b.name||''), undefined, { sensitivity:'base' });
+  });
+
+  renderOnlineUsers(filtered);
+}
+
+function startPresenceList(){
+  stopPresenceList();
+  stopPresenceTimer();
+  presenceSnapshot = [];
+
+  if(!CURRENT_UID || !hasProject()){
+    renderOnlineUsers([]);
+    return;
+  }
+
+  const collRef = collection(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL);
+  presenceUnsub = onSnapshot(collRef, (snap)=>{
+    const list = [];
+    snap.forEach(d=>{
+      const x = d.data() || {};
+      list.push({
+        uid: x.uid || d.id,
+        name: x.name || d.id,
+        role: x.role || 'Viewer',
+        online: (x.online !== false),
+        expiresAt: x.expiresAt || 0
+      });
+    });
+    presenceSnapshot = list;
+    refreshPresenceRender();
+  }, (err)=>{
+    console.warn('presence read failed', err);
+    presenceSnapshot = [];
+    renderOnlineUsers([]);
+  });
+
+  presenceTimer = setInterval(refreshPresenceRender, 60000);
+}
+
+function startPresence(){
+  if(!CURRENT_UID || !hasProject()) return;
+  setOnlinePresence();
+  startPresenceList();
+}
+
+function presenceOnProjectChanged(prevProjectId = null){
+  if(!CURRENT_UID){
+    renderOnlineUsers([]);
+    return;
+  }
+  if(prevProjectId && prevProjectId !== ACTIVE_PROJECT_ID){
+    try{
+      setDoc(
+        doc(db, PROJECTS_COLL, prevProjectId, PRESENCE_COLL, CURRENT_UID),
+        { online:false, switchedAt: serverTimestamp() },
+        { merge:true }
+      );
+    }catch(e){}
+  }
+  startPresence();
+}
+
+
+async function loadProjects(){
+  // Listing /projects is often blocked by rules (no list permission).
+  // We only keep a local projectId (set via modal or ?project=...).
+  const urlId = new URLSearchParams(location.search).get('project') || '';
+  if(urlId && urlId.trim()) setActiveProject(urlId.trim());
+  updateProjectChip();
+}
+async function createProject(projectId, title){
+  const id = (projectId||'').trim();
+  if(!id){ alert('Project ID is required'); return; }
+  const payload = {
+    title: (title||'').trim() || id,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  };
+  await setDoc(doc(db, PROJECTS_COLL, id), payload, { merge:true });
+  await loadProjects();
+  setActiveProject(id);
+}
+updateProjectChip();
+
+function showProjectModal(show=true){
+  const ov = document.getElementById('projectOverlay');
+  if(!ov) return;
+  ov.classList.toggle('show', !!show);
+  ov.setAttribute('aria-hidden', show?'false':'true');
+}
 
 
     
@@ -742,8 +990,19 @@ const $ = (q,root=document)=>root.querySelector(q);
     $('#yr').textContent = new Date().getFullYear();
 
     const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
-    const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
-    const owners=["","Coop Board","Kamaki Cooperative","QA Manager","Operations Lead","Value Add Manager","MRDP Field Coord.","SEKU (QA Lab)","Finance Lead","Sales Lead","County Govt Kitui","Dorcas Kenya","Program Manager","Procurement","FFS Coordinator"];
+    
+
+    // Map user role -> rights label (used in auth header + permissions UX)
+    function rightsFromRole(role){
+      const r = String(role||'Viewer');
+      if(r.toLowerCase()==='admin') return 'admin';
+      if(EDIT_ROLES.has(r)) return 'editor';
+      if(r.toLowerCase().includes('sponsor') || r.toLowerCase().includes('partner')) return 'partner';
+      return 'viewer';
+    }
+
+const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
+    const owners=["","Dorcas Tanzania","Mimi Moto (Tanzania)","Pellet Plant Manager","Operations Lead","Sales Lead","Finance Lead","PAYG/VICOBA Coordinator","Field Officer","After-Sales Technician Lead","MRV/Carbon Lead","Govt Liaison (Arusha)","TANESCO Liaison","Community Leader","Institutional Sales"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
@@ -755,170 +1014,7 @@ const $ = (q,root=document)=>root.querySelector(q);
     const noteStatus   = ["","Added","Edited","Deleted","Approved","Pending","Dismissed"];
     const noteRoles    = ["","Admin","Sponsor/Partner","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
-    let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
-    // ===== Presence (online users, TTL 2h) =====
-    const PRESENCE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
-    let presenceUnsub = null;
-    let presenceTimer = null;
-    let presenceSnapshot = [];
-
-    function stopPresenceTimer(){
-      if(presenceTimer){ clearInterval(presenceTimer); presenceTimer = null; }
-    }
-    function stopPresenceList(){
-      if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
-    }
-
-    function escapeHtmlOU(s){
-      return (s ?? '').toString().replace(/[&<>"']/g, c => ({
-        '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-      }[c]));
-    }
-
-    function roleRank(roleRaw){
-      const r = (roleRaw||'').toString().toLowerCase().replace(/\s+/g,' ').trim();
-      if(!r) return 99;
-      // Order: Admin, Project manager, Thematic Expert, Sponsor/Partner, Viewers
-      if(r.includes('admin')) return 0;
-      if((r.includes('project') && r.includes('manager')) || r.includes('projectmanager')) return 1;
-      if(r.includes('thematic')) return 2;
-      if(r.includes('sponsor') || r.includes('partner')) return 3;
-      if(r.includes('viewer') || r.includes('view')) return 4;
-      return 98;
-    }
-
-    async function setOnlinePresence(extra = {}){
-      if(!CURRENT_UID) return;
-      try{
-        const now = Date.now();
-        await setDoc(
-          doc(pcoll('presence'), CURRENT_UID),
-          {
-            uid: CURRENT_UID,
-            name: (CURRENT_NAME||'').trim(),
-            role: CURRENT_ROLE || 'Viewer',
-            online: true,
-            loginAt: serverTimestamp(),
-            expiresAt: Timestamp.fromMillis(now + PRESENCE_TTL_MS),
-            ...extra
-          },
-          { merge:true }
-        );
-      }catch(e){
-        console.warn('presence write failed', e);
-      }
-    }
-
-    async function setOfflinePresence(extra = {}){
-      if(!CURRENT_UID) return;
-      try{
-        await setDoc(
-          doc(pcoll('presence'), CURRENT_UID),
-          { online:false, logoutAt: serverTimestamp(), ...extra },
-          { merge:true }
-        );
-      }catch(e){
-        console.warn('presence offline write failed', e);
-      }
-    }
-
-    function renderOnlineUsers(list){
-      const box = document.getElementById('onlineUsers');
-      if(!box) return;
-
-      if(!CURRENT_UID){
-        box.style.display = 'none';
-        box.innerHTML = '';
-        return;
-      }
-
-      const items = (list||[]).filter(Boolean);
-      const count = items.length;
-
-      box.style.display = 'block';
-
-      if(!count){
-        box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div>
-                         <div class="ou-note">Niemand online.</div>`;
-        return;
-      }
-
-      const head = `<div class="ou-head"><span class="ou-title">Online Users: ${count}</span></div>`;
-      const chips = items.map(u=>{
-        const name = (u.name||'unknown').toString().trim();
-        const role = (u.role||'').toString().trim();
-        const isMe = (u.uid && u.uid===CURRENT_UID)
-          || ((CURRENT_NAME||'').toString().trim().toLowerCase()===name.toLowerCase());
-        return `
-          <div class="ou-chip" title="${escapeHtmlOU(role)}">
-            <span class="dot ok"></span>
-            <span class="ou-name ${isMe?'ou-me':''}">${escapeHtmlOU(name)}</span>
-            <span class="ou-role">${role?('— '+escapeHtmlOU(role)):""}</span>
-          </div>`;
-      }).join('');
-
-      box.innerHTML = head + `<div class="ou-list">${chips}</div>`;
-    }
-
-    function refreshPresenceRender(){
-      if(!CURRENT_UID){ renderOnlineUsers([]); return; }
-      const now = Date.now();
-      const filtered = (presenceSnapshot||[])
-        .map(u=>{
-          const exp = u.expiresAt;
-          const expMs = (exp && typeof exp.toMillis === 'function') ? exp.toMillis()
-                       : (typeof exp === 'number' ? exp : 0);
-          return { ...u, _expMs: expMs };
-        })
-        .filter(u => (u.online !== false) && u._expMs && (u._expMs > now));
-
-      filtered.sort((a,b)=>{
-        const ra = roleRank(a.role), rb = roleRank(b.role);
-        if(ra !== rb) return ra - rb;
-        return (a.name||'').localeCompare((b.name||''), undefined, { sensitivity:'base' });
-      });
-
-      renderOnlineUsers(filtered);
-    }
-
-    function startPresenceList(){
-      stopPresenceList();
-      stopPresenceTimer();
-      presenceSnapshot = [];
-
-      if(!CURRENT_UID){ renderOnlineUsers([]); return; }
-
-      const collRef = pcoll('presence');
-      presenceUnsub = onSnapshot(collRef, (snap)=>{
-        const list = [];
-        snap.forEach(d=>{
-          const x = d.data() || {};
-          list.push({
-            uid: x.uid || d.id,
-            name: x.name || d.id,
-            role: x.role || 'Viewer',
-            online: (x.online !== false),
-            expiresAt: x.expiresAt || 0
-          });
-        });
-        presenceSnapshot = list;
-        refreshPresenceRender();
-      }, (err)=>{
-        console.warn('presence read failed', err);
-        presenceSnapshot = [];
-        renderOnlineUsers([]);
-      });
-
-      // UI refresh only (no DB writes) so expired users disappear
-      presenceTimer = setInterval(refreshPresenceRender, 60000);
-    }
-
-    function startPresence(){
-      if(!CURRENT_UID) return;
-      setOnlinePresence();
-      startPresenceList();
-    }
-
+    let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME=''; let CURRENT_RIGHTS='viewer';
 
     let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
     let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[]};
@@ -957,10 +1053,8 @@ const $ = (q,root=document)=>root.querySelector(q);
     };
 
     onAuthStateChanged(auth, async (user)=>{
-      const authDot=$('#authDot'), authTxt=$('#authTxt'), userInfo=$('#userInfo');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; userInfo.textContent=''; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
-      try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
-      return; }
+      const authDot=$('#authDot'), authTxt=$('#authTxt'), userDot=$('#userDot'), userTxt=$('#userTxt');
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; if(userDot) userDot.classList.remove('ok'); if(userTxt) userTxt.textContent='not signed in'; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; CURRENT_RIGHTS='viewer'; try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){} syncSectionUserLabels(); return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
       let role='Viewer', full=user.displayName||user.email||'';
@@ -972,11 +1066,22 @@ const $ = (q,root=document)=>root.querySelector(q);
 
       CURRENT_ROLE=role; CURRENT_NAME=full;
       const isEditor = EDIT_ROLES.has(role) && !!user.email;
-      authTxt.textContent = isEditor ? 'editor' : (role==='Partner/Sponsor' ? 'sponsor' : 'viewer');
-      userInfo.textContent = `${(full||'').toLowerCase()} – ${role.toLowerCase()}`;
+      const rights = rightsFromRole(role);
+      CURRENT_RIGHTS = rights;
+      // hidden legacy chips (kept for internal use)
+      authTxt.textContent = rights;
+      if(userDot) userDot.classList.add('ok');
+      if(userTxt) userTxt.textContent = `${full||''} – ${role||''} – ${rights}`;
+
+      try{ renderOnlineUsers([]); }catch(e){}
       syncSectionUserLabels();
       setEditMode(isEditor);
-      try{ startPresence(); }catch(e){}
+      await loadProjects();
+      if(!hasProject()){
+        showProjectModal(true);
+        return;
+      }
+      startPresence();
       await loadAll();
     });
 
@@ -1006,14 +1111,15 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     // Notification helpers
     function makeNote({subject,status,relatedId,description,comments=''}) {
-      const ts = new Date().toISOString(); // full timestamp (date + time)
       return {
+        projectId: hasProject() ? (ACTIVE_PROJECT_ID||'') : '',
         id: relatedId,
         description: description||'',
         subject, status,
         role: CURRENT_ROLE||'Viewer',
-        timestamp: ts,
-        date: ts.slice(0,10), // show only date in UI
+        actor: (CURRENT_NAME||'').trim(),
+        actorUid: CURRENT_UID||'',
+        date: new Date().toISOString().slice(0,10),
         comments
       };
     }
@@ -1029,14 +1135,16 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     // Load / Save
     async function loadAll(){
+  if(!hasProject()){ alert('Select a project first'); return; }
+
       const [g,r,i,p,s,q,n] = await Promise.all([
-        getDocs(pcoll('goals')),
-        getDocs(pcoll('risks')),
-        getDocs(pcoll('issues')),
-        getDocs(pcoll('plans')),
-        getDocs(pcoll('suggestions')),
-        getDocs(pcoll('questions')),
-        getDocs(pcoll('notifications')),
+        getDocs(colRef('goals')),
+        getDocs(colRef('risks')),
+        getDocs(colRef('issues')),
+        getDocs(colRef('plans')),
+        getDocs(colRef('suggestions')),
+        getDocs(colRef('questions')),
+        getDocs(colRef('notifications')),
       ]);
 
       prevCache = JSON.parse(JSON.stringify(cache));
@@ -1047,12 +1155,7 @@ const $ = (q,root=document)=>root.querySelector(q);
       cache.plans = p.docs.map(d=>({id:d.id,...d.data()}));
       cache.suggestions = s.docs.map(d=>({id:d.id,...d.data()}));
       cache.questions = q.docs.map(d=>({id:d.id,...d.data()}));
-      cache.notifications = n.docs.map(d=>{
-        const data = d.data() || {};
-        const ts = data.timestamp || data.ts || data.createdAt || (data.date ? (String(data.date).length===10 ? String(data.date)+'T00:00:00.000Z' : String(data.date)) : '');
-        const date = data.date || (ts ? String(ts).slice(0,10) : '');
-        return { __id: d.id, ...data, timestamp: ts, date };
-      });
+      cache.notifications = n.docs.map(d=>({__id:d.id, ...d.data()}));
 
       buildFilterOptions();
       renderAll();
@@ -1062,60 +1165,63 @@ const $ = (q,root=document)=>root.querySelector(q);
 }
 
     async function saveAll(){
+  if(!hasProject()){ alert('Select a project first'); return; }
+
       if(!CAN_EDIT){ alert('no edit rights'); return; }
       const tasks=[]; const notes=[];
 
-      // Save-to-DB is meant to sync the current UI/cache state into Firebase.
-      // Skip invalid rows (prevents empty items from being written when a draft exists).
-      const warnings=[];
-      const nonEmpty = (v)=> String(v||'').trim().length>0;
-      const isValid = (coll,row)=>{
-        if(coll==='goals') return nonEmpty(row.goal);
-        if(['risks','issues','plans','suggestions','questions'].includes(coll)) return nonEmpty(row.description);
-        return true;
-      };
-      const cleanRow = (row)=>{
-        const r = { ...row };
-        delete r.__isDraft; delete r.__isNew; delete r.__isLocal; delete r._local;
-        return r;
-      };
-      const prep = (coll, arr)=> (Array.isArray(arr)?arr:[])
-        .filter(x=>x && typeof x==='object' && x.id)
-        .map(cleanRow)
-        .filter(r=>{
-          if(!isValid(coll,r)){ warnings.push(`${coll}:${r.id}`); return false; }
-          return true;
-        });
+      const tblGoals = rowsFromTable('goals');
+      const tblRisks = rowsFromTable('risks');
+      const tblIssues= rowsFromTable('issues');
+      const tblPlans = rowsFromTable('plans');
 
-      const newGoals = prep('goals', rowsFromTable('goals'));
-      const newRisks = prep('risks', rowsFromTable('risks'));
-      const newIssues= prep('issues', rowsFromTable('issues'));
-      const newPlans = prep('plans', rowsFromTable('plans'));
+      // IMPORTANT: Save should never depend on which tab you opened.
+      // If a table has 0 rows (tab not rendered), fall back to cache (full dataset).
+      const mergeWithCache = (kind, rows)=> rows.map(r=>({
+        ...((cache[kind]||[]).find(x=>x.id===r.id) || {}),
+        ...r
+      }));
 
-      // Q/S tables are read-only in the grid; the cache is the source of truth (incl. JSON import)
-      const newSuggestions = prep('suggestions', cache.suggestions);
-      const newQuestions   = prep('questions', cache.questions);
+      const newGoals = (tblGoals.length ? mergeWithCache('goals', tblGoals) : (cache.goals||[]).map(x=>({...(x||{})})));
+      const newRisks = (tblRisks.length ? mergeWithCache('risks', tblRisks) : (cache.risks||[]).map(x=>({...(x||{})})));
+      const newIssues= (tblIssues.length? mergeWithCache('issues',tblIssues): (cache.issues||[]).map(x=>({...(x||{})})));
+      const newPlans = (tblPlans.length ? mergeWithCache('plans', tblPlans) : (cache.plans||[]).map(x=>({...(x||{})})));
+
+
+      const newSuggestions = (cache.suggestions||[]).map(x=>({...(x||{})}));
+      const newQuestions   = (cache.questions||[]).map(x=>({...(x||{})}));
 
       const byId = (arr)=>Object.fromEntries(arr.map(x=>[x.id,x]));
-      const changed = (prev,next)=> {
-        const keys = Object.keys(next||{});
-        for(const k of keys){
-          if(JSON.stringify(prev?.[k]) !== JSON.stringify(next[k])) return true;
-        }
-        return false;
-      };
+      const stripMeta = (o)=>{ const x={...(o||{})}; delete x.updatedAt; delete x.createdAt; return x; };
+      const changed = (a,b)=> JSON.stringify(stripMeta(a)) !== JSON.stringify(stripMeta(b));
 
       function upserts(prevArr, nextArr, coll, label){
-        const prevMap = byId(prevArr || []);
+        const prevMap = byId(prevArr);
         nextArr.forEach(row=>{
-          tasks.push(setDoc(doc(pcoll(coll), row.id), row, {merge:true}));
-          if(!prevMap[row.id]){
+          const _isNew = !prevMap[row.id];
+          if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
+          // audit fields (actor)
+          if(_isNew){
+            if(!('createdByName' in row)) row.createdByName = (CURRENT_NAME||'').trim();
+            if(!('createdByRole' in row)) row.createdByRole = (CURRENT_ROLE||'Viewer');
+            if(!('createdByUid'  in row)) row.createdByUid  = (CURRENT_UID||'');
+          }
+          row.updatedByName = (CURRENT_NAME||'').trim();
+          row.updatedByRole = (CURRENT_ROLE||'Viewer');
+          row.updatedByUid  = (CURRENT_UID||'');
+
+          // keep all fields; only touch timestamps server-side
+
+          if(_isNew && !('createdAt' in row)) row.createdAt = serverTimestamp();
+          row.updatedAt = serverTimestamp();
+          tasks.push(setDoc(projDoc(coll,row.id), row, {merge:true}));
+          if(_isNew){
             notes.push(makeNote({subject:`New ${label}`, status:'Added', relatedId: row.id, description: pickDesc(label,row)}));
           } else if(changed(prevMap[row.id], row)){
             notes.push(makeNote({subject: label, status:'Edited', relatedId: row.id, description: pickDesc(label,row)}));
           }
         });
-        (prevArr||[]).forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
+        prevArr.forEach(prev=>{ if(!nextArr.find(x=>x.id===prev.id)){
           notes.push(makeNote({subject: label, status:'Deleted', relatedId: prev.id, description: pickDesc(label,prev)}));
         }});
       }
@@ -1124,125 +1230,150 @@ const $ = (q,root=document)=>root.querySelector(q);
       upserts(prevCache.risks, newRisks, 'risks', 'Risk');
       upserts(prevCache.issues,newIssues,'issues','Issue');
       upserts(prevCache.plans, newPlans, 'plans', 'Plan');
+
+      
       upserts(prevCache.suggestions, newSuggestions, 'suggestions', 'Suggestion');
       upserts(prevCache.questions, newQuestions, 'questions', 'Question');
-
-      await Promise.all(tasks);
-      if(notes.length) await Promise.all(notes.map(n=>addDoc(pcoll('notifications'), n)));
-
-      const msg = warnings.length
-        ? `saved to firestore (skipped ${warnings.length} invalid rows without required text)`
-        : 'saved to firestore';
-      alert(msg);
-
+await Promise.all(tasks);
+      if(notes.length) await Promise.all(notes.map(n=>addDoc(projColl('notifications'), n)));
+      alert('saved to firestore');
       await loadAll();
     }
-// --- Load menu (Firebase vs JSON import) ---
-    function setLoadMenuMsg(msg=''){ const el = document.getElementById('lmMsg'); if(el) el.textContent = msg||''; }
-    function showLoadMenu(msg=''){
-      const m = document.getElementById('loadMenu');
-      if(!m) return;
-      m.classList.add('show'); m.setAttribute('aria-hidden','false');
-      const proj = document.getElementById('lmProject'); if(proj) proj.textContent = PROJECT_ID;
-      setLoadMenuMsg(msg);
+    $('#btnLoad').onclick=()=>showLoadModal(true);
+    $('#btnSaveAll').onclick=saveAll;
+
+    // ===== Load modal (Firebase / JSON import) =====
+    function showLoadModal(show=true){
+      const ov = document.getElementById('loadOverlay');
+      if(!ov){ alert('Load modal missing in HTML'); return; }
+      ov.classList.toggle('show', !!show);
+      ov.setAttribute('aria-hidden', show ? 'false' : 'true');
     }
-    function hideLoadMenu(){
-      const m = document.getElementById('loadMenu');
-      if(!m) return;
-      m.classList.remove('show'); m.setAttribute('aria-hidden','true');
-      setLoadMenuMsg('');
-    }
-    function isCacheEmpty(){
-      return ['goals','risks','issues','plans','suggestions','questions','notifications']
-        .every(k => Array.isArray(cache[k]) && cache[k].length===0);
-    }
-    function normalizeArr(v){ return Array.isArray(v) ? v : []; }
-    function importFromJson(data, filename=''){
-      if(!data || typeof data !== 'object') throw new Error('Invalid JSON (expected an object)');
-      // Snapshot current cache so Save-to-DB can produce correct "new/edited" notes
+
+    async function importFromJsonFile(file){
+      const raw = await file.text();
+      let obj = null;
+      try { obj = JSON.parse(raw); }
+      catch(e){ alert('Invalid JSON file'); return; }
+
+      // snapshot for diff-based notifications
       prevCache = JSON.parse(JSON.stringify(cache));
 
-      const goals = normalizeArr(data.goals);
-      const risks = normalizeArr(data.risks);
-      const issues = normalizeArr(data.issues);
-      const plans = normalizeArr(data.plans);
-      const suggestions = normalizeArr(data.suggestions);
-      const questions = normalizeArr(data.questions);
-      const notifications = normalizeArr(data.notifications);
+      const keys = ['goals','risks','issues','plans','suggestions','questions','notifications'];
+      for(const k of keys){
+        cache[k] = Array.isArray(obj?.[k]) ? obj[k] : [];
+      }
 
-      const withId = (arr)=> arr
-        .filter(x=>x && typeof x==='object')
-        .map(x=>({ ...x, id: String(x.id||'').trim() }))
-        .filter(x=>x.id);
+      // apply active projectId to imported items (helps exports)
+      if(hasProject()){
+        ['goals','risks','issues','plans','suggestions','questions','notifications'].forEach(k=>{
+          if(Array.isArray(cache[k])) cache[k] = cache[k].map(x=> (x && typeof x==='object') ? ({...x, projectId: ACTIVE_PROJECT_ID}) : x);
+        });
+      }
 
-      cache.goals = withId(goals);
-      cache.risks = withId(risks);
-      cache.issues = withId(issues);
-      cache.plans = withId(plans);
-      cache.suggestions = withId(suggestions);
-      cache.questions = withId(questions);
-      cache.notifications = notifications
-        .filter(x=>x && typeof x==='object')
-        .map(x=>({ __id: String(x.__id||x.id||''), ...x }));
+      // normalize notifications (this app expects __id)
+      if(Array.isArray(cache.notifications) && cache.notifications.length){
+        cache.notifications = cache.notifications.map(n=>{
+          if(n && typeof n === 'object'){
+            if(n.__id) return n;
+            if(n.id && !n.__id){ const {id, ...rest} = n; return {__id:id, ...rest}; }
+          }
+          return n;
+        });
+      }
+
+      // reflect meta in UI
+      const meta = (obj && typeof obj === 'object' && obj.meta && typeof obj.meta === 'object') ? obj.meta : {};
+      const proj = meta.project || meta.name || '';
+      const area = meta.area || '';
+      const ver  = meta.version || '';
+
+      if(proj){
+        const t = 'GRIPlog – ' + proj;
+        document.title = t;
+        const el = document.getElementById('appTitle'); if(el) el.textContent = t;
+      }
+      const elA = document.getElementById('appArea'); if(elA) elA.textContent = area;
+      const elV = document.getElementById('appVersion'); if(elV) elV.textContent = ver ? ('v'+ver) : '';
+
+      const ds = document.getElementById('datasetChip'); if(ds) ds.textContent = file.name;
+      const dsDot = document.getElementById('dsDot'); if(dsDot){ dsDot.classList.add('ok'); }
 
       buildFilterOptions();
       renderAll();
       openFromHash();
 
-      DATA_READY = true;
-      disableNewButtons(false);
+      DATA_READY = true; disableNewButtons(false);
 
-      alert(`JSON imported${filename?`: ${filename}`:''}. Now click "Save to Database" to write to Firebase (requires editor login).`);
+      alert('JSON loaded: ' + file.name);
     }
 
-    async function loadFromFirestoreViaMenu(){
-      setLoadMenuMsg('Loading from Firebase…');
-      try{
-        await loadAll();
-        if(isCacheEmpty()){
-          setLoadMenuMsg('No data found in Firebase for this project. Use "Import JSON file".');
-          return; // keep modal open
+    document.addEventListener('DOMContentLoaded', ()=>{
+
+      // Projects UI
+      const projChip = document.getElementById('projChip');
+      projChip && (projChip.onclick=async()=>{ const inp=document.getElementById('projectIdInput'); if(inp) inp.value = ACTIVE_PROJECT_ID||''; showProjectModal(true); });
+
+      const userChip = document.getElementById('userChip');
+      userChip && (userChip.onclick=async()=>{ const inp=document.getElementById('projectIdInput'); if(inp) inp.value = ACTIVE_PROJECT_ID||''; showProjectModal(true); });
+      const onlineUsers = document.getElementById('onlineUsers');
+      onlineUsers && (onlineUsers.onclick=async()=>{ const inp=document.getElementById('projectIdInput'); if(inp) inp.value = ACTIVE_PROJECT_ID||''; showProjectModal(true); });
+
+      const pov = document.getElementById('projectOverlay');
+      const pback = pov?.querySelector('.modal-backdrop');
+      pback && pback.addEventListener('click', ()=>showProjectModal(false));
+
+      const btnCloseP = document.getElementById('btnCloseProject');
+      btnCloseP && (btnCloseP.onclick=()=>showProjectModal(false));
+
+      const btnUseP = document.getElementById('btnUseProject');
+      btnUseP && (btnUseP.onclick=async()=>{
+        const inp = document.getElementById('projectIdInput');
+        const id = (inp?.value||'').trim();
+        if(!id){ alert('Please enter a project id'); return; }
+        setActiveProject(id);
+        showProjectModal(false);
+        if(CURRENT_UID){ startPresence(); await loadAll(); }
+      });
+
+      const btnCreateP = document.getElementById('btnCreateProject');
+      btnCreateP && (btnCreateP.onclick=async()=>{
+        const inp = document.getElementById('projectIdInput');
+        const id = (inp?.value||'').trim() || prompt('Project ID:','stove-clean-cooking-tanzania');
+        if(!id) return;
+        const title = prompt('Project title:','Clean Cooking Stoves (Tanzania)') || id;
+        try{
+          await createProject(id, title);
+          startPresence();
+          alert('Project created: ' + id);
+        }catch(err){
+          console.error(err);
+          alert('Create failed (permissions). You can also create it in Firebase Console under collection: projects.');
         }
-        hideLoadMenu();
-      }catch(e){
-        console.error(e);
-        setLoadMenuMsg('Load failed: ' + (e?.message||String(e)));
-      }
-    }
+      });
 
-    function triggerJsonImport(){
-      const inp = document.getElementById('jsonImportInput');
-      if(!inp) return;
-      inp.value = '';
-      inp.click();
-    }
 
-    document.getElementById('jsonImportInput')?.addEventListener('change', async (e)=>{
-      const file = e.target.files && e.target.files[0];
-      if(!file) return;
-      setLoadMenuMsg('Reading file…');
-      try{
-        const text = await file.text();
-        const obj = JSON.parse(text);
-        importFromJson(obj, file.name);
-        hideLoadMenu();
-      }catch(err){
-        console.error(err);
-        setLoadMenuMsg('Import failed: ' + (err?.message||String(err)));
-      } finally {
-        e.target.value = '';
-      }
+      const ov = document.getElementById('loadOverlay');
+      const back = ov?.querySelector('.modal-backdrop');
+      back && back.addEventListener('click', ()=>showLoadModal(false));
+
+      const btnClose = document.getElementById('btnCloseLoad');
+      btnClose && (btnClose.onclick=()=>showLoadModal(false));
+
+      const btnFb = document.getElementById('btnLoadFirebase');
+      btnFb && (btnFb.onclick=async()=>{ showLoadModal(false); await loadAll(); });
+
+      const btnJson = document.getElementById('btnImportJson');
+      const fileInput = document.getElementById('jsonFile');
+      btnJson && (btnJson.onclick=()=>{ showLoadModal(false); if(fileInput){ fileInput.value=''; fileInput.click(); }});
+
+      fileInput && fileInput.addEventListener('change', async(e)=>{
+        const file = e.target.files && e.target.files[0];
+        if(!file) return;
+        await importFromJsonFile(file);
+      });
     });
-
-    document.getElementById('lmClose')?.addEventListener('click', hideLoadMenu);
-    document.querySelector('#loadMenu .lm-backdrop')?.addEventListener('click', hideLoadMenu);
-    document.getElementById('lmLoadFirestore')?.addEventListener('click', loadFromFirestoreViaMenu);
-    document.getElementById('lmImportJson')?.addEventListener('click', triggerJsonImport);
-
-    // Clicking "Load Database" opens the menu (instead of directly loading)
-    document.getElementById('btnLoad')?.addEventListener('click', ()=>showLoadMenu());
-
-    $('#btnSaveAll').onclick=saveAll;
+    
 
     // Helpers
 function num(id){
@@ -1477,16 +1608,6 @@ function actionsCell(coll){
     }
 
     // Notifications
-    function linkedCollFromId(id){
-      const p = String(id||'').trim().slice(0,1).toUpperCase();
-      const map = {G:'goals',R:'risks',I:'issues',P:'plans',S:'suggestions',Q:'questions'};
-      return map[p] || null;
-    }
-    function itemHasCardNotes(coll,id){
-      const row = getRow(coll,id);
-      if(!row) return false;
-      return ['comments','notes','mitigation','resolution'].some(k => String(row[k]||'').trim().length>0);
-    }
     function renderNotifications(rows){
       const tbody=$('#tblNotifications tbody'); tbody.innerHTML='';
       let list=[...rows];
@@ -1498,21 +1619,10 @@ function actionsCell(coll){
       if(rl) list=list.filter(r=> (r.role||'')===rl);
       if(from) list=list.filter(r=> (r.date||'')>=from);
       if(to) list=list.filter(r=> (r.date||'')<=to);
-      const _ts = (x)=> {
-        const v = (x && (x.timestamp || x.ts || x.createdAt)) || (x && x.date ? (String(x.date).length===10 ? String(x.date)+'T00:00:00.000Z' : String(x.date)) : '') || '';
-        return String(v);
-      };
-      list.sort((a,b)=> _ts(b).localeCompare(_ts(a)));
+      list.sort((a,b)=> (b.date||'').localeCompare(a.date||''));
       list.forEach(r=>{
         const tr=document.createElement('tr'); tr.dataset.docid=r.__id||'';
         const actions = (CURRENT_ROLE==='Admin')? `<div class="row-actions"><button class="btn danger" data-del-note>Del</button></div>` : '—';
-        const _coll = linkedCollFromId(r.id);
-        const _hasCard = (_coll && itemHasCardNotes(_coll, r.id));
-        const _yesBtn = _hasCard ? `<button class=\"btn ok\" data-open-item data-coll=\"${_coll}\" data-id=\"${escapeHtml(r.id||'')}\">Yes</button>` : '';
-        const _nComments = String(r.comments||'').trim();
-        const commentsCellHtml = (_yesBtn || _nComments)
-          ? (`<div class=\"row-actions\">${_yesBtn}</div>` + (_nComments?`<div class=\"cell-text\">${escapeHtml(_nComments)}</div>`:''))
-          : '—';
         tr.innerHTML = `
           <td>${escapeHtml(r.id||'')}</td>
           <td>${escapeHtml(r.description||'')}</td>
@@ -1520,7 +1630,7 @@ function actionsCell(coll){
           <td>${escapeHtml(r.status||'')}</td>
           <td>${escapeHtml(r.role||'')}</td>
           <td>${escapeHtml(r.date||'')}</td>
-          <td>${commentsCellHtml}</td>
+          <td>${escapeHtml(r.comments||'')}</td>
           <td>${actions}</td>`;
         tbody.appendChild(tr);
       });
@@ -1531,14 +1641,14 @@ function actionsCell(coll){
 
 // === Unique ID (online + cache) ===
 async function docExists(coll, id){
-  try{ const snap = await getDoc(doc(pcoll(coll), id)); return snap.exists(); }
+  try{ const snap = await getDoc(projDoc(coll, id)); return snap.exists(); }
   catch(_e){ return false; }
 }
 async function nextUniqueId(coll, prefix){
   let arr = cache[coll] || [];
   if(!arr || arr.length===0){
     try{
-      const snap = await getDocs(pcoll(coll));
+      const snap = await getDocs(colRef(coll));
       arr = snap.docs.map(d=>({id:d.id, ...d.data()}));
     }catch(_e){ arr = []; }
   }
@@ -1562,10 +1672,10 @@ function nextId(arr, prefix){
       let goal = (prompt('Goal (SMART):','')||'').trim();
       if(!goal){ alert('goal required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
-      await setDoc(doc(pcoll('goals'), id), row);
+      const row = { submitted: today,  id, goal, owner:'', start:'', end:'', status:'Open', notes:'' };
+      await setDoc(projDoc('goals', id), row);
       if(opts.source==='manual'){
-      await addDoc(pcoll('notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
+      await addDoc(projColl('notifications'), makeNote({subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id)) }));
     }
 cache.goals.push(row); renderGoals();
     };
@@ -1575,9 +1685,9 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Risk description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
-      await setDoc(doc(pcoll('risks'), id), row);
-      await addDoc(pcoll('notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
+      const row = { submitted: today,  id, description, owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'' };
+      await setDoc(projDoc('risks', id), row);
+      await addDoc(projColl('notifications'), makeNote({subject:'New Risk', status:'Added', relatedId:id, description}));
       cache.risks.push(row); renderRisks();
     };
     $('#addIssueBtn').onclick = async ()=>{
@@ -1586,9 +1696,9 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Issue description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
-      await setDoc(doc(pcoll('issues'), id), row);
-      await addDoc(pcoll('notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
+      const row = { submitted: today,  id, description, owner:'', severity:'Medium', status:'Open', resolution:'' };
+      await setDoc(projDoc('issues', id), row);
+      await addDoc(projColl('notifications'), makeNote({subject:'New Issue', status:'Added', relatedId:id, description}));
       cache.issues.push(row); renderIssues();
     };
     $('#addPlanBtn').onclick = async ()=>{
@@ -1597,31 +1707,21 @@ cache.goals.push(row); renderGoals();
       let description = (prompt('Plan description:','')||'').trim();
       if(!description){ alert('description required'); return; }
       const today = new Date().toISOString().slice(0,10);
-      const row = { submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'),  id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
-      await setDoc(doc(pcoll('plans'), id), row);
-      await addDoc(pcoll('notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
+      const row = { submitted: today,  id, description, owner:'', goalId:'', start:'', end:'', status:'Open' };
+      await setDoc(projDoc('plans', id), row);
+      await addDoc(projColl('notifications'), makeNote({subject:'New Plan', status:'Added', relatedId:id, description}));
       cache.plans.push(row); renderPlans();
     };
 
     // Click handlers
     document.addEventListener('click', async (e)=>{
-      const openItemBtn = e.target.closest('[data-open-item]');
-      if(openItemBtn){
-        const coll = openItemBtn.dataset.coll;
-        const id = openItemBtn.dataset.id;
-        if(coll && id){
-          try{ renderOverlay(coll, id); }catch(err){ alert('Could not open item: '+err.message); }
-        }
-        return;
-      }
-
       const starBtn = e.target.closest('[data-star-sug]');
       if(starBtn){
         if(!CURRENT_UID){ alert('Please login to star.'); return; }
         const tr = starBtn.closest('tr'); const sugId = tr?.dataset.sugid; if(!sugId) return;
         starBtn.disabled = true;
         try{
-          const ref = doc(pcoll('suggestions'), sugId);
+          const ref = projDoc('suggestions', sugId);
           const cntEl = tr.querySelector('[data-star-count]');
           const current = parseInt(cntEl?.textContent||'0',10) || 0;
           await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
@@ -1634,7 +1734,7 @@ cache.goals.push(row); renderGoals();
         const tr = starQBtn.closest('tr'); const qid = tr?.dataset.qid; if(!qid) return;
         starQBtn.disabled = true;
         try{
-          const ref = doc(pcoll('questions'), qid);
+          const ref = projDoc('questions', qid);
           const cntEl = tr.querySelector('[data-star-count]');
           const current = parseInt(cntEl?.textContent||'0',10) || 0;
           await updateDoc(ref, { stars: current + 1, ["starredBy."+CURRENT_UID]: true });
@@ -1678,17 +1778,17 @@ if(editBtn){
   }
 
   try{
-    await updateDoc(doc(pcoll(coll), id), updates);
+    await updateDoc(projDoc(coll, id), { ...updates, updatedAt: serverTimestamp() });
     Object.assign(row, updates);
     // herteken huidig tabblad
     renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
     // note aan Notifications
     const subj = (coll==='suggestions')?'Suggestion' : (coll==='questions')?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1);
-    await addDoc(pcoll('notifications'), makeNote({
+    await addDoc(projColl('notifications'), makeNote({
       subject: subj, status:'Edited', relatedId:id, description: pickDesc(subj,row)
     }));
     // refresh notifications cache
-    const listSnap = await getDocs(pcoll('notifications'));
+    const listSnap = await getDocs(colRef('notifications'));
     cache.notifications = listSnap.docs.map(d=>({__id:d.id, ...d.data()}));
   }catch(err){ alert('edit failed: '+err.message); }
 }
@@ -1701,11 +1801,11 @@ if(editBtn){
         const coll = collMap[table]; if(!coll||!id){ tr?.remove(); return; }
         if(!confirm(`Delete ${id} from ${coll}?`)) return;
         try{ 
-          await deleteDoc(doc(pcoll(coll), id)); 
+          await deleteDoc(projDoc(coll, id)); 
           tr.remove(); 
           const subj = (table==='suggestions')?'Suggestion' : (table==='questions')?'Question' : table.slice(0,1).toUpperCase()+table.slice(1,-1);
-          await addDoc(pcoll('notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
-          const list = await getDocs(pcoll('notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
+          await addDoc(projColl('notifications'), makeNote({subject: subj, status:'Deleted', relatedId:id, description:''}));
+          const list = await getDocs(colRef('notifications')); cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()})); renderNotifications(cache.notifications);
         }catch(err){ alert('delete failed: '+err.message); }
       }
 
@@ -1714,8 +1814,8 @@ if(editBtn){
         if(CURRENT_ROLE!=='Admin'){ alert('Only Admin can delete notifications.'); return; }
         const tr = delNoteBtn.closest('tr'); const id = tr?.dataset.docid; if(!id) return;
         if(!confirm('Delete this notification?')) return;
-        await deleteDoc(doc(pcoll('notifications'),id));
-        const list = await getDocs(pcoll('notifications'));
+        await deleteDoc(projDoc('notifications',id));
+        const list = await getDocs(colRef('notifications'));
         cache.notifications=list.docs.map(d=>({__id:d.id,...d.data()}));
         renderNotifications(cache.notifications);
       }
@@ -1728,10 +1828,10 @@ if(editBtn){
       const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
       const owner = CURRENT_ROLE || 'Viewer';
       const today = new Date().toISOString().slice(0,10);
-      const suggestion = { id, description, subject, owner, submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'), status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      const suggestion = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
-        await setDoc(doc(pcoll('suggestions'), id), suggestion);
-        await addDoc(pcoll('notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
+        await setDoc(projDoc('suggestions', id), suggestion);
+        await addDoc(projColl('notifications'), makeNote({subject:'New Suggestion', status:'Added', relatedId:id, description}));
         cache.suggestions.push(suggestion);
         renderSuggestions();
       }catch(err){ alert('Could not add: '+err.message); }
@@ -1742,10 +1842,10 @@ if(editBtn){
       const subject = prompt('Subject (New Goal / New Risk / New Issue / New Plan):','New Goal') || 'New Goal';
       const owner = CURRENT_ROLE || 'Viewer';
       const today = new Date().toISOString().slice(0,10);
-      const qdoc = { id, description, subject, owner, submitted: today, createdAt: new Date().toISOString(), createdByUid: (CURRENT_UID||''), createdByName: (CURRENT_NAME||''), createdByRole: (CURRENT_ROLE||'Viewer'), status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
+      const qdoc = { id, description, subject, owner, submitted: today, status: '', reviewerRole: '', reviewed: '', comments: '', stars:0, starredBy:{} };
       try{
-        await setDoc(doc(pcoll('questions'), id), qdoc);
-        await addDoc(pcoll('notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
+        await setDoc(projDoc('questions', id), qdoc);
+        await addDoc(projColl('notifications'), makeNote({subject:'New Question', status:'Added', relatedId:id, description}));
         cache.questions.push(qdoc);
         renderQuestions();
       }catch(err){ alert('Could not add: '+err.message); }
@@ -1874,87 +1974,52 @@ function collectOverlayUpdates(){
   });
   return updates;
 }
+
+async function flushGoalBundle(goalId){
+  try{
+    if(!hasProject()) return;
+    const gId = String(goalId||'').trim();
+    if(!gId) return;
+    const colls = ['goals','risks','issues','plans','questions','suggestions'];
+    const writes = [];
+    colls.forEach(coll=>{
+      const arr = (cache[coll]||[]);
+      const rows = (coll==='goals')
+        ? arr.filter(r=>String(r.id||'')===gId)
+        : arr.filter(r=>String(r.goalId||'')===gId);
+      rows.forEach(r=>{
+        const payload = { ...(r||{}) };
+        payload.projectId = ACTIVE_PROJECT_ID;
+        if(!('createdAt' in payload)) payload.createdAt = serverTimestamp();
+        payload.updatedAt = serverTimestamp();
+        writes.push(setDoc(projDoc(coll, payload.id), payload, {merge:true}));
+      });
+    });
+    if(writes.length) await Promise.all(writes);
+  }catch(err){
+    console.warn('flushGoalBundle failed', err);
+  }
+}
+
 async function saveOverlay(updates, opts={}){
   if(!CAN_EDIT){ alert('no edit rights'); return; }
   if(!OV.coll || !OV.id) return;
-
-  const base = getRow(OV.coll, OV.id) || OV.row || {};
-  const isDraft = !!(base && base.__isDraft);
-
-  // Never autosave drafts; drafts are only committed when the user clicks Save
-  if(isDraft && opts.source !== 'manual') return;
-
-  const merged = Object.assign({}, base, updates);
-
-  // validation (required fields)
-  const reqKey = ({goals:'goal', risks:'description', issues:'description', plans:'description', questions:'description', suggestions:'description'}[OV.coll] || '');
-  if(reqKey && String(merged[reqKey]||'').trim()===''){
-    alert(OV.coll==='goals' ? 'Goal is required' : 'Description is required');
-    return;
-  }
-  if(OV.coll==='plans'){
-    const gid = String(merged.goalId||'').trim();
-    if(gid && !/^G\d+$/.test(gid)){ alert('Goal Link must look like G1, G2, ...'); return; }
-  }
-
+  // validation
+  if(OV.coll==='goals' && 'goal' in updates && (updates.goal||'').trim()===''){ alert('Goal is required'); return; }
+  if(OV.coll==='plans' && 'goalId' in updates && updates.goalId && !/^G\d+$/.test(String(updates.goalId).trim())){ alert('Goal Link must look like G1, G2, ...'); return; }
   try{
-    // Nothing to do for existing items with no changes
-    if(!isDraft && !Object.keys(updates).length){
-      setOverlayEdit(false);
-      return;
+    if(Object.keys(updates).length){
+      await updateDoc(projDoc(OV.coll, OV.id), { ...updates, updatedAt: serverTimestamp() });
+      Object.assign(getRow(OV.coll,OV.id), updates);
+      // also persist full goal bundle so timeline-linked items keep all fields
+      const _gId = (OV.coll==='goals') ? OV.id : (getRow(OV.coll,OV.id)?.goalId||'');
+      await flushGoalBundle(_gId);
+      await addDoc(projColl('notifications'), makeNote({
+        subject: OV.coll==='suggestions'?'Suggestion' : (OV.coll==='questions'?'Question' : OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)),
+        status:'Edited', relatedId:OV.id, description: pickDesc(OV.coll==='suggestions'?'Suggestion':(OV.coll==='questions'?'Question':OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1)), getRow(OV.coll,OV.id))
+      }));
+      renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab);
     }
-
-    const subj = (OV.coll==='suggestions') ? 'Suggestion'
-              : (OV.coll==='questions') ? 'Question'
-              : (OV.coll.slice(0,1).toUpperCase()+OV.coll.slice(1,-1));
-
-    if(isDraft){
-      const toSave = Object.assign({}, merged);
-      // ensure creator fields exist (for timeline)
-      try{
-        toSave.createdByUid = toSave.createdByUid || (CURRENT_UID||'');
-        toSave.createdByName = toSave.createdByName || (CURRENT_NAME||'');
-        toSave.createdByRole = toSave.createdByRole || (CURRENT_ROLE||'Viewer');
-        toSave.createdAt = toSave.createdAt || new Date().toISOString();
-      }catch(_e){}
-      // strip local-only fields
-      try{ delete toSave.__isDraft; delete toSave.__isNew; delete toSave.__draftCreatedAt; }catch(_e){}
-
-      await setDoc(doc(pcoll(OV.coll), OV.id), toSave);
-
-      // update local cache + overlay snapshot
-      const live = getRow(OV.coll, OV.id) || base;
-      Object.assign(live, toSave);
-      if(OV.row) Object.assign(OV.row, toSave);
-      try{ if(OV.row){ delete OV.row.__isDraft; delete OV.row.__isNew; delete OV.row.__draftCreatedAt; } }catch(_e){}
-      try{ delete live.__isDraft; delete live.__isNew; delete live.__draftCreatedAt; }catch(_e){}
-
-      // Notification only on manual Save
-      if(opts.source === 'manual'){
-        await addDoc(pcoll('notifications'), makeNote({
-          subject: `New ${subj}`, status:'Added', relatedId:OV.id, description: pickDesc(subj, live)
-        }));
-      }
-
-      // refresh underlying list
-      try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
-    }else{
-      if(Object.keys(updates).length){
-        await updateDoc(doc(pcoll(OV.coll), OV.id), updates);
-        const live = getRow(OV.coll, OV.id) || base;
-        Object.assign(live, updates);
-        if(OV.row) Object.assign(OV.row, updates);
-
-        // Notification only on manual Save
-        if(opts.source === 'manual'){
-          await addDoc(pcoll('notifications'), makeNote({
-            subject: subj, status:'Edited', relatedId:OV.id, description: pickDesc(subj, live)
-          }));
-          try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
-        }
-      }
-    }
-
     setOverlayEdit(false);
   }catch(err){ alert('save failed: '+err.message); }
 }
@@ -1978,24 +2043,40 @@ function renderLinkGraph(){
   });
 
   const typeClass = (k)=> ({goals:'goal',risks:'risk',issues:'issue',plans:'plan',questions:'question',suggestions:'suggestion'}[k]||'');
-  const firstName = (full)=>{ 
-    const s = String(full||'').trim(); 
-    if(!s) return ''; 
-    return s.split(/\s+/)[0]; 
+  const pickActorName = (d)=> (d.updatedByName || d.createdByName || d.actor || d.actorName || d.byName || '').toString().trim();
+  const pickActorRole = (d)=> (d.updatedByRole || d.createdByRole || d.role || d.actorRole || '').toString().trim();
+  const pickOwner = (d)=> (d.owner || d.eigenaar || '').toString().trim();
+  const firstName = (s)=>{ s=(s||'').toString().trim(); if(!s) return ''; return s.split(/\s+/)[0]; };
+  const label = (n)=>{
+    const t = fmtDate(pickTime(n.data));
+    const d = t ? t.slice(0,10) : '';
+    const actor = firstName(pickActorName(n.data)) || '—';
+    const roleOrOwner = (n.coll==='questions' || n.coll==='suggestions')
+      ? (pickActorRole(n.data) || '—')
+      : (pickOwner(n.data) || '—');
+    return d ? `${n.id} • ${actor} • ${roleOrOwner} • ${d}` : `${n.id} • ${actor} • ${roleOrOwner}`;
   };
-  const label = (n)=>{ 
-    const data = (n.data||{}); 
-    const t = fmtDate(pickTime(data)); 
-    const d = t ? t.slice(0,10) : ''; 
-    const full = String(data.createdByName || data.createdBy || data.creatorName || '').trim(); 
-    const fn = firstName(full) || String(data.createdByUid||'').trim() || '—'; 
-    const role = String(data.createdByRole || data.creatorRole || data.role || data.owner || '').trim() || '—'; 
-    const s = d ? `${n.id} • ${fn} • ${role} • ${d}` : `${n.id} • ${fn} • ${role}`; 
-    return escapeHtml(s); 
+  const pickTime = (d)=> d.updatedAt || d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.created || d.timestamp || '';
+  const fmtDate = (v)=>{
+    if(!v) return '';
+    try{
+      // Firestore Timestamp support (toDate() or {seconds,nanoseconds})
+      if(typeof v === 'object'){
+        if(typeof v.toDate === 'function'){
+          const dt = v.toDate();
+          if(dt && !isNaN(dt)) return dt.toISOString().slice(0,10);
+        }
+        if(typeof v.seconds === 'number'){
+          const dt = new Date(v.seconds * 1000);
+          if(!isNaN(dt)) return dt.toISOString().slice(0,10);
+        }
+      }
+      if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
+      const dt = new Date(v);
+      if(!isNaN(dt)) return dt.toISOString().slice(0,10);
+    }catch(e){}
+    return '';
   };
-
-  const pickTime = (d)=> d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.timestamp || '';
-  const fmtDate = (v)=>{ if(!v) return ''; try{ if(/^\d{4}-\d{2}-\d{2}/.test(v)) return v; const dt=new Date(v); if(!isNaN(dt)) return dt.toISOString().slice(0,10);}catch(e){} return String(v); };
 
   // find root (goal)
   let rootId = '';
@@ -2076,11 +2157,7 @@ async function annotateOverlayNextIds(){
     const btn = document.getElementById(btnId);
     if(!btn) continue;
     try{
-      // Prefer the Firebase-backed next id, but avoid duplicates with local drafts
-      let cand = await nextUniqueId(coll, PREFIX[coll]);
-      const used = (cache[coll]||[]).some(x=> String(x.id||'').trim()===String(cand||'').trim());
-      if(used) cand = nextId(cache[coll]||[], PREFIX[coll]);
-
+      const cand = await nextUniqueId(coll, PREFIX[coll]);
       btn.textContent = `+ New ${label} (${cand})`;
       btn.title = `Volgende ID: ${cand}`;
       btn.dataset.nextId = cand;
@@ -2105,18 +2182,6 @@ function renderOverlay(coll,id){
     const opts  = Array.isArray(optsOrGroup)? optsOrGroup : (Array.isArray(maybeGroup)? maybeGroup : null);
     pieces[group] += inputHtml(name,type,label,opts,row[name]||'', !OV.edit);
   });
-
-  // Creator info (read-only fields)
-  try{
-    const fullName = String(row.createdByName||'').trim();
-    const role = String(row.createdByRole||'').trim();
-    if(fullName || role){
-      const _rows = [];
-      _rows.push(`<div class="form-row"><label>Created by</label><div>${escapeHtml(fullName||'—')}</div></div>`);
-      _rows.push(`<div class="form-row"><label>User role</label><div>${escapeHtml(role||'—')}</div></div>`);
-      pieces.meta = _rows.join('') + (pieces.meta||'');
-    }
-  }catch(_e){}
 
   let html = '';
   if(pieces.content) html += sectionWrap('Content', pieces.content);
@@ -2189,27 +2254,7 @@ function renderOverlay(coll,id){
     }
   }catch(_e){}
 }
-function closeOverlay(){
-  // if a new draft was never saved, discard it (no Firebase writes, no logs)
-  try{
-    const isDraft = (OV && OV.row && OV.row.__isDraft);
-    const coll = OV?.coll, id = OV?.id;
-    $('#overlay').classList.remove('show');
-
-    if(isDraft && coll && id){
-      cache[coll] = (cache[coll]||[]).filter(x=> String(x.id||'').trim() !== String(id||'').trim());
-      try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
-    }
-
-    OV = {coll:null,id:null,row:null,edit:false};
-    try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){}
-    return;
-  }catch(_e){
-    $('#overlay').classList.remove('show');
-    OV={coll:null,id:null,row:null,edit:false};
-    try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){}
-  }
-}
+function closeOverlay(){ $('#overlay').classList.remove('show'); OV={coll:null,id:null,row:null,edit:false}; try{ const h=parseHash(); delete h.item; setHash(h);}catch(_e){} }
 function setOverlayEdit(on){
   OV.edit = !!on;
   $$('#ovBody [name]').forEach(el=>{ el.disabled = !OV.edit; });
@@ -2236,9 +2281,9 @@ $('#ovDelete')?.addEventListener('click', async ()=>{
   const coll = OV.coll, id = OV.id;
   if(!confirm(`Delete ${id}?`)) return;
   try{
-    await deleteDoc(doc(pcoll(coll), id));
+    await deleteDoc(projDoc(coll, id));
     cache[coll] = (cache[coll]||[]).filter(x=>x.id!==id);
-    await addDoc(pcoll('notifications'), makeNote({
+    await addDoc(projColl('notifications'), makeNote({
       subject: coll==='suggestions'?'Suggestion' : (coll==='questions'?'Question' : coll.slice(0,1).toUpperCase()+coll.slice(1,-1)),
       status:'Deleted', relatedId:id, description:''
     }));
@@ -2249,13 +2294,8 @@ $('#ovDelete')?.addEventListener('click', async ()=>{
 // autosave debounce
 $('#ovBody')?.addEventListener('input', ()=>{
   if(!OV.edit) return;
-  // drafts are never autosaved (only manual Save commits them)
-  if(OV && OV.row && OV.row.__isDraft) return;
   clearTimeout(_autosaveTimer);
-  _autosaveTimer = setTimeout(()=>{
-    const updates = collectOverlayUpdates();
-    if(Object.keys(updates).length) saveOverlay(updates, {source:'auto'});
-  }, 120000);
+  _autosaveTimer = setTimeout(()=>{ const updates = collectOverlayUpdates(); if(Object.keys(updates).length) saveOverlay(updates, {source:'auto'}); }, 120000);
 });
 // keyboard shortcuts in overlay
 // Add New from overlay header
@@ -2263,15 +2303,8 @@ async function addNew(coll, forcedId){
   if(!DATA_READY){ alert('Data wordt geladen. Probeer zo nogmaals.'); return; }
 
   if(!CAN_EDIT){ alert('no edit rights'); return; }
-
-  cache[coll] = cache[coll] || [];
   const prefix = PREFIX[coll];
-
-  // Prefer the suggested nextId (from Firebase), but never create duplicates locally
-  let id = (forcedId && String(forcedId).trim()) || nextId(cache[coll]||[], prefix);
-  const hasId = (xid)=> (cache[coll]||[]).some(x=> String(x.id||'').trim()===String(xid||'').trim());
-  if(hasId(id)) id = nextId(cache[coll]||[], prefix);
-
+  const id = (forcedId && String(forcedId).trim()) || nextId(cache[coll]||[], prefix);
   const defaults = {
     goals:       (id)=>({id, goal:'', owner:'', start:'', end:'', status:'Open', notes:'', parentId:''}),
     risks:       (id)=>({id, description:'', owner:'', likelihood:'Medium', impact:'Medium', status:'Open', mitigation:'', parentId:'', goalId:''}),
@@ -2280,31 +2313,12 @@ async function addNew(coll, forcedId){
     questions:   (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
     suggestions: (id)=>({id, description:'', subject:'New Goal', owner: CURRENT_ROLE||'Viewer', submitted: new Date().toISOString().slice(0,10), status:'', reviewerRole:'', reviewed:'', comments:'', stars:0, starredBy:{}, parentId:'', goalId:''}),
   };
-
   const row = defaults[coll](id);
-
-  // creator stamps (for timeline labels)
-  try{
-    row.createdByUid = row.createdByUid || (CURRENT_UID||'');
-    row.createdByName = row.createdByName || (CURRENT_NAME||'');
-    row.createdByRole = row.createdByRole || (CURRENT_ROLE||'Viewer');
-    row.createdAt = row.createdAt || new Date().toISOString();
-  }catch(_e){}
-
-  // timestamps (local draft)
-  try{
-    const _today = new Date().toISOString().slice(0,10);
-    row.ts = new Date().toISOString();
-    row.submitted = row.submitted || _today;
-    row.Submitted = row.Submitted || _today;
-  }catch(_e){}
-  row.__isDraft = true;
-  row.__isNew = true;
-  row.__draftCreatedAt = new Date().toISOString();
-
-  if(OV && OV.id){ row.parentId = OV.id; }
+      try{ const _today = new Date().toISOString().slice(0,10); row.ts = new Date().toISOString(); row.submitted = _today; row.Submitted = _today; }catch(_e){}
+row.ts = new Date().toISOString();
+  row.Submitted = new Date().toISOString().slice(0,10);
+if(OV && OV.id){ row.parentId = OV.id; }
   if(OV && OV.coll==='goals' && coll!=='goals'){ row.goalId = OV.id; }
-
   // Ensure chain info for Questions/Suggestions
   if((coll==='questions'||coll==='suggestions') && typeof OV!=='undefined' && OV){
     if(!row.parentId && OV.id) row.parentId = OV.id;
@@ -2319,12 +2333,21 @@ async function addNew(coll, forcedId){
     }
   }
 
-  // IMPORTANT: do NOT write to Firebase yet. Only save/commit on manual Save.
+  if(hasProject()){ row.projectId = ACTIVE_PROJECT_ID; }
+  // audit fields
+  if(!('createdByName' in row)) row.createdByName = (CURRENT_NAME||'').trim();
+  if(!('createdByRole' in row)) row.createdByRole = (CURRENT_ROLE||'Viewer');
+  if(!('createdByUid'  in row)) row.createdByUid  = (CURRENT_UID||'');
+  row.updatedByName = (CURRENT_NAME||'').trim();
+  row.updatedByRole = (CURRENT_ROLE||'Viewer');
+  row.updatedByUid  = (CURRENT_UID||'');
+  row.createdAt = row.createdAt || serverTimestamp();
+  row.updatedAt = serverTimestamp();
+  await setDoc(projDoc(coll, id), row, {merge:true});
+  await addDoc(projColl('notifications'), makeNote({subject:`New ${coll.slice(0,1).toUpperCase()+coll.slice(1,-1)}`, status:'Added', relatedId:id, description: pickDesc(coll.slice(0,1).toUpperCase()+coll.slice(1,-1), row)}));
   cache[coll].push(row);
-
-  // refresh current view (keep behaviour) and open overlay
-  try{ renderTab(document.querySelector('nav.tabs button.active')?.dataset.tab); }catch(_e){}
-  renderOverlay(coll, id);
+  renderTab(coll);
+  renderOverlay(coll,id);
 }
 $('#ovAddRisk')?.addEventListener('click', ()=>{ const cand=$('#ovAddRisk')?.dataset?.nextId; addNew('risks', cand); });
 $('#ovAddIssue')?.addEventListener('click', ()=>{ const cand=$('#ovAddIssue')?.dataset?.nextId; addNew('issues', cand); });
@@ -2361,6 +2384,23 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     buildFilterOptions();
     renderAll();
   </script>
+
+
+<div id="loadOverlay" aria-hidden="true">
+  <div class="modal-backdrop"></div>
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="loadTitle">
+    <div class="modal-title" id="loadTitle">Load data</div>
+    <div class="modal-sub">Choose where to load from.</div>
+    <div class="modal-actions">
+      <button id="btnLoadFirebase" class="btn">Load from Firebase</button>
+      <button id="btnImportJson" class="btn primary">Import JSON file</button>
+    </div>
+    <div class="modal-foot">
+      <button id="btnCloseLoad" class="btn ghost">Close</button>
+    </div>
+  </div>
+</div>
+<input id="jsonFile" type="file" accept="application/json,.json" style="display:none" />
 
 <div id="overlay" aria-hidden="true">
   <div class="ov-backdrop"></div>
@@ -2625,7 +2665,7 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
     ["settings","Instellingen"], ["options","Opties"], ["actions","Acties"],
     ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
-    ["yes","Com"], ["no","Nee"],
+    ["yes","Ja"], ["no","Nee"],
 
     // Kolomkoppen / velden
     ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
@@ -2745,5 +2785,3 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
-
-
