@@ -343,6 +343,54 @@
 #loadOverlay .modal-actions{display:flex;gap:8px;flex-wrap:wrap}
 #loadOverlay .modal-foot{display:flex;justify-content:flex-end;margin-top:12px}
 
+
+    /* ===== Online users (presence) layout ===== */
+    .onlineUsers{
+      display:none;
+      max-width:520px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.92);
+      border-radius:12px;
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--ink);
+    }
+    .onlineUsers .ou-head{
+      font-weight:900;
+      font-size:12px;
+      margin-bottom:6px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      white-space:nowrap;
+    }
+    .onlineUsers .ou-count{
+      color:var(--muted);
+      font-weight:800;
+    }
+    .onlineUsers .ou-note{ color:var(--muted); font-size:12px; }
+    .onlineUsers .ou-list{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:8px;
+    }
+    .onlineUsers .ou-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.10);
+      background:rgba(255,255,255,.75);
+      white-space:nowrap;
+    }
+    .onlineUsers .ou-chip .dot.ok{ transform:scale(.9); }
+    .onlineUsers .ou-name{ font-weight:700; }
+    .onlineUsers .ou-name.ou-me{ font-weight:900; }
+    .onlineUsers .ou-role{ color:var(--muted); font-weight:700; }
+
 </style>
 </head>
 <body>
@@ -667,7 +715,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, setDoc, doc, serverTimestamp, Timestamp, getDoc, deleteDoc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -689,10 +737,11 @@ let PROJECTS_CACHE = [];
 
 function hasProject(){ return !!(ACTIVE_PROJECT_ID && ACTIVE_PROJECT_ID.trim()); }
 function setActiveProject(id){
+  const prev = ACTIVE_PROJECT_ID;
   ACTIVE_PROJECT_ID = (id || '').trim();
   localStorage.setItem('griplog_projectId', ACTIVE_PROJECT_ID);
   updateProjectChip();
-  try{ presenceOnProjectChanged(); }catch(e){}
+  try{ presenceOnProjectChanged(prev); }catch(e){}
 }
 function updateProjectChip(){
   const t = document.getElementById('projTxt');
@@ -776,22 +825,31 @@ const $ = (q,root=document)=>root.querySelector(q);
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
     // ===== Presence (online users, per project) =====
     const PRESENCE_COLL = 'presence';
-    const PRESENCE_STALE_MS = 120000;        // 2 min
-    const PRESENCE_HEARTBEAT_MS = 25000;     // 25 sec
+    const PRESENCE_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
 
     let presenceUnsub = null;
-    let presenceBeat = null;
+    let presenceTimer = null;
+    let presenceSnapshot = []; // latest raw snapshot list (unfiltered)
 
-    function stopPresence(){
-      if(presenceBeat){ clearInterval(presenceBeat); presenceBeat = null; }
+    function stopPresenceTimer(){
+      if(presenceTimer){ clearInterval(presenceTimer); presenceTimer = null; }
     }
     function stopPresenceList(){
       if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
     }
 
-    async function touchPresence(extra = {}){
+    function isOnlineNow(x){
+      const now = Date.now();
+      const exp = x?.expiresAt;
+      const expMs = (exp && typeof exp.toMillis === 'function') ? exp.toMillis() : (typeof exp === 'number' ? exp : 0);
+      const online = (x?.online !== false) && expMs && (expMs > now);
+      return { online, expMs };
+    }
+
+    async function setOnlinePresence(extra = {}){
       if(!CURRENT_UID || !hasProject()) return;
       try{
+        const now = Date.now();
         await setDoc(
           doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL, CURRENT_UID),
           {
@@ -801,7 +859,8 @@ const $ = (q,root=document)=>root.querySelector(q);
             role: CURRENT_ROLE || 'Viewer',
             rights: ($('#authTxt')?.textContent || '').trim(),
             online: true,
-            lastSeen: serverTimestamp(),
+            loginAt: serverTimestamp(),
+            expiresAt: Timestamp.fromMillis(now + PRESENCE_TTL_MS),
             ...extra
           },
           { merge:true }
@@ -811,91 +870,160 @@ const $ = (q,root=document)=>root.querySelector(q);
       }
     }
 
-    function startPresence(){
-      stopPresence();
+    async function setOfflinePresence(extra = {}){
       if(!CURRENT_UID || !hasProject()) return;
-      touchPresence();
-      presenceBeat = setInterval(()=>touchPresence(), PRESENCE_HEARTBEAT_MS);
+      try{
+        await setDoc(
+          doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL, CURRENT_UID),
+          {
+            online: false,
+            logoutAt: serverTimestamp(),
+            ...extra
+          },
+          { merge:true }
+        );
+      }catch(e){
+        console.warn('presence offline write failed', e);
+      }
+    }
+
+    function roleRank(roleRaw){
+      const r = (roleRaw||'').toString().toLowerCase().replace(/\s+/g,' ').trim();
+      if(!r) return 99;
+
+      // Order: Admin, Project manager, Thematic Expert, Sponsor/Partner, Viewers
+      if(r.includes('admin')) return 0; // Admin / Administrator
+      if((r.includes('project') && r.includes('manager')) || r.includes('projectmanager')) return 1;
+      if(r.includes('thematic')) return 2;
+      if(r.includes('sponsor') || r.includes('partner')) return 3;
+      if(r.includes('viewer') || r.includes('view')) return 4;
+
+      return 98;
     }
 
     function renderOnlineUsers(list){
       const box = document.getElementById('onlineUsers');
       if(!box) return;
 
-      // Not signed in
       if(!CURRENT_UID){
         box.style.display = 'none';
         box.innerHTML = '';
         return;
       }
 
-      // No project selected
       if(!hasProject()){
         box.style.display = 'block';
-        box.innerHTML = `<div class="ou-head">Online users</div><div class="ou-note">Select a project to see who is online.</div>`;
+        box.innerHTML = `<div class="ou-head"><span>Online</span><span class="ou-count">0</span></div><div class="ou-note">Select a project to see who is online.</div>`;
         return;
       }
 
       const items = (list||[]).filter(Boolean);
+      const count = items.length;
+
       box.style.display = 'block';
 
-      if(!items.length){
-        box.innerHTML = `<div class="ou-head">Online users</div><div class="ou-note">Nobody online right now.</div>`;
+      if(!count){
+        box.innerHTML = `<div class="ou-head"><span>Online</span><span class="ou-count">0</span></div><div class="ou-note">Niemand online.</div>`;
         return;
       }
 
-      const head = `<div class="ou-head">Online users (${items.length})</div>`;
-      const rows = items.map(u=>{
-        const name = (u.name||'unknown').toLowerCase();
-        const role = (u.role||'').toLowerCase();
-        const isMe = (u.uid && u.uid===CURRENT_UID) || (name && (CURRENT_NAME||'').toLowerCase()===name);
+      const head = `<div class="ou-head"><span>Online</span><span class="ou-count">${count}</span></div>`;
+      const chips = items.map(u=>{
+        const nameRaw = (u.name||'unknown').toString().trim();
+        const role = (u.role||'').toString().trim();
+        const isMe = (u.uid && u.uid===CURRENT_UID) || ((CURRENT_NAME||'').toString().trim().toLowerCase()===nameRaw.toLowerCase());
         return `
-          <div class="ou-row">
+          <div class="ou-chip" title="${escapeHtml(role)}">
             <span class="dot ok"></span>
-            <span class="ou-name ${isMe?'ou-me':''}">${escapeHtml(name)}</span>
-            <span class="ou-meta">${role?('&nbsp;•&nbsp;'+escapeHtml(role)):""}</span>
+            <span class="ou-name ${isMe?'ou-me':''}">${escapeHtml(nameRaw)}</span>
+            <span class="ou-role">${role?('— '+escapeHtml(role)):""}</span>
           </div>`;
       }).join('');
 
-      box.innerHTML = head + rows;
+      box.innerHTML = head + `<div class="ou-list">${chips}</div>`;
+    }
+
+    function refreshPresenceRender(){
+      if(!CURRENT_UID || !hasProject()){
+        renderOnlineUsers([]);
+        return;
+      }
+      const now = Date.now();
+      const filtered = (presenceSnapshot||[])
+        .map(u=>{
+          const exp = u.expiresAt;
+          const expMs = (exp && typeof exp.toMillis === 'function') ? exp.toMillis() : (typeof exp === 'number' ? exp : 0);
+          return { ...u, _expMs: expMs };
+        })
+        .filter(u => (u.online !== false) && u._expMs && (u._expMs > now));
+
+      // Static order: role rank -> name (no time-based sorting)
+      filtered.sort((a,b)=>{
+        const ra = roleRank(a.role), rb = roleRank(b.role);
+        if(ra !== rb) return ra - rb;
+        return (a.name||'').localeCompare((b.name||''), undefined, { sensitivity:'base' });
+      });
+
+      renderOnlineUsers(filtered);
     }
 
     function startPresenceList(){
       stopPresenceList();
+      stopPresenceTimer();
+      presenceSnapshot = [];
+
       if(!CURRENT_UID){ renderOnlineUsers([]); return; }
       if(!hasProject()){ renderOnlineUsers([]); return; }
 
       const coll = collection(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL);
+      // keep the snapshot small and filter client-side by expiresAt
       presenceUnsub = onSnapshot(coll, (snap)=>{
-        const now = Date.now();
         const list = [];
         snap.forEach(d=>{
           const x = d.data() || {};
-          const ls = x.lastSeen;
-          const ms = (ls && typeof ls.toMillis === 'function') ? ls.toMillis() : 0;
-          const online = (x.online !== false) && ms && ((now - ms) <= PRESENCE_STALE_MS);
-          if(!online) return;
           list.push({
             uid: x.uid || d.id,
             name: x.name || x.email || d.id,
             role: x.role || '',
-            lastSeen: ms
+            online: (x.online !== false),
+            expiresAt: x.expiresAt || 0
           });
         });
-        list.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
-        renderOnlineUsers(list);
+        presenceSnapshot = list;
+        refreshPresenceRender();
       }, (err)=>{
         console.warn('presence read failed', err);
+        presenceSnapshot = [];
         renderOnlineUsers([]);
       });
+
+      // local timer only for UI refresh (no DB writes)
+      presenceTimer = setInterval(refreshPresenceRender, 60000);
     }
 
-    function presenceOnProjectChanged(){
+    function startPresence(){
+      if(!CURRENT_UID || !hasProject()) return;
+      setOnlinePresence();
+    }
+
+    function presenceOnProjectChanged(prevProjectId = null){
       // Called after selecting/creating a project
       if(!CURRENT_UID){
         renderOnlineUsers([]);
         return;
       }
+
+      // mark offline in previous project (best effort)
+      if(prevProjectId && prevProjectId !== ACTIVE_PROJECT_ID){
+        try{
+          setDoc(
+            doc(db, PROJECTS_COLL, prevProjectId, PRESENCE_COLL, CURRENT_UID),
+            { online:false, switchedAt: serverTimestamp() },
+            { merge:true }
+          );
+        }catch(e){}
+      }
+
       startPresence();
       startPresenceList();
     }
@@ -931,12 +1059,16 @@ const $ = (q,root=document)=>root.querySelector(q);
         if(EDIT_ROLES.has(rolePick) && email){ await upsertUserDoc(cred.user.uid,{ role: rolePick, email, fullName }); }
       }catch(e){ alert('login failed: '+e.message); }
     };
-    $('#btnSignout').onclick=()=>signOut(auth);
+    $('#btnSignout').onclick=async ()=>{
+      try{ await setOfflinePresence(); }catch(e){}
+      try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
+      await signOut(auth);
+    };
 
     onAuthStateChanged(auth, async (user)=>{
       const authDot=$('#authDot'), authTxt=$('#authTxt'), userDot=$('#userDot'), userTxt=$('#userTxt');
       if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; if(userDot) userDot.classList.remove('ok'); if(userTxt) userTxt.textContent='not signed in'; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
-      try{ stopPresence(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
+      try{ stopPresenceTimer(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
       return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
@@ -2664,4 +2796,5 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
 
