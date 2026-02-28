@@ -742,7 +742,7 @@ const $ = (q,root=document)=>root.querySelector(q);
     const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
     const owners=["","Dorcas Tanzania","Mimi Moto (Tanzania)","Pellet Plant Manager","Operations Lead","Sales Lead","Finance Lead","PAYG/VICOBA Coordinator","Field Officer","After-Sales Technician Lead","MRV/Carbon Lead","Govt Liaison (Arusha)","TANESCO Liaison","Community Leader","Institutional Sales"];
-    const statuses={ goals:["","Identified","In progress","Finished"], risks:["","Identified","In progress","Finished"], issues:["","Identified","In progress","Blocked","Finished"], plans:["","Open","In progress","Done"] };
+    const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
     const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
@@ -903,15 +903,18 @@ const $ = (q,root=document)=>root.querySelector(q);
       const tblIssues= rowsFromTable('issues');
       const tblPlans = rowsFromTable('plans');
 
+      // IMPORTANT: Save should never depend on which tab you opened.
+      // If a table has 0 rows (tab not rendered), fall back to cache (full dataset).
       const mergeWithCache = (kind, rows)=> rows.map(r=>({
         ...((cache[kind]||[]).find(x=>x.id===r.id) || {}),
         ...r
       }));
 
-      const newGoals = mergeWithCache('goals', tblGoals);
-      const newRisks = mergeWithCache('risks', tblRisks);
-      const newIssues= mergeWithCache('issues',tblIssues);
-      const newPlans = mergeWithCache('plans',tblPlans);
+      const newGoals = (tblGoals.length ? mergeWithCache('goals', tblGoals) : (cache.goals||[]).map(x=>({...(x||{})})));
+      const newRisks = (tblRisks.length ? mergeWithCache('risks', tblRisks) : (cache.risks||[]).map(x=>({...(x||{})})));
+      const newIssues= (tblIssues.length? mergeWithCache('issues',tblIssues): (cache.issues||[]).map(x=>({...(x||{})})));
+      const newPlans = (tblPlans.length ? mergeWithCache('plans', tblPlans) : (cache.plans||[]).map(x=>({...(x||{})})));
+
 
       const newSuggestions = (cache.suggestions||[]).map(x=>({...(x||{})}));
       const newQuestions   = (cache.questions||[]).map(x=>({...(x||{})}));
@@ -1756,7 +1759,26 @@ function renderLinkGraph(){
   const typeClass = (k)=> ({goals:'goal',risks:'risk',issues:'issue',plans:'plan',questions:'question',suggestions:'suggestion'}[k]||'');
   const label = (n)=>{ const t=fmtDate(pickTime(n.data)); const d=t? t.slice(0,10):''; const map={goals:'Goal',risks:'Risk',issues:'Issue',plans:'Plan',questions:'Question',suggestions:'Suggestion'}; const ty=map[n.coll]||n.coll; return d? `${ty} • ${n.id} • ${d}` : `${ty} • ${n.id}`; };
   const pickTime = (d)=> d.updated || d.reviewed || d.submitted || d.end || d.start || d.createdAt || d.timestamp || '';
-  const fmtDate = (v)=>{ if(!v) return ''; try{ if(/^\d{4}-\d{2}-\d{2}/.test(v)) return v; const dt=new Date(v); if(!isNaN(dt)) return dt.toISOString().slice(0,10);}catch(e){} return String(v); };
+  const fmtDate = (v)=>{
+    if(!v) return '';
+    try{
+      // Firestore Timestamp support (toDate() or {seconds,nanoseconds})
+      if(typeof v === 'object'){
+        if(typeof v.toDate === 'function'){
+          const dt = v.toDate();
+          if(dt && !isNaN(dt)) return dt.toISOString().slice(0,10);
+        }
+        if(typeof v.seconds === 'number'){
+          const dt = new Date(v.seconds * 1000);
+          if(!isNaN(dt)) return dt.toISOString().slice(0,10);
+        }
+      }
+      if(typeof v === 'string' && /^\d{4}-\d{2}-\d{2}/.test(v)) return v.slice(0,10);
+      const dt = new Date(v);
+      if(!isNaN(dt)) return dt.toISOString().slice(0,10);
+    }catch(e){}
+    return '';
+  };
 
   // find root (goal)
   let rootId = '';
@@ -2331,14 +2353,12 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     // Acties / knoppen
     ["save","Opslaan"], ["save changes","Wijzigingen opslaan"], ["edit","Bewerken"],
     ["delete","Verwijderen"], ["remove","Verwijderen"], ["close","Sluiten"],
-    ["open","Ontwerp"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
+    ["open","Openen"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
     ["cancel","Annuleren"], ["confirm","Bevestigen"], ["search","Zoeken"],
     ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
     ["settings","Instellingen"], ["options","Opties"], ["actions","Acties"],
     ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
-    ["yes","Ja"], ["no","Nee"], ["design","Ontwerp"], ["created","Aangemaakt"], ["finished","Afgerond"],
-    ["Mimi Moto (Tanzania)","Mimi Moto (Tanzania)"], ["MRV/Carbon Lead","MRV/Carbon Lead"],
-    
+    ["yes","Ja"], ["no","Nee"],
 
     // Kolomkoppen / velden
     ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
@@ -2458,4 +2478,5 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
 
