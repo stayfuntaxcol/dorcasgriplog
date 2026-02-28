@@ -742,7 +742,7 @@ const $ = (q,root=document)=>root.querySelector(q);
     const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
     const owners=["","Dorcas Tanzania","Mimi Moto (Tanzania)","Pellet Plant Manager","Operations Lead","Sales Lead","Finance Lead","PAYG/VICOBA Coordinator","Field Officer","After-Sales Technician Lead","MRV/Carbon Lead","Govt Liaison (Arusha)","TANESCO Liaison","Community Leader","Institutional Sales"];
-    const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
+    const statuses={ goals:["","Identified","In progress","Finished"], risks:["","Identified","In progress","Finished"], issues:["","Identified","In progress","Blocked","Finished"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
     const suggestionSubjects = ["","New Goal","New Risk","New Issue","New Plan"];
@@ -2331,12 +2331,12 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
     // Acties / knoppen
     ["save","Opslaan"], ["save changes","Wijzigingen opslaan"], ["edit","Bewerken"],
     ["delete","Verwijderen"], ["remove","Verwijderen"], ["close","Sluiten"],
-    ["open","Openen"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
+    ["open","Ontwerp"], ["new","Nieuw"], ["add","Toevoegen"], ["update","Bijwerken"],
     ["cancel","Annuleren"], ["confirm","Bevestigen"], ["search","Zoeken"],
     ["filter","Filteren"], ["download","Downloaden"], ["upload","Uploaden"],
     ["settings","Instellingen"], ["options","Opties"], ["actions","Acties"],
     ["details","Details"], ["back","Terug"], ["next","Volgende"], ["previous","Vorige"],
-    ["yes","Ja"], ["no","Nee"],
+    ["yes","Ja"], ["no","Nee"], ["design","Ontwerp"], ["created","Aangemaakt"], ["finished","Afgerond"],
 
     // Kolomkoppen / velden
     ["title","Titel"], ["name","Naam"], ["type","Type"], ["description","Beschrijving"],
