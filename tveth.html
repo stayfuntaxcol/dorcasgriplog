@@ -40,14 +40,15 @@
     .onlineUsers{
       display:none;
       max-width:320px;
-      border:1px solid var(--line);
+      border:none;
       background:rgba(255,255,255,.92);
       border-radius:12px;
       padding:6px 8px;
       font-size:12px;
       color:var(--ink);
     }
-    .onlineUsers .ou-head{font-weight:800;font-size:12px;margin-bottom:4px}
+    .onlineUsers .ou-head{
+      text-align:right;font-weight:800;font-size:12px;margin-bottom:4px}
     .onlineUsers .ou-note{color:var(--muted);font-size:12px}
     .onlineUsers .ou-row{display:flex;gap:6px;align-items:center;justify-content:flex-end;line-height:1.2;padding:2px 0}
     .onlineUsers .ou-name{font-weight:600}
@@ -67,7 +68,7 @@
     h2{margin:0 0 6px 0;font-size:18px}
     p.help{margin:0 0 10px 0;color:var(--muted);font-size:12px}
 
-    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
+    .sectionbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin:6px 0}
     .sectionbar .left{display:flex;gap:8px;align-items:center}
     .sectionbar .right{display:flex;gap:8px;align-items:center}
 
@@ -912,7 +913,7 @@ const $ = (q,root=document)=>root.querySelector(q);
 
       if(!hasProject()){
         box.style.display = 'block';
-        box.innerHTML = `<div class="ou-head"><span>Online</span><span class="ou-count">0</span></div><div class="ou-note">Select a project to see who is online.</div>`;
+        box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div><div class="ou-note">Select a project to see who is online.</div>`;
         return;
       }
 
@@ -922,11 +923,11 @@ const $ = (q,root=document)=>root.querySelector(q);
       box.style.display = 'block';
 
       if(!count){
-        box.innerHTML = `<div class="ou-head"><span>Online</span><span class="ou-count">0</span></div><div class="ou-note">Niemand online.</div>`;
+        box.innerHTML = `<div class="ou-head"><span class="ou-title">Online Users: 0</span></div><div class="ou-note">Niemand online.</div>`;
         return;
       }
 
-      const head = `<div class="ou-head"><span>Online</span><span class="ou-count">${count}</span></div>`;
+      const head = `<div class="ou-head"><span class="ou-title">Online Users: ${count}</span></div>`;
       const chips = items.map(u=>{
         const nameRaw = (u.name||'unknown').toString().trim();
         const role = (u.role||'').toString().trim();
@@ -2795,3 +2796,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
