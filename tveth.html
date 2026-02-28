@@ -37,6 +37,24 @@
     .ok{background:var(--ok)}
     .user-info{font-size:12px;color:var(--ink);text-transform:lowercase}
 
+    .onlineUsers{
+      display:none;
+      max-width:320px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.92);
+      border-radius:12px;
+      padding:6px 8px;
+      font-size:12px;
+      color:var(--ink);
+    }
+    .onlineUsers .ou-head{font-weight:800;font-size:12px;margin-bottom:4px}
+    .onlineUsers .ou-note{color:var(--muted);font-size:12px}
+    .onlineUsers .ou-row{display:flex;gap:6px;align-items:center;justify-content:flex-end;line-height:1.2;padding:2px 0}
+    .onlineUsers .ou-name{font-weight:600}
+    .onlineUsers .ou-meta{color:var(--muted)}
+    .onlineUsers .ou-me{font-weight:900}
+
+
     nav.tabs{display:flex;gap:8px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--line)}
     nav.tabs button{border:none;background:#eaf6f6;color:#065a59;padding:8px 10px;border-radius:10px;font-weight:700;cursor:pointer}
     nav.tabs button.active{background:#0ea5a3;color:#fff}
@@ -342,6 +360,7 @@
       <span id="dsChip" class="chip"><span id="dsDot" class="dot"></span><span id="datasetChip">no dataset loaded</span></span>
       <span id="authChip" class="chip"><span id="authDot" class="dot"></span><span id="authTxt">not signed in</span></span>
       <span id="userChip" class="chip clickable"><span id="userDot" class="dot"></span><span id="userTxt">not signed in</span></span>
+      <div id="onlineUsers" class="onlineUsers" aria-live="polite"></div>
     </div>
   </header>
 
@@ -648,7 +667,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
     import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+    import { getFirestore, collection, query, where, getDocs, setDoc, doc, serverTimestamp, getDoc, deleteDoc, updateDoc, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyAcIiKWweeFZDDwkpnj-triuetWY0zwkps",
@@ -673,6 +692,7 @@ function setActiveProject(id){
   ACTIVE_PROJECT_ID = (id || '').trim();
   localStorage.setItem('griplog_projectId', ACTIVE_PROJECT_ID);
   updateProjectChip();
+  try{ presenceOnProjectChanged(); }catch(e){}
 }
 function updateProjectChip(){
   const t = document.getElementById('projTxt');
@@ -741,11 +761,7 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     const EDIT_ROLES = new Set(['Admin','Sponsor/Partner','Projectmanager','Strategic Program Advisor','Thematic Expert']);
     const ownerRoles = ['Admin','Projectmanager','Strategic Program Advisor','Thematic Expert','Partner/Sponsor'];
-    const owners=["","Dorcas Ethiopia (Country Office)","CO Programs Manager","TVET Dean",
-  "Construction Project Manager","Procurement Officer","Finance Lead","Supervision Consultant",
-  "Contractor (Civil Works)","Contractor (M&E)","Municipality / Permits","Federal TVET Agency",
-  "Industry Partners","Donor A (Maarten/Derk/Paul)","Donor B (Bredewout)","Dorcas International",
-  "Community / Neighbors","Security & Facility","M&E / Quality Assurance"];
+    const owners=["", "Dorcas Ethiopia (Country Office)", "CO Programs Manager", "TVET Dean", "Construction Project Manager", "Procurement Officer", "Finance Lead", "Supervision Consultant", "Contractor (Civil Works)", "Contractor (M&E)", "Municipality / Permits", "Federal TVET Agency", "Industry Partners", "Donor A (Maarten/Derk/Paul)", "Donor B (Bredewout)", "Dorcas International", "Community / Neighbors", "Security & Facility", "M&E / Quality Assurance"];
     const statuses={ goals:["","Open","In progress","Done"], risks:["","Open","In progress","Done"], issues:["","Open","In progress","Blocked","Done"], plans:["","Open","In progress","Done"] };
     const tri=["","Low","Medium","High"];
 
@@ -758,6 +774,132 @@ const $ = (q,root=document)=>root.querySelector(q);
     const noteRoles    = ["","Admin","Sponsor/Partner","Projectmanager","Strategic Program Advisor","Thematic Expert","Viewer"];
 
     let CAN_EDIT=false; let CURRENT_UID=null; let CURRENT_ROLE='Viewer'; let CURRENT_NAME='';
+    // ===== Presence (online users, per project) =====
+    const PRESENCE_COLL = 'presence';
+    const PRESENCE_STALE_MS = 120000;        // 2 min
+    const PRESENCE_HEARTBEAT_MS = 25000;     // 25 sec
+
+    let presenceUnsub = null;
+    let presenceBeat = null;
+
+    function stopPresence(){
+      if(presenceBeat){ clearInterval(presenceBeat); presenceBeat = null; }
+    }
+    function stopPresenceList(){
+      if(presenceUnsub){ presenceUnsub(); presenceUnsub = null; }
+    }
+
+    async function touchPresence(extra = {}){
+      if(!CURRENT_UID || !hasProject()) return;
+      try{
+        await setDoc(
+          doc(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL, CURRENT_UID),
+          {
+            uid: CURRENT_UID,
+            name: (CURRENT_NAME||'').trim(),
+            email: auth.currentUser?.email || '',
+            role: CURRENT_ROLE || 'Viewer',
+            rights: ($('#authTxt')?.textContent || '').trim(),
+            online: true,
+            lastSeen: serverTimestamp(),
+            ...extra
+          },
+          { merge:true }
+        );
+      }catch(e){
+        console.warn('presence write failed', e);
+      }
+    }
+
+    function startPresence(){
+      stopPresence();
+      if(!CURRENT_UID || !hasProject()) return;
+      touchPresence();
+      presenceBeat = setInterval(()=>touchPresence(), PRESENCE_HEARTBEAT_MS);
+    }
+
+    function renderOnlineUsers(list){
+      const box = document.getElementById('onlineUsers');
+      if(!box) return;
+
+      // Not signed in
+      if(!CURRENT_UID){
+        box.style.display = 'none';
+        box.innerHTML = '';
+        return;
+      }
+
+      // No project selected
+      if(!hasProject()){
+        box.style.display = 'block';
+        box.innerHTML = `<div class="ou-head">Online users</div><div class="ou-note">Select a project to see who is online.</div>`;
+        return;
+      }
+
+      const items = (list||[]).filter(Boolean);
+      box.style.display = 'block';
+
+      if(!items.length){
+        box.innerHTML = `<div class="ou-head">Online users</div><div class="ou-note">Nobody online right now.</div>`;
+        return;
+      }
+
+      const head = `<div class="ou-head">Online users (${items.length})</div>`;
+      const rows = items.map(u=>{
+        const name = (u.name||'unknown').toLowerCase();
+        const role = (u.role||'').toLowerCase();
+        const isMe = (u.uid && u.uid===CURRENT_UID) || (name && (CURRENT_NAME||'').toLowerCase()===name);
+        return `
+          <div class="ou-row">
+            <span class="dot ok"></span>
+            <span class="ou-name ${isMe?'ou-me':''}">${escapeHtml(name)}</span>
+            <span class="ou-meta">${role?('&nbsp;•&nbsp;'+escapeHtml(role)):""}</span>
+          </div>`;
+      }).join('');
+
+      box.innerHTML = head + rows;
+    }
+
+    function startPresenceList(){
+      stopPresenceList();
+      if(!CURRENT_UID){ renderOnlineUsers([]); return; }
+      if(!hasProject()){ renderOnlineUsers([]); return; }
+
+      const coll = collection(db, PROJECTS_COLL, ACTIVE_PROJECT_ID, PRESENCE_COLL);
+      presenceUnsub = onSnapshot(coll, (snap)=>{
+        const now = Date.now();
+        const list = [];
+        snap.forEach(d=>{
+          const x = d.data() || {};
+          const ls = x.lastSeen;
+          const ms = (ls && typeof ls.toMillis === 'function') ? ls.toMillis() : 0;
+          const online = (x.online !== false) && ms && ((now - ms) <= PRESENCE_STALE_MS);
+          if(!online) return;
+          list.push({
+            uid: x.uid || d.id,
+            name: x.name || x.email || d.id,
+            role: x.role || '',
+            lastSeen: ms
+          });
+        });
+        list.sort((a,b)=>(b.lastSeen||0)-(a.lastSeen||0));
+        renderOnlineUsers(list);
+      }, (err)=>{
+        console.warn('presence read failed', err);
+        renderOnlineUsers([]);
+      });
+    }
+
+    function presenceOnProjectChanged(){
+      // Called after selecting/creating a project
+      if(!CURRENT_UID){
+        renderOnlineUsers([]);
+        return;
+      }
+      startPresence();
+      startPresenceList();
+    }
+
 
     let cache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[],notifications:[]};
     let prevCache={goals:[],risks:[],issues:[],plans:[],suggestions:[],questions:[]};
@@ -793,7 +935,9 @@ const $ = (q,root=document)=>root.querySelector(q);
 
     onAuthStateChanged(auth, async (user)=>{
       const authDot=$('#authDot'), authTxt=$('#authTxt'), userDot=$('#userDot'), userTxt=$('#userTxt');
-      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; if(userDot) userDot.classList.remove('ok'); if(userTxt) userTxt.textContent='not signed in'; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels(); return; }
+      if(!user){ authDot.classList.remove('ok'); authTxt.textContent='not signed in'; if(userDot) userDot.classList.remove('ok'); if(userTxt) userTxt.textContent='not signed in'; $('#btnSignout').style.display='none'; setEditMode(false); CURRENT_UID=null; CURRENT_ROLE='Viewer'; CURRENT_NAME=''; syncSectionUserLabels();
+      try{ stopPresence(); stopPresenceList(); renderOnlineUsers([]); }catch(e){}
+      return; }
       $('#btnSignout').style.display='inline-block'; authDot.classList.add('ok'); CURRENT_UID=user.uid; CURRENT_NAME=user.displayName||user.email||'';
 
       let role='Viewer', full=user.displayName||user.email||'';
@@ -816,6 +960,7 @@ const $ = (q,root=document)=>root.querySelector(q);
         showProjectModal(true);
         return;
       }
+      try{ presenceOnProjectChanged(); }catch(e){}
       await loadAll();
     });
 
@@ -971,6 +1116,7 @@ const $ = (q,root=document)=>root.querySelector(q);
 await Promise.all(tasks);
       if(notes.length) await Promise.all(notes.map(n=>addDoc(projColl('notifications'), n)));
       alert('saved to firestore');
+      try{ presenceOnProjectChanged(); }catch(e){}
       await loadAll();
     }
     $('#btnLoad').onclick=()=>showLoadModal(true);
@@ -1065,7 +1211,8 @@ await Promise.all(tasks);
         if(!id){ alert('Please enter a project id'); return; }
         setActiveProject(id);
         showProjectModal(false);
-        if(CURRENT_UID){ await loadAll(); }
+        if(CURRENT_UID){ try{ presenceOnProjectChanged(); }catch(e){}
+      await loadAll(); }
       });
 
       const btnCreateP = document.getElementById('btnCreateProject');
@@ -1092,7 +1239,8 @@ await Promise.all(tasks);
       btnClose && (btnClose.onclick=()=>showLoadModal(false));
 
       const btnFb = document.getElementById('btnLoadFirebase');
-      btnFb && (btnFb.onclick=async()=>{ showLoadModal(false); await loadAll(); });
+      btnFb && (btnFb.onclick=async()=>{ showLoadModal(false); try{ presenceOnProjectChanged(); }catch(e){}
+      await loadAll(); });
 
       const btnJson = document.getElementById('btnImportJson');
       const fileInput = document.getElementById('jsonFile');
@@ -2516,3 +2664,4 @@ $$('.tabs button').forEach(btn=>btn.addEventListener('click',()=>{
 
 </body>
 </html>
+
